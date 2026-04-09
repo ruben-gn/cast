@@ -19,12 +19,12 @@ fun Route.podcastRouting(dependencies: DependencyRegistry) {
     val listPodcasts: ListPodcasts by dependencies
 
     route("podcasts") {
-        get("/") {
+        get {
             val podcasts = listPodcasts().map(::podcastDto)
             call.respond(podcasts)
         }
 
-        post("/") {
+        post {
             val request = call.receive<AddPodcastRequest>()
             val podcast = addPodcast(url = request.url).let(::podcastDto)
             call.respond(podcast)
