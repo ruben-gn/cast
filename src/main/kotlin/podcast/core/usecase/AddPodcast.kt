@@ -1,11 +1,13 @@
-package grootnibbel.ink.podcast.core
+package podcast.core.usecase
 
-import java.util.*
+import podcast.core.model.Podcast
+import podcast.core.port.PodcastPersistence
+import java.util.UUID
 
-class PodcastApi(
+class AddPodcast(
     private val podcasts: PodcastPersistence
 ) {
-    fun add(url: String): Podcast {
+    operator fun invoke(url: String): Podcast {
         val podcast = Podcast(
             id = UUID.randomUUID().toString(),
             url = url,
@@ -15,6 +17,4 @@ class PodcastApi(
         podcasts.save(podcast)
         return podcast
     }
-
-    fun get(): List<Podcast> = podcasts.findAll()
 }

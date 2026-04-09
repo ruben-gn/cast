@@ -1,14 +1,15 @@
-package grootnibbel.ink.podcast
+package podcast
 
-import grootnibbel.ink.podcast.core.PodcastApi
-import grootnibbel.ink.podcast.core.PodcastPersistence
-import grootnibbel.ink.podcast.infrastructure.InMemoryPodcastPersistence
-import grootnibbel.ink.podcast.infrastructure.html.podcastRouting
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.*
+import podcast.core.port.PodcastPersistence
+import podcast.core.usecase.AddPodcast
+import podcast.core.usecase.ListPodcasts
+import podcast.infrastructure.InMemoryPodcastPersistence
+import podcast.infrastructure.web.podcastRouting
 
 fun Application.podcastModule() {
     install(ContentNegotiation) {
@@ -17,7 +18,9 @@ fun Application.podcastModule() {
 
     dependencies {
         provide<PodcastPersistence> { InMemoryPodcastPersistence() }
-        provide<PodcastApi> { PodcastApi(resolve()) }
+
+        provide<ListPodcasts> { ListPodcasts(resolve()) }
+        provide<AddPodcast> { AddPodcast(resolve()) }
     }
 
     routing {

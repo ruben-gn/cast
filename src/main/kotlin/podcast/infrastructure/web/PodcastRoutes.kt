@@ -1,7 +1,6 @@
-package grootnibbel.ink.podcast.infrastructure.html
+package podcast.infrastructure.web
 
-import grootnibbel.ink.podcast.core.Podcast
-import grootnibbel.ink.podcast.core.PodcastApi
+import podcast.core.model.Podcast
 import io.ktor.server.plugins.di.DependencyRegistry
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -10,21 +9,24 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
+import podcast.core.usecase.AddPodcast
+import podcast.core.usecase.ListPodcasts
 import kotlin.collections.map
 
 fun Route.podcastRouting(dependencies: DependencyRegistry) {
 
-    val api: PodcastApi by dependencies
+    val addPodcast: AddPodcast by dependencies
+    val listPodcasts: ListPodcasts by dependencies
 
     route("podcasts") {
         get("/") {
-            val podcasts = api.get().map(::podcastDto)
+            val podcasts = listPodcasts().map(::podcastDto)
             call.respond(podcasts)
         }
 
         post("/") {
             val request = call.receive<AddPodcastRequest>()
-            val podcast = api.add(url = request.url).let(::podcastDto)
+            val podcast = addPodcast(url = request.url).let(::podcastDto)
             call.respond(podcast)
         }
     }

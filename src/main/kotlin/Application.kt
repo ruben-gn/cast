@@ -1,6 +1,4 @@
-package grootnibbel.ink
-
-import grootnibbel.ink.podcast.podcastModule
+import podcast.podcastModule
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
 import io.ktor.server.netty.*

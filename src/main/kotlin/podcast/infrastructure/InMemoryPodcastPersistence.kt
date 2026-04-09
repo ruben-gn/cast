@@ -1,7 +1,7 @@
-package grootnibbel.ink.podcast.infrastructure
+package podcast.infrastructure
 
-import grootnibbel.ink.podcast.core.Podcast
-import grootnibbel.ink.podcast.core.PodcastPersistence
+import podcast.core.model.Podcast
+import podcast.core.port.PodcastPersistence
 
 class InMemoryPodcastPersistence : PodcastPersistence {
 

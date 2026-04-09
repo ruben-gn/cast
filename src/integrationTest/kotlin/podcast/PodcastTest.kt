@@ -1,6 +1,5 @@
 package podcast
 
-import grootnibbel.ink.podcast.podcastModule
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.plugins.contentnegotiation.*
