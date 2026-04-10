@@ -1,6 +1,6 @@
 package podcast
 
-import common
+import installCommon
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
@@ -22,8 +22,8 @@ class PodcastTest : StringSpec({
     "should save and retrieve podcasts through the full stack" {
         testApplication {
             application {
-                common()
-                podcastModule(clock = fixedClock)
+                installCommon()
+                installPodcastModule(clock = fixedClock)
             }
 
             val client = createClient {

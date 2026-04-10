@@ -10,7 +10,7 @@ import podcast.infrastructure.InMemoryPodcastPersistence
 import podcast.infrastructure.web.podcastRouting
 import java.time.Clock
 
-fun Application.podcastModule(clock: Clock = Clock.systemUTC()) {
+fun Application.installPodcastModule(clock: Clock = Clock.systemUTC()) {
     dependencies {
         provide<Clock> { clock }
         provide<PodcastPersistence> { InMemoryPodcastPersistence() }

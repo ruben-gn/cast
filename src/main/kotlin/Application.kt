@@ -1,4 +1,4 @@
-import podcast.podcastModule
+import podcast.installPodcastModule
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
@@ -11,16 +11,16 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     // cross cutting concerns
-    common()
+    installCommon()
 
     // application defaults
-    defaultRouting()
+    installDefaultRouting()
 
     // modules
-    podcastModule()
+    installPodcastModule()
 }
 
-fun Application.common() {
+fun Application.installCommon() {
     install(ContentNegotiation) {
         json()
     }
