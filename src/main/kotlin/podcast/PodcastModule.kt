@@ -8,13 +8,15 @@ import podcast.core.usecase.AddPodcast
 import podcast.core.usecase.ListPodcasts
 import podcast.infrastructure.InMemoryPodcastPersistence
 import podcast.infrastructure.web.podcastRouting
+import java.time.Clock
 
-fun Application.podcastModule() {
+fun Application.podcastModule(clock: Clock = Clock.systemUTC()) {
     dependencies {
+        provide<Clock> { clock }
         provide<PodcastPersistence> { InMemoryPodcastPersistence() }
 
         provide<ListPodcasts> { ListPodcasts(resolve()) }
-        provide<AddPodcast> { AddPodcast(resolve()) }
+        provide<AddPodcast> { AddPodcast(resolve(), resolve()) }
     }
 
     routing {

@@ -1,17 +1,13 @@
 package podcast.infrastructure.web
 
-import podcast.core.model.Podcast
-import io.ktor.server.plugins.di.DependencyRegistry
-import io.ktor.server.request.receive
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.route
+import io.ktor.server.plugins.di.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
+import podcast.core.model.Podcast
 import podcast.core.usecase.AddPodcast
 import podcast.core.usecase.ListPodcasts
-import kotlin.collections.map
 
 fun Route.podcastRouting(dependencies: DependencyRegistry) {
 
@@ -32,10 +28,10 @@ fun Route.podcastRouting(dependencies: DependencyRegistry) {
     }
 }
 
-fun podcastDto(podcast: Podcast): PodcastDto = PodcastDto(podcast.id, podcast.url, podcast.name, podcast.image)
+fun podcastDto(podcast: Podcast): PodcastDto = PodcastDto(podcast.id, podcast.url, podcast.name, podcast.image, podcast.createdAt.toString())
 
 @Serializable
 data class AddPodcastRequest(val url: String)
 
 @Serializable
-data class PodcastDto(val id: String, val url: String, val name: String, val image: String)
+data class PodcastDto(val id: String, val url: String, val name: String, val image: String, val createdAt: String)
