@@ -1,12 +1,23 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <!-- 
+                 %d{MM-dd HH:mm:ss} : Month-Day Time
+                 [%-8.8t]           : Thread name, fixed to 8 chars (e.g., [orker-7])
+                 %highlight(%-5level): Level (INFO, ERROR, etc.)
+                 %cyan(%-15.15logger): Logger (e.g., p.c.u.AddFeed)
+                 - %msg%n           : Message
+            -->
+            <pattern>%d{MM-dd HH:mm:ss} [%-8.8t] %highlight(%-5level) %cyan(%-15.15logger) - %msg%n</pattern>
         </encoder>
     </appender>
+
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="org.eclipse.jetty" level="INFO"/>
-    <logger name="io.netty" level="INFO"/>
+
+    <!-- Silence common noise -->
+    <logger name="org.eclipse.jetty" level="WARN"/>
+    <logger name="io.netty" level="WARN"/>
+    <logger name="io.ktor.server.plugins.di" level="WARN"/>
 </configuration>

@@ -9,7 +9,7 @@ import podcast.core.model.Podcast
 import podcast.core.usecase.AddFeed
 import podcast.core.usecase.ListPodcasts
 
-fun Route.podcastRouting(dependencies: DependencyRegistry) {
+fun Route.podcastApi(dependencies: DependencyRegistry) {
 
     val addFeed: AddFeed by dependencies
     val listPodcasts: ListPodcasts by dependencies

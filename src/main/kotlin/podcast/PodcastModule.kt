@@ -3,13 +3,15 @@ package podcast
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.*
+import kotlinx.coroutines.launch
+import podcast.adapters.InMemoryPodcastPersistence
+import podcast.adapters.RssFeedInfoProvider
+import podcast.adapters.web.podcastApi
+import podcast.adapters.web.podcastView
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastPersistence
 import podcast.core.usecase.AddFeed
 import podcast.core.usecase.ListPodcasts
-import podcast.adapters.InMemoryPodcastPersistence
-import podcast.adapters.RssFeedInfoProvider
-import podcast.adapters.web.podcastRouting
 import java.time.Clock
 
 fun Application.installPodcastModule(clock: Clock = Clock.systemUTC()) {
@@ -24,6 +26,9 @@ fun Application.installPodcastModule(clock: Clock = Clock.systemUTC()) {
     }
 
     routing {
-        podcastRouting(dependencies)
+        route("/api") {
+            podcastApi(dependencies)
+        }
+        podcastView(dependencies)
     }
 }
