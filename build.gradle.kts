@@ -35,13 +35,10 @@ dependencies {
     implementation("io.ktor:ktor-serialization-jackson:3.4.2")
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
-
 testing {
     suites {
-        val integrationTest by registering(JvmTestSuite::class) {
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter()
 
             dependencies {
                 implementation(project())

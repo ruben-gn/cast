@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 
 ignore/
+src/main/resources/feed_list.txt
 
 ### STS ###
 .apt_generated

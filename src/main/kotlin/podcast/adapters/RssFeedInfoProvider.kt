@@ -1,4 +1,4 @@
-package podcast.infrastructure
+package podcast.adapters
 
 import io.ktor.client.*
 import io.ktor.client.request.*

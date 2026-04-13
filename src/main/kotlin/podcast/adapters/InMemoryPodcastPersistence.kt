@@ -1,4 +1,4 @@
-package podcast.infrastructure
+package podcast.adapters
 
 import podcast.core.model.Podcast
 import podcast.core.port.PodcastPersistence

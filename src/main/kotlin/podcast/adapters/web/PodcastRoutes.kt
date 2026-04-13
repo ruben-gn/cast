@@ -1,4 +1,4 @@
-package podcast.infrastructure.web
+package podcast.adapters.web
 
 import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
