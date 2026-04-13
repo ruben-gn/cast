@@ -3,7 +3,6 @@ package podcast
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.*
-import kotlinx.coroutines.launch
 import podcast.adapters.InMemoryPodcastPersistence
 import podcast.adapters.RssFeedInfoProvider
 import podcast.adapters.web.podcastApi
