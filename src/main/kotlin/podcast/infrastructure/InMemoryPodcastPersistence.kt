@@ -9,5 +9,7 @@ class InMemoryPodcastPersistence : PodcastPersistence {
 
     override fun save(podcast: Podcast) = podcast.let { storage[podcast.id] = podcast }
 
-    override fun findAll(): List<Podcast> = storage.values.toList()
+    override fun findAll() = storage.values.toList()
+
+    override fun findByUrl(url: String) = storage.values.find { it.url == url }
 }
