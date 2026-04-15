@@ -9,18 +9,24 @@ import podcast.adapters.web.podcastApi
 import podcast.adapters.web.podcastView
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastPersistence
-import podcast.core.usecase.AddFeed
-import podcast.core.usecase.ListPodcasts
+import podcast.core.AddFeed
+import podcast.core.GetPodcast
+import podcast.core.ListPodcasts
 import java.time.Clock
 
-fun Application.installPodcastModule(clock: Clock = Clock.systemUTC()) {
+
+fun Application.installPodcastModule(
+    clock: Clock = Clock.systemUTC(),
+    persistence: PodcastPersistence = InMemoryPodcastPersistence()
+) {
     dependencies {
         provide<Clock> { clock }
 
-        provide<PodcastPersistence> { InMemoryPodcastPersistence() }
+        provide<PodcastPersistence> { persistence }
         provide<FeedInfoProvider> { RssFeedInfoProvider(resolve()) }
 
         provide<ListPodcasts> { ListPodcasts(resolve()) }
+        provide<GetPodcast> { GetPodcast(resolve()) }
         provide<AddFeed> { AddFeed(resolve(), resolve(), resolve()) }
     }
 

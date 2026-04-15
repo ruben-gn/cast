@@ -7,5 +7,15 @@ data class Podcast(
     val url: String,
     val name: String,
     val image: String,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val episodes: List<Episode>
+)
+
+data class Episode(
+    val id: String,
+    val title: String,
+    val description: String,
+    val audioUrl: String,
+    val duration: String?,
+    val publishedAt: Instant?
 )
