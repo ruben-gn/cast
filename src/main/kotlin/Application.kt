@@ -2,6 +2,7 @@ import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.di.*
@@ -26,6 +27,7 @@ fun Application.module() {
 
 fun Application.installDefaultRouting() {
     routing {
+        staticResources("/static", "static")
         get("/") {
             call.respondRedirect("/podcasts/")
         }

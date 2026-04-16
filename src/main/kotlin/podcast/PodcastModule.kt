@@ -5,8 +5,8 @@ import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.*
 import podcast.adapters.InMemoryPodcastPersistence
 import podcast.adapters.RssFeedInfoProvider
-import podcast.adapters.web.podcastApi
-import podcast.adapters.web.podcastView
+import podcast.adapters.web.api.podcastApi
+import podcast.adapters.web.view.podcastView
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastPersistence
 import podcast.core.AddFeed

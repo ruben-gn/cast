@@ -12,8 +12,8 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
-import podcast.adapters.web.AddPodcastRequest
-import podcast.adapters.web.PodcastSummaryDto
+import podcast.adapters.web.api.AddPodcastRequest
+import podcast.adapters.web.api.PodcastSummaryDto
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
