@@ -19,9 +19,12 @@ class AddFeed(
     private val clock: Clock
 ) {
     suspend operator fun invoke(url: String): Podcast {
-        podcasts.findByUrl(url)?.let { return it }
-
         log.info { "Adding feed $url." }
+
+        podcasts.findByUrl(url)?.let {
+            log.info { "Feed $url already exists [${it.name}, ${it.id}]." }
+            return it
+        }
 
         val feedInfo = feedInfoProvider.fetch(url)
 

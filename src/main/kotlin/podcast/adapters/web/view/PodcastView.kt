@@ -3,17 +3,18 @@ package podcast.adapters.web.view
 import io.ktor.http.*
 import io.ktor.server.html.*
 import io.ktor.server.plugins.di.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.stream.appendHTML
 import podcast.adapters.web.view.components.layout
 import podcast.adapters.web.view.components.podcastDetails
+import podcast.adapters.web.view.components.podcastGrid
 import podcast.adapters.web.view.components.podcastList
+import podcast.core.AddFeed
 import podcast.core.GetPodcast
 import podcast.core.ListPodcasts
-import io.ktor.server.request.receiveParameters
-import io.ktor.server.response.respondRedirect
-import podcast.core.AddFeed
 
 fun Route.podcastView(dependencies: DependencyRegistry) {
 
@@ -27,8 +28,8 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
             val isHtmx = call.request.headers["HX-Request"] == "true"
 
             if (isHtmx) {
-                call.respondHtml(HttpStatusCode.OK) {
-                    body { podcastList(podcasts) }
+                call.respondText(ContentType.Text.Html) {
+                    buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastGrid(podcasts) } }
                 }
             } else {
                 call.respondHtml {
@@ -47,8 +48,8 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
                 val isHtmx = call.request.headers["HX-Request"] == "true"
 
                 if (isHtmx) {
-                    call.respondHtml(HttpStatusCode.OK) {
-                        body { podcastList(podcasts) }
+                    call.respondText(ContentType.Text.Html) {
+                        buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastGrid(podcasts) } }
                     }
                 } else {
                     call.respondRedirect("/podcasts")
@@ -64,8 +65,8 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
             val isHtmx = call.request.headers["HX-Request"] == "true"
 
             if (isHtmx) {
-                call.respondHtml(HttpStatusCode.OK) {
-                    body { podcastDetails(podcast) }
+                call.respondText(ContentType.Text.Html) {
+                    buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastDetails(podcast) } }
                 }
             } else {
                 call.respondHtml {

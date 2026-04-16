@@ -11,6 +11,31 @@ fun HTML.layout(titleText: String, content: BODY.() -> Unit) {
     }
     body {
         id = "main-body"
+        style {
+            unsafe {
+                +"""
+                        .fab {
+                            position: absolute; top: 10px; right: 10px;
+                            width: 44px; height: 44px; border-radius: 50%;
+                            background: #333; color: white; border: none;
+                            font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                            display: flex; align-items: center; justify-content: center; z-index: 100;
+                        }
+                        #add-feed-modal {
+                            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                            background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center;
+                        }
+                        #add-feed-modal.open { display: flex; }
+                        .modal-content {
+                            background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px;
+                            box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative;
+                        }
+                        .close-modal {
+                            position: absolute; top: 10px; right: 15px; font-size: 20px; cursor: pointer; color: #888;
+                        }
+                    """.trimIndent()
+            }
+        }
         content()
     }
 }

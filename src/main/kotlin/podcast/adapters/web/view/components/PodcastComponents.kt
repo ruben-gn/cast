@@ -6,15 +6,36 @@ import podcast.core.model.Podcast
 
 fun FlowContent.podcastList(podcasts: List<Podcast>) {
     div {
-        id = "content-container"
-        style = "max-width: 1100px; margin: 0 auto;"
+        style = "max-width: 1100px; margin: 0 auto; position: relative; padding-top: 60px;"
 
-        subscribeForm()
+        button(classes = "fab") {
+            attributes["onclick"] = "document.getElementById('add-feed-modal').classList.add('open')"
+            +"+"
+        }
 
         div {
-            style = "display: grid; grid-template-columns: repeat(auto-fill, 200px); justify-content: center; gap: 7px;"
-            podcasts.forEach { podcastCard(it) }
+            id = "content-container"
+            podcastGrid(podcasts)
         }
+    }
+
+    div {
+        id = "add-feed-modal"
+        div(classes = "modal-content") {
+            span(classes = "close-modal") {
+                attributes["onclick"] = "document.getElementById('add-feed-modal').classList.remove('open')"
+                unsafe { +"&times;" }
+            }
+            h3 { style = "margin-top: 0;"; +"Add New Podcast" }
+            subscribeForm()
+        }
+    }
+}
+
+fun FlowContent.podcastGrid(podcasts: List<Podcast>) {
+    div {
+        style = "display: grid; grid-template-columns: repeat(auto-fill, 200px); justify-content: center; gap: 7px;"
+        podcasts.forEach { podcastCard(it) }
     }
 }
 
@@ -24,22 +45,25 @@ private fun FlowContent.subscribeForm() {
         attributes["hx-target"] = "#content-container"
         attributes["hx-swap"] = "outerHTML"
         attributes["hx-indicator"] = "#sub-spinner"
-        style = "margin-bottom: 40px; display: flex; gap: 10px; justify-content: center; align-items: center;"
+        attributes["hx-on::after-request"] = "if(event.detail.successful) document.getElementById('add-feed-modal').classList.remove('open')"
+        style = "display: flex; flex-direction: column; gap: 15px;"
 
         input(type = InputType.url, name = "url") {
             placeholder = "Enter RSS feed URL..."
             required = true
-            style = "padding: 12px 16px; border-radius: 8px; border: 1px solid #ccc; width: 100%; max-width: 400px; font-family: inherit; font-size: 14px;"
+            style = "padding: 12px 16px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-size: 14px;"
         }
-        button(type = ButtonType.submit) {
-            style =
-                "padding: 12px 24px; border-radius: 8px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; font-family: inherit;"
-            +"Subscribe"
-        }
-        span("htmx-indicator") {
-            id = "sub-spinner"
-            style = "font-size: 12px; color: #666;"
-            +"Processing..."
+        div {
+            style = "display: flex; align-items: center; gap: 15px;"
+            button(type = ButtonType.submit) {
+                style = "padding: 12px 24px; border-radius: 8px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; font-family: inherit; flex-grow: 1;"
+                +"Subscribe"
+            }
+            span("htmx-indicator") {
+                id = "sub-spinner"
+                style = "font-size: 12px; color: #666;"
+                +"Processing..."
+            }
         }
     }
 }
@@ -72,7 +96,6 @@ private fun FlowContent.podcastCard(podcast: Podcast) {
 
 fun FlowContent.podcastDetails(podcast: Podcast) {
     div {
-        id = "content-container"
         style = "max-width: 800px; margin: 0 auto;"
 
         a {
