@@ -1,0 +1,81 @@
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+    display: inline-block !important;
+}
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+
+.podcast-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 12px rgba(0,0,0,0.1) !important;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+input:focus {
+    outline: none;
+    border-color: #333 !important;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+}
+
+/* Toggle Logic */
+.episode-toggle {
+    display: none;
+}
+
+.description-container {
+    position: relative;
+    max-height: 6em;
+    overflow: hidden;
+    /* transition-timing-function: cubic-bezier(0, 1, 0, 1) is a trick to minimize max-height delay */
+    transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+    font-size: 14px;
+    line-height: 1.5;
+    color: #666;
+}
+
+.description-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3em;
+    background: linear-gradient(transparent, white);
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.toggle-icon {
+    display: inline-block;
+    transition: transform 0.3s ease-in-out;
+    color: #aaa;
+}
+
+/* Expansion Logic */
+.episode-toggle:checked ~ .description-container {
+    max-height: 1000px; 
+    transition: max-height 0.4s ease-in-out; /* Slower expand, faster collapse */
+}
+
+.episode-toggle:checked ~ .description-container .description-fade {
+    opacity: 0;
+}
+
+/* Icon Rotation - Targets the icon inside the label (header) */
+.episode-toggle:checked ~ .episode-header .toggle-icon {
+    transform: rotate(180deg);
+}
+
+body#main-body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #e4e4e4;
+    margin: 0;
+    padding: 40px;
+    color: #333;
+}

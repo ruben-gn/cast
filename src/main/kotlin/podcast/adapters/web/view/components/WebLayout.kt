@@ -5,12 +5,11 @@ import kotlinx.html.*
 fun HTML.layout(titleText: String, content: BODY.() -> Unit) {
     head {
         montserratFont()
+        link(rel = "stylesheet", href = "/static/css/style.css")
         script { src = "https://unpkg.com/htmx.org@1.9.10" }
-        script { src = "/static/js/podcast.js" }
         title { +titleText }
     }
     body {
-        style = "font-family: 'Montserrat', sans-serif; background-color: #e4e4e4; margin: 0; padding: 40px; color: #333;"
         id = "main-body"
         content()
     }

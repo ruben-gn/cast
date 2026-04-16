@@ -11,11 +11,15 @@ import podcast.adapters.web.view.components.podcastDetails
 import podcast.adapters.web.view.components.podcastList
 import podcast.core.GetPodcast
 import podcast.core.ListPodcasts
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.response.respondRedirect
+import podcast.core.AddFeed
 
 fun Route.podcastView(dependencies: DependencyRegistry) {
 
     val listPodcasts: ListPodcasts by dependencies
     val getPodcast: GetPodcast by dependencies
+    val addFeed: AddFeed by dependencies
 
     route("podcasts") {
         get {
@@ -30,6 +34,27 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
                 call.respondHtml {
                     layout("Cast") { podcastList(podcasts) }
                 }
+            }
+        }
+
+        post {
+            val params = call.receiveParameters()
+            val url = params["url"] ?: return@post call.respond(HttpStatusCode.BadRequest, "Missing URL")
+
+            try {
+                addFeed(url)
+                val podcasts = listPodcasts()
+                val isHtmx = call.request.headers["HX-Request"] == "true"
+
+                if (isHtmx) {
+                    call.respondHtml(HttpStatusCode.OK) {
+                        body { podcastList(podcasts) }
+                    }
+                } else {
+                    call.respondRedirect("/podcasts")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, "Failed to add feed: ${e.message}")
             }
         }
 

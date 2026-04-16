@@ -8,8 +8,8 @@ import java.time.Instant
 
 class InMemoryPodcastPersistence : PodcastPersistence {
 
-        private val storage = mockPodcastData()
-//    private val storage = mutableMapOf<String, Podcast>()
+//        private val storage = mockPodcastData()
+    private val storage = mutableMapOf<String, Podcast>()
 
     override fun save(podcast: Podcast) = podcast.let { storage[podcast.id] = podcast }
 
