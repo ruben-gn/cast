@@ -10,7 +10,6 @@ import kotlinx.html.div
 import kotlinx.html.stream.appendHTML
 import podcast.adapters.web.view.components.layout
 import podcast.adapters.web.view.components.podcastDetails
-import podcast.adapters.web.view.components.podcastGrid
 import podcast.adapters.web.view.components.podcastList
 import podcast.core.AddFeed
 import podcast.core.GetPodcast
@@ -29,7 +28,7 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
 
             if (isHtmx) {
                 call.respondText(ContentType.Text.Html) {
-                    buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastGrid(podcasts) } }
+                    buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastList(podcasts) } }
                 }
             } else {
                 call.respondHtml {
@@ -49,7 +48,7 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
 
                 if (isHtmx) {
                     call.respondText(ContentType.Text.Html) {
-                        buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastGrid(podcasts) } }
+                        buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastList(podcasts) } }
                     }
                 } else {
                     call.respondRedirect("/podcasts")

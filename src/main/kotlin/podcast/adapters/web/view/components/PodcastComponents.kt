@@ -6,19 +6,12 @@ import podcast.core.model.Podcast
 
 fun FlowContent.podcastList(podcasts: List<Podcast>) {
     div {
-        style = "max-width: 1100px; margin: 0 auto; position: relative; padding-top: 60px;"
-
-        button(classes = "fab") {
-            attributes["onclick"] = "document.getElementById('add-feed-modal').classList.add('open')"
-            +"+"
-        }
-
-        div {
-            id = "content-container"
-            podcastGrid(podcasts)
-        }
+        style = "max-width: 1100px; margin: 0 auto;"
+        podcastGrid(podcasts)
     }
+}
 
+fun FlowContent.addFeedModal() {
     div {
         id = "add-feed-modal"
         div(classes = "modal-content") {

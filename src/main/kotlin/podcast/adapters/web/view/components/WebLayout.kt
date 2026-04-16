@@ -2,7 +2,7 @@ package podcast.adapters.web.view.components
 
 import kotlinx.html.*
 
-fun HTML.layout(titleText: String, content: BODY.() -> Unit) {
+fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
     head {
         montserratFont()
         link(rel = "stylesheet", href = "/static/css/style.css")
@@ -15,7 +15,7 @@ fun HTML.layout(titleText: String, content: BODY.() -> Unit) {
             unsafe {
                 +"""
                         .fab {
-                            position: absolute; top: 10px; right: 10px;
+                            position: fixed; top: 20px; right: 20px;
                             width: 44px; height: 44px; border-radius: 50%;
                             background: #333; color: white; border: none;
                             font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -36,7 +36,15 @@ fun HTML.layout(titleText: String, content: BODY.() -> Unit) {
                     """.trimIndent()
             }
         }
-        content()
+        button(classes = "fab") {
+            attributes["onclick"] = "document.getElementById('add-feed-modal').classList.add('open')"
+            +"+"
+        }
+        addFeedModal()
+        div {
+            id = "content-container"
+            content()
+        }
     }
 }
 
