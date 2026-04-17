@@ -1,5 +1,7 @@
+import configuration.installDatabase
 import io.ktor.client.*
 import io.ktor.client.plugins.*
+import java.sql.Connection
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.staticResources
@@ -15,14 +17,12 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    // cross cutting concerns
-    installCommon()
-
-    // application defaults
+    val database = installDatabase()
+    installCommon(databaseConnection = database)
     installDefaultRouting()
 
     // modules
-    installPodcastModule()
+    installPodcastModule(databaseConnection = database)
 }
 
 fun Application.installDefaultRouting() {
@@ -34,7 +34,7 @@ fun Application.installDefaultRouting() {
     }
 }
 
-fun Application.installCommon(httpClient: HttpClient? = null) {
+fun Application.installCommon(httpClient: HttpClient? = null, databaseConnection: Connection? = null) {
     install(ContentNegotiation) {
         json()
     }
@@ -48,5 +48,6 @@ fun Application.installCommon(httpClient: HttpClient? = null) {
 
     dependencies {
         provide<HttpClient> { client }
+        provide<Connection> { databaseConnection }
     }
 }

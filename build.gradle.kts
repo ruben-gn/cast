@@ -34,7 +34,8 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.xml)
 
     implementation(libs.kotlinx.html.jvm)
-    implementation("io.ktor:ktor-serialization-jackson:3.4.2")
+
+    implementation(libs.sqlite.jdbc)
 }
 
 testing {
