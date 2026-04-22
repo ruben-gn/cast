@@ -2,11 +2,11 @@ package podcast.core
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import podcast.core.model.Podcast
-import podcast.core.port.PodcastPersistence
+import podcast.core.port.PodcastCatalog
 
 private val log = KotlinLogging.logger { }
 
-class ListPodcasts(private val podcasts: PodcastPersistence) {
+class ListPodcasts(private val catalog: PodcastCatalog) {
     suspend operator fun invoke(): List<Podcast> =
-        podcasts.findAll().also { log.debug { "Listed ${it.size} podcasts." } }
+        catalog.findAll().also { log.debug { "Listed ${it.size} podcasts." } }
 }

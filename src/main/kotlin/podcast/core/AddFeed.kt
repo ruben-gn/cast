@@ -9,14 +9,12 @@ import podcast.core.model.PodcastId
 import podcast.core.port.EpisodeInfo
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastCatalog
-import podcast.core.port.PodcastPersistence
 import java.time.Clock
 import java.util.*
 
 private val log = KotlinLogging.logger {}
 
 class AddFeed(
-    private val podcasts: PodcastPersistence,
     private val catalog: PodcastCatalog,
     private val feedInfoProvider: FeedInfoProvider,
     private val clock: Clock
@@ -24,7 +22,7 @@ class AddFeed(
     suspend operator fun invoke(url: FeedUrl): Podcast {
         log.info { "Adding feed $url." }
 
-        podcasts.findByUrl(url)?.let {
+        catalog.findByUrl(url)?.let {
             log.info { "Feed $url already exists [${it.name}, ${it.id}]." }
             return it
         }
@@ -44,7 +42,7 @@ class AddFeed(
         )
 
         val episodeList = feedInfo.episodes.map { episode(it, podcast.id) }
-        catalog.register(podcast, episodeList)
+        catalog.add(podcast, episodeList)
 
         log.info { "Added feed $url: ${podcast.name} (${episodeList.size} episodes)." }
         return podcast

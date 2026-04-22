@@ -8,9 +8,7 @@ import podcast.core.model.PodcastId
 import podcast.core.port.EpisodeInfo
 import podcast.core.port.FeedInfo
 import podcast.core.port.FeedInfoProvider
-import podcast.fakes.FakeEpisodePersistence
 import podcast.fakes.FakePodcastCatalog
-import podcast.fakes.FakePodcastPersistence
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -22,8 +20,7 @@ class PodcastDomainTests : DescribeSpec({
     val fixedClock = Clock.fixed(fixedInstant, ZoneId.of("UTC"))
 
     describe("Podcast Domain Hexagon") {
-        lateinit var persistence: FakePodcastPersistence
-        lateinit var episodePersistence: FakeEpisodePersistence
+        lateinit var catalog: FakePodcastCatalog
         lateinit var stubFeedProvider: FeedInfoProvider
 
         lateinit var addFeed: AddFeed
@@ -32,14 +29,13 @@ class PodcastDomainTests : DescribeSpec({
         lateinit var listEpisodes: ListEpisodes
 
         beforeEach {
-            persistence = FakePodcastPersistence()
-            episodePersistence = FakeEpisodePersistence()
+            catalog = FakePodcastCatalog()
             stubFeedProvider = FeedInfoProvider { url -> FeedInfo(title = "Show for ${url.value}", description = "Desc", image = "img.png") }
 
-            addFeed = AddFeed(persistence, FakePodcastCatalog(persistence, episodePersistence), stubFeedProvider, fixedClock)
-            listPodcasts = ListPodcasts(persistence)
-            getPodcast = GetPodcast(persistence)
-            listEpisodes = ListEpisodes(episodePersistence)
+            addFeed = AddFeed(catalog, stubFeedProvider, fixedClock)
+            listPodcasts = ListPodcasts(catalog)
+            getPodcast = GetPodcast(catalog)
+            listEpisodes = ListEpisodes(catalog)
         }
 
         it("should register a new podcast and make it available for listing and retrieval") {
@@ -77,7 +73,7 @@ class PodcastDomainTests : DescribeSpec({
                 EpisodeInfo("Ep 2", "Desc 2", "https://cdn/ep2.mp3", 30.minutes, Instant.parse("2026-01-02T00:00:00Z"))
             )
             stubFeedProvider = FeedInfoProvider { FeedInfo("Show", "Desc", "img.png", episodeInfos) }
-            addFeed = AddFeed(persistence, FakePodcastCatalog(persistence, episodePersistence), stubFeedProvider, fixedClock)
+            addFeed = AddFeed(catalog, stubFeedProvider, fixedClock)
 
             val podcast = addFeed(FeedUrl("https://example.com/rss"))
             val episodes = listEpisodes(podcast.id)

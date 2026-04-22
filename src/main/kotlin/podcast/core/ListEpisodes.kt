@@ -2,8 +2,8 @@ package podcast.core
 
 import podcast.core.model.Episode
 import podcast.core.model.PodcastId
-import podcast.core.port.EpisodePersistence
+import podcast.core.port.PodcastCatalog
 
-class ListEpisodes(private val episodes: EpisodePersistence) {
-    suspend operator fun invoke(podcastId: PodcastId): List<Episode> = episodes.findByPodcastId(podcastId)
+class ListEpisodes(private val catalog: PodcastCatalog) {
+    suspend operator fun invoke(podcastId: PodcastId): List<Episode> = catalog.episodesFor(podcastId)
 }

@@ -4,9 +4,7 @@ import configuration.ConnectionProvider
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.*
-import podcast.adapters.persistence.SQLiteEpisodePersistence
 import podcast.adapters.persistence.SQLitePodcastCatalog
-import podcast.adapters.persistence.SQLitePodcastPersistence
 import podcast.adapters.rss.RssFeedInfoProvider
 import podcast.adapters.web.api.podcastApi
 import podcast.adapters.web.view.podcastView
@@ -14,43 +12,27 @@ import podcast.core.AddFeed
 import podcast.core.GetPodcast
 import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
-import podcast.core.port.EpisodePersistence
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastCatalog
-import podcast.core.port.PodcastPersistence
 import java.time.Clock
-
 
 fun Application.installPodcastModule(
     clock: Clock = Clock.systemUTC(),
-    podcastPersistence: PodcastPersistence? = null,
-    episodePersistence: EpisodePersistence? = null,
     podcastCatalog: PodcastCatalog? = null
 ) {
     dependencies {
         provide<Clock> { clock }
-
-        provide<PodcastPersistence> {
-            podcastPersistence ?: SQLitePodcastPersistence(resolve<ConnectionProvider>())
-        }
-        provide<EpisodePersistence> {
-            episodePersistence ?: SQLiteEpisodePersistence(resolve<ConnectionProvider>())
-        }
-        provide<PodcastCatalog> {
-            podcastCatalog ?: SQLitePodcastCatalog(resolve<ConnectionProvider>())
-        }
+        provide<PodcastCatalog> { podcastCatalog ?: SQLitePodcastCatalog(resolve<ConnectionProvider>()) }
         provide<FeedInfoProvider> { RssFeedInfoProvider(resolve()) }
 
         provide<ListPodcasts> { ListPodcasts(resolve()) }
         provide<GetPodcast> { GetPodcast(resolve()) }
         provide<ListEpisodes> { ListEpisodes(resolve()) }
-        provide<AddFeed> { AddFeed(resolve(), resolve(), resolve(), resolve()) }
+        provide<AddFeed> { AddFeed(resolve(), resolve(), resolve()) }
     }
 
     routing {
-        route("/api") {
-            podcastApi(dependencies)
-        }
+        route("/api") { podcastApi(dependencies) }
         podcastView(dependencies)
     }
 }

@@ -15,9 +15,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
 import podcast.adapters.web.api.AddPodcastRequest
 import podcast.adapters.web.api.PodcastSummaryDto
-import podcast.fakes.FakeEpisodePersistence
 import podcast.fakes.FakePodcastCatalog
-import podcast.fakes.FakePodcastPersistence
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -50,13 +48,9 @@ class PodcastApiTest : DescribeSpec({
                 application {
                     installHttpClient(testHttpClient)
                     installCommon()
-                    val fakePodcasts = FakePodcastPersistence()
-                    val fakeEpisodes = FakeEpisodePersistence()
                     installPodcastModule(
                         clock = fixedClock,
-                        podcastPersistence = fakePodcasts,
-                        episodePersistence = fakeEpisodes,
-                        podcastCatalog = FakePodcastCatalog(fakePodcasts, fakeEpisodes)
+                        podcastCatalog = FakePodcastCatalog()
                     )
                 }
                 val client = createClient { install(ContentNegotiation) { json() } }
