@@ -7,8 +7,8 @@ import podcast.core.model.FeedUrl
 import podcast.core.model.Podcast
 import podcast.core.model.PodcastId
 import podcast.core.port.EpisodeInfo
-import podcast.core.port.EpisodePersistence
 import podcast.core.port.FeedInfoProvider
+import podcast.core.port.PodcastCatalog
 import podcast.core.port.PodcastPersistence
 import java.time.Clock
 import java.util.*
@@ -17,7 +17,7 @@ private val log = KotlinLogging.logger {}
 
 class AddFeed(
     private val podcasts: PodcastPersistence,
-    private val episodes: EpisodePersistence,
+    private val catalog: PodcastCatalog,
     private val feedInfoProvider: FeedInfoProvider,
     private val clock: Clock
 ) {
@@ -43,10 +43,8 @@ class AddFeed(
             createdAt = clock.instant()
         )
 
-        podcasts.save(podcast)
-
         val episodeList = feedInfo.episodes.map { episode(it, podcast.id) }
-        episodes.saveAll(episodeList)
+        catalog.register(podcast, episodeList)
 
         log.info { "Added feed $url: ${podcast.name} (${episodeList.size} episodes)." }
         return podcast

@@ -8,7 +8,7 @@ import podcast.core.port.PodcastPersistence
 class FakePodcastPersistence : PodcastPersistence {
     private val storage = mutableMapOf<PodcastId, Podcast>()
 
-    override suspend fun save(podcast: Podcast) { storage[podcast.id] = podcast }
+    fun save(podcast: Podcast) { storage[podcast.id] = podcast }
 
     override suspend fun findAll() = storage.values.toList()
 

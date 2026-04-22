@@ -9,8 +9,6 @@ class InMemoryPodcastPersistence : PodcastPersistence {
 
     private val storage = mutableMapOf<PodcastId, Podcast>()
 
-    override suspend fun save(podcast: Podcast) { storage[podcast.id] = podcast }
-
     override suspend fun findAll() = storage.values.toList()
 
     override suspend fun findById(id: PodcastId) = storage[id]

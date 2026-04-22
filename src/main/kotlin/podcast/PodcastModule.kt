@@ -1,10 +1,11 @@
 package podcast
 
-import configuration.DatabaseContext
+import configuration.ConnectionProvider
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.*
 import podcast.adapters.persistence.SQLiteEpisodePersistence
+import podcast.adapters.persistence.SQLitePodcastCatalog
 import podcast.adapters.persistence.SQLitePodcastPersistence
 import podcast.adapters.rss.RssFeedInfoProvider
 import podcast.adapters.web.api.podcastApi
@@ -15,6 +16,7 @@ import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
 import podcast.core.port.EpisodePersistence
 import podcast.core.port.FeedInfoProvider
+import podcast.core.port.PodcastCatalog
 import podcast.core.port.PodcastPersistence
 import java.time.Clock
 
@@ -22,16 +24,20 @@ import java.time.Clock
 fun Application.installPodcastModule(
     clock: Clock = Clock.systemUTC(),
     podcastPersistence: PodcastPersistence? = null,
-    episodePersistence: EpisodePersistence? = null
+    episodePersistence: EpisodePersistence? = null,
+    podcastCatalog: PodcastCatalog? = null
 ) {
     dependencies {
         provide<Clock> { clock }
 
         provide<PodcastPersistence> {
-            podcastPersistence ?: SQLitePodcastPersistence(resolve<DatabaseContext>())
+            podcastPersistence ?: SQLitePodcastPersistence(resolve<ConnectionProvider>())
         }
         provide<EpisodePersistence> {
-            episodePersistence ?: SQLiteEpisodePersistence(resolve<DatabaseContext>())
+            episodePersistence ?: SQLiteEpisodePersistence(resolve<ConnectionProvider>())
+        }
+        provide<PodcastCatalog> {
+            podcastCatalog ?: SQLitePodcastCatalog(resolve<ConnectionProvider>())
         }
         provide<FeedInfoProvider> { RssFeedInfoProvider(resolve()) }
 

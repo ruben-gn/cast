@@ -16,6 +16,7 @@ import io.ktor.server.testing.*
 import podcast.adapters.web.api.AddPodcastRequest
 import podcast.adapters.web.api.PodcastSummaryDto
 import podcast.fakes.FakeEpisodePersistence
+import podcast.fakes.FakePodcastCatalog
 import podcast.fakes.FakePodcastPersistence
 import java.time.Clock
 import java.time.Instant
@@ -49,10 +50,13 @@ class PodcastApiTest : DescribeSpec({
                 application {
                     installHttpClient(testHttpClient)
                     installCommon()
+                    val fakePodcasts = FakePodcastPersistence()
+                    val fakeEpisodes = FakeEpisodePersistence()
                     installPodcastModule(
                         clock = fixedClock,
-                        podcastPersistence = FakePodcastPersistence(),
-                        episodePersistence = FakeEpisodePersistence()
+                        podcastPersistence = fakePodcasts,
+                        episodePersistence = fakeEpisodes,
+                        podcastCatalog = FakePodcastCatalog(fakePodcasts, fakeEpisodes)
                     )
                 }
                 val client = createClient { install(ContentNegotiation) { json() } }

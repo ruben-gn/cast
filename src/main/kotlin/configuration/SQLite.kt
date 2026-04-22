@@ -4,7 +4,7 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.di.dependencies
 import java.sql.DriverManager
 
-fun Application.installDatabase(): DatabaseContext {
+fun Application.installDatabase() {
     val connection = DriverManager.getConnection("jdbc:sqlite:podcasts.db")
 
     connection.createStatement().use { statement ->
@@ -12,13 +12,11 @@ fun Application.installDatabase(): DatabaseContext {
         statement.executeUpdate(CREATE_EPISODES_TABLE)
     }
 
-    val db = DatabaseContext(connection)
+    val db = SingleConnectionProvider(connection)
 
     dependencies {
-        provide<DatabaseContext> { db }
+        provide<ConnectionProvider> { db }
     }
-
-    return db
 }
 
 val CREATE_PODCASTS_TABLE = """

@@ -15,7 +15,7 @@ import podcast.core.model.Episode
 import podcast.core.model.FeedUrl
 import podcast.core.model.Podcast
 import podcast.core.model.PodcastId
-import podcast.core.model.formatted
+import podcast.adapters.web.formatted
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
 

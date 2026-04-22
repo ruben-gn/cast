@@ -2,11 +2,12 @@ package podcast.adapters.persistence
 
 import configuration.CREATE_EPISODES_TABLE
 import configuration.CREATE_PODCASTS_TABLE
-import configuration.DatabaseContext
+import configuration.SingleConnectionProvider
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import podcast.core.model.Episode
 import podcast.core.model.EpisodeId
 import podcast.core.model.FeedUrl
@@ -17,42 +18,59 @@ import java.time.Instant
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
-class SQLitePodcastPersistenceIT : DescribeSpec({
+class SQLitePersistenceIT : DescribeSpec({
 
-    lateinit var db: DatabaseContext
+    lateinit var db: SingleConnectionProvider
+    lateinit var catalog: SQLitePodcastCatalog
     lateinit var podcasts: SQLitePodcastPersistence
     lateinit var episodes: SQLiteEpisodePersistence
 
     beforeEach {
-        db = DatabaseContext(DriverManager.getConnection("jdbc:sqlite::memory:"))
+        db = SingleConnectionProvider(DriverManager.getConnection("jdbc:sqlite::memory:"))
+        catalog = SQLitePodcastCatalog(db)
         podcasts = SQLitePodcastPersistence(db)
         episodes = SQLiteEpisodePersistence(db)
 
-        db.connection.createStatement().use { it.execute(CREATE_PODCASTS_TABLE) }
-        db.connection.createStatement().use { it.execute(CREATE_EPISODES_TABLE) }
+        db.withConnection { conn ->
+            conn.createStatement().use { it.execute(CREATE_PODCASTS_TABLE) }
+            conn.createStatement().use { it.execute(CREATE_EPISODES_TABLE) }
+        }
     }
 
     afterEach {
-        db.connection.close()
+        db.close()
     }
 
-    describe("SQLitePodcastPersistence") {
-        it("should persist and retrieve a podcast") {
-            val podcast = createPodcast("1")
-            podcasts.save(podcast)
+    describe("SQLitePodcastCatalog") {
+        it("should persist a podcast and its episodes atomically") {
+            val podcastId = PodcastId(UUID.randomUUID().toString())
+            catalog.register(createPodcast(podcastId.value), listOf(
+                createEpisode("e1", podcastId.value),
+                createEpisode("e2", podcastId.value)
+            ))
 
-            val found = podcasts.findById(PodcastId("1"))!!
-            found.name shouldBe "Name 1"
+            podcasts.findById(podcastId) shouldNotBe null
+            episodes.findByPodcastId(podcastId) shouldHaveSize 2
         }
 
-        it("should update an existing podcast (upsert logic)") {
+        it("should persist a podcast with no episodes") {
+            val podcastId = PodcastId(UUID.randomUUID().toString())
+            catalog.register(createPodcast(podcastId.value), emptyList())
+
+            podcasts.findById(podcastId) shouldNotBe null
+            episodes.findByPodcastId(podcastId).shouldBeEmpty()
+        }
+
+        it("should upsert on podcast id conflict") {
             val id = PodcastId("same-id")
-            podcasts.save(Podcast(id, FeedUrl("url"), "Old Name", "img", Instant.now()))
-            podcasts.save(Podcast(id, FeedUrl("url"), "New Name", "img", Instant.now()))
+            catalog.register(Podcast(id, FeedUrl("url"), "Old Name", "img", Instant.now()), emptyList())
+            catalog.register(Podcast(id, FeedUrl("url"), "New Name", "img", Instant.now()), emptyList())
 
             podcasts.findById(id)?.name shouldBe "New Name"
         }
+    }
 
+    describe("SQLitePodcastPersistence") {
         it("should return null for a missing podcast") {
             podcasts.findById(PodcastId("non-existent")) shouldBe null
         }
@@ -60,42 +78,19 @@ class SQLitePodcastPersistenceIT : DescribeSpec({
         it("should return all saved podcasts") {
             podcasts.findAll().shouldBeEmpty()
 
-            podcasts.save(createPodcast("1"))
-            podcasts.save(createPodcast("2"))
+            catalog.register(createPodcast("1"), emptyList())
+            catalog.register(createPodcast("2"), emptyList())
 
             podcasts.findAll() shouldHaveSize 2
         }
     }
 
     describe("SQLiteEpisodePersistence") {
-        it("should persist and retrieve episodes by podcast id") {
-            val podcastId = PodcastId(UUID.randomUUID().toString())
-            podcasts.save(createPodcast(podcastId.value))
-
-            episodes.saveAll(listOf(
-                createEpisode("e1", podcastId.value),
-                createEpisode("e2", podcastId.value)
-            ))
-
-            val found = episodes.findByPodcastId(podcastId)
-            found shouldHaveSize 2
-            found.map { it.id }.toSet() shouldBe setOf(EpisodeId("e1"), EpisodeId("e2"))
-        }
-
-        it("should return empty list when podcast has no episodes") {
-            val podcastId = PodcastId(UUID.randomUUID().toString())
-            podcasts.save(createPodcast(podcastId.value))
-
-            episodes.findByPodcastId(podcastId).shouldBeEmpty()
-        }
-
         it("should not return episodes for a different podcast") {
             val id1 = PodcastId(UUID.randomUUID().toString())
             val id2 = PodcastId(UUID.randomUUID().toString())
-            podcasts.save(createPodcast(id1.value))
-            podcasts.save(createPodcast(id2.value))
-
-            episodes.saveAll(listOf(createEpisode("e1", id1.value)))
+            catalog.register(createPodcast(id1.value), listOf(createEpisode("e1", id1.value)))
+            catalog.register(createPodcast(id2.value), emptyList())
 
             episodes.findByPodcastId(id2).shouldBeEmpty()
         }
