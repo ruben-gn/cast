@@ -38,7 +38,7 @@ val CREATE_EPISODES_TABLE = """
         title TEXT NOT NULL,
         description TEXT NOT NULL,
         audio_url TEXT NOT NULL,
-        duration TEXT,
+        duration INTEGER,
         published_at TEXT,
         FOREIGN KEY (podcast_id) REFERENCES podcasts(id) ON DELETE CASCADE
     )

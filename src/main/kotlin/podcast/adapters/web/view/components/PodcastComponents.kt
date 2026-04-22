@@ -3,6 +3,7 @@ package podcast.adapters.web.view.components
 import kotlinx.html.*
 import podcast.core.model.Episode
 import podcast.core.model.Podcast
+import podcast.core.model.formatted
 
 fun FlowContent.podcastList(podcasts: List<Podcast>) {
     div {
@@ -49,7 +50,8 @@ private fun FlowContent.subscribeForm() {
         div {
             style = "display: flex; align-items: center; gap: 15px;"
             button(type = ButtonType.submit) {
-                style = "padding: 12px 24px; border-radius: 8px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; font-family: inherit; flex-grow: 1;"
+                style =
+                    "padding: 12px 24px; border-radius: 8px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; font-family: inherit; flex-grow: 1;"
                 +"Subscribe"
             }
             span("htmx-indicator") {
@@ -140,7 +142,7 @@ private fun FlowContent.episodeItem(episode: Episode) {
                 div {
                     style = "display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: 12px;"
                     episode.duration?.let { duration ->
-                        span { style = "font-size: 12px; color: #888; white-space: nowrap;"; +formatDuration(duration) }
+                        span { style = "font-size: 12px; color: #888; white-space: nowrap;"; +duration.formatted() }
                     }
                     span("toggle-icon") { +"▼" }
                 }

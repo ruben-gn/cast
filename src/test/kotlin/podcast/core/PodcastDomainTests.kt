@@ -12,6 +12,8 @@ import podcast.fakes.FakePodcastPersistence
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 class PodcastDomainTest : DescribeSpec({
     val fixedInstant = Instant.parse("2026-04-10T10:00:00Z")
@@ -47,7 +49,7 @@ class PodcastDomainTest : DescribeSpec({
 
             val all = listPodcasts()
             all shouldHaveSize 1
-            all.first().id shouldBe created.id
+            all.first() shouldBe created
 
             val retrieved = getPodcast(created.id)
             retrieved shouldBe created
@@ -69,8 +71,8 @@ class PodcastDomainTest : DescribeSpec({
 
         it("should map all episodes from the feed") {
             val episodeInfos = listOf(
-                EpisodeInfo("Ep 1", "Desc 1", "https://cdn/ep1.mp3", "01:00:00", Instant.parse("2026-01-01T00:00:00Z")),
-                EpisodeInfo("Ep 2", "Desc 2", "https://cdn/ep2.mp3", "00:30:00", Instant.parse("2026-01-02T00:00:00Z"))
+                EpisodeInfo("Ep 1", "Desc 1", "https://cdn/ep1.mp3", 1.hours, Instant.parse("2026-01-01T00:00:00Z")),
+                EpisodeInfo("Ep 2", "Desc 2", "https://cdn/ep2.mp3", 30.minutes, Instant.parse("2026-01-02T00:00:00Z"))
             )
             stubFeedProvider = FeedInfoProvider { FeedInfo("Show", "Desc", "img.png", episodeInfos) }
             addFeed = AddFeed(persistence, episodePersistence, stubFeedProvider, fixedClock)
@@ -83,10 +85,11 @@ class PodcastDomainTest : DescribeSpec({
                 title shouldBe "Ep 1"
                 audioUrl shouldBe "https://cdn/ep1.mp3"
                 publishedAt shouldBe Instant.parse("2026-01-01T00:00:00Z")
+                duration shouldBe 1.hours
             }
             with(episodes[1]) {
                 title shouldBe "Ep 2"
-                duration shouldBe "00:30:00"
+                duration shouldBe 30.minutes
             }
             episodes.map { it.id }.toSet() shouldHaveSize 2
         }

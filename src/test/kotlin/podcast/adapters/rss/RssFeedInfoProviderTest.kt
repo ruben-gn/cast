@@ -7,6 +7,8 @@ import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import java.time.Instant
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 class RssFeedInfoProviderTest : StringSpec({
     fun providerWithResponse(url: String, xml: String): RssFeedInfoProvider {
@@ -97,13 +99,13 @@ class RssFeedInfoProviderTest : StringSpec({
             title shouldBe "Episode 1"
             description shouldBe "About ep 1"
             audioUrl shouldBe "https://cdn/ep1.mp3"
-            duration shouldBe "01:00:00"
+            duration shouldBe 1.hours
             publishedAt shouldBe Instant.parse("2026-01-01T10:00:00Z")
         }
         with(feedInfo.episodes[1]) {
             title shouldBe "Episode 2"
             audioUrl shouldBe "https://cdn/ep2.mp3"
-            duration shouldBe "00:30:00"
+            duration shouldBe 30.minutes
         }
     }
 

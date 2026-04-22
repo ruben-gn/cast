@@ -16,6 +16,8 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private val pubDateFormatter = DateTimeFormatter.ofPattern("dd MMM uuuu HH:mm:ss Z", Locale.ENGLISH)
     .withResolverStyle(ResolverStyle.LENIENT)
@@ -41,13 +43,31 @@ private fun toFeedInfo(channel: RssChannel) =
                 title = item.title,
                 description = item.description,
                 audioUrl = item.enclosure?.url ?: "",
-                duration = item.duration,
+                duration = parseDuration(item.duration),
                 publishedAt = item.pubDate.takeIf { it.isNotBlank() }?.trim()?.let {
                     runCatching { ZonedDateTime.parse(weekdayPrefix.replace(it, ""), pubDateFormatter).toInstant() }.getOrNull()
                 }
             )
         }
     )
+
+private fun parseDuration(raw: String?): Duration? {
+    if (raw.isNullOrBlank()) return null
+    return runCatching {
+        val trimmed = raw.trim()
+        val totalSeconds = if (":" in trimmed) {
+            val parts = trimmed.split(":")
+            when (parts.size) {
+                2 -> parts[0].toLong() * 60 + parts[1].toLong()
+                3 -> parts[0].toLong() * 3600 + parts[1].toLong() * 60 + parts[2].toLong()
+                else -> return null
+            }
+        } else {
+            trimmed.toLong()
+        }
+        totalSeconds.seconds
+    }.getOrNull()
+}
 
 private fun parseXml(xml: String) = xmlParser.decodeFromString<RssEnvelope>(xml).channel
 

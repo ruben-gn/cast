@@ -7,7 +7,9 @@ import kotlinx.coroutines.withContext
 import podcast.core.model.Episode
 import podcast.core.port.EpisodePersistence
 import java.sql.ResultSet
+import java.sql.Types
 import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
 
 class SQLiteEpisodePersistence(private val db: DatabaseContext) : EpisodePersistence {
 
@@ -24,7 +26,10 @@ class SQLiteEpisodePersistence(private val db: DatabaseContext) : EpisodePersist
                         statement.setString(3, episode.title)
                         statement.setString(4, episode.description)
                         statement.setString(5, episode.audioUrl)
-                        statement.setString(6, episode.duration)
+                        if (episode.duration != null)
+                            statement.setLong(6, episode.duration.inWholeSeconds)
+                        else
+                            statement.setNull(6, Types.INTEGER)
                         statement.setString(7, episode.publishedAt?.toString())
                         statement.addBatch()
                     }
@@ -55,15 +60,18 @@ class SQLiteEpisodePersistence(private val db: DatabaseContext) : EpisodePersist
     }
 }
 
-private fun ResultSet.toEpisode() = Episode(
-    id = getString("id"),
-    podcastId = getString("podcast_id"),
-    title = getString("title"),
-    description = getString("description"),
-    audioUrl = getString("audio_url"),
-    duration = getString("duration"),
-    publishedAt = getString("published_at")?.let { Instant.parse(it) }
-)
+private fun ResultSet.toEpisode(): Episode {
+    val durationSeconds = getLong("duration")
+    return Episode(
+        id = getString("id"),
+        podcastId = getString("podcast_id"),
+        title = getString("title"),
+        description = getString("description"),
+        audioUrl = getString("audio_url"),
+        duration = if (wasNull()) null else durationSeconds.seconds,
+        publishedAt = getString("published_at")?.let { Instant.parse(it) }
+    )
+}
 
 private val INSERT_EPISODE_STATEMENT = """
     INSERT INTO episodes

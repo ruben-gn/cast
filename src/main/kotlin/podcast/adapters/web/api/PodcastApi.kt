@@ -13,6 +13,8 @@ import podcast.core.ListPodcasts
 import podcast.core.PodcastException
 import podcast.core.model.Episode
 import podcast.core.model.Podcast
+import podcast.core.model.formatted
+import kotlin.time.Duration
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
 
@@ -65,7 +67,7 @@ private fun episodeDto(episode: Episode) =
         title = episode.title,
         description = episode.description,
         audioUrl = episode.audioUrl,
-        duration = episode.duration,
+        duration = episode.duration?.formatted(),
         publishedAt = episode.publishedAt?.toString()
     )
 

@@ -12,6 +12,7 @@ import podcast.core.model.Podcast
 import java.sql.DriverManager
 import java.time.Instant
 import java.util.*
+import kotlin.time.Duration.Companion.minutes
 
 class SQLitePodcastPersistenceIT : DescribeSpec({
 
@@ -112,6 +113,6 @@ private fun createEpisode(id: String, podcastId: String) = Episode(
     title = "Episode $id",
     description = "Desc",
     audioUrl = "https://audio/$id.mp3",
-    duration = "01:00",
+    duration = 1.minutes,
     publishedAt = Instant.now()
 )
