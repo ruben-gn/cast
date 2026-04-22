@@ -65,7 +65,7 @@ private fun FlowContent.subscribeForm() {
 
 private fun FlowContent.podcastCard(podcast: Podcast) {
     div {
-        attributes["hx-get"] = "/podcasts/${podcast.id}"
+        attributes["hx-get"] = "/podcasts/${podcast.id.value}"
         attributes["hx-target"] = "#content-container"
         attributes["hx-swap"] = "outerHTML"
         attributes["hx-push-url"] = "true"
@@ -125,7 +125,7 @@ private fun FlowContent.episodeItem(episode: Episode) {
     div {
         style = "background: white; border-radius: 12px; padding: 20px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative;"
 
-        val toggleId = "tgl-${episode.id}"
+        val toggleId = "tgl-${episode.id.value}"
         input(type = InputType.checkBox) {
             id = toggleId
             classes = setOf("episode-toggle")

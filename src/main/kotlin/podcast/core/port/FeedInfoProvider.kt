@@ -1,10 +1,11 @@
 package podcast.core.port
 
+import podcast.core.model.FeedUrl
 import java.time.Instant
 import kotlin.time.Duration
 
 fun interface FeedInfoProvider {
-    suspend fun fetch(url: String): FeedInfo
+    suspend fun fetch(url: FeedUrl): FeedInfo
 }
 
 data class FeedInfo(

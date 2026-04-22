@@ -3,6 +3,8 @@ package podcast.core
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import podcast.core.model.FeedUrl
+import podcast.core.model.PodcastId
 import podcast.core.port.EpisodeInfo
 import podcast.core.port.FeedInfo
 import podcast.core.port.FeedInfoProvider
@@ -32,7 +34,7 @@ class PodcastDomainTest : DescribeSpec({
         beforeEach {
             persistence = FakePodcastPersistence()
             episodePersistence = FakeEpisodePersistence()
-            stubFeedProvider = FeedInfoProvider { url -> FeedInfo(title = "Show for $url", description = "Desc", image = "img.png") }
+            stubFeedProvider = FeedInfoProvider { url -> FeedInfo(title = "Show for ${url.value}", description = "Desc", image = "img.png") }
 
             addFeed = AddFeed(persistence, episodePersistence, stubFeedProvider, fixedClock)
             listPodcasts = ListPodcasts(persistence)
@@ -41,10 +43,10 @@ class PodcastDomainTest : DescribeSpec({
         }
 
         it("should register a new podcast and make it available for listing and retrieval") {
-            val url = "https://example.com/rss"
+            val url = FeedUrl("https://example.com/rss")
 
             val created = addFeed(url)
-            created.name shouldBe "Show for $url"
+            created.name shouldBe "Show for ${url.value}"
             created.createdAt shouldBe fixedInstant
 
             val all = listPodcasts()
@@ -56,7 +58,7 @@ class PodcastDomainTest : DescribeSpec({
         }
 
         it("should not create duplicate entries for the same feed URL") {
-            val url = "https://duplicate.com/rss"
+            val url = FeedUrl("https://duplicate.com/rss")
 
             val first = addFeed(url)
             val second = addFeed(url)
@@ -66,7 +68,7 @@ class PodcastDomainTest : DescribeSpec({
         }
 
         it("should return null when retrieving a non-existent podcast") {
-            getPodcast("non-existent-id") shouldBe null
+            getPodcast(PodcastId("non-existent-id")) shouldBe null
         }
 
         it("should map all episodes from the feed") {
@@ -77,7 +79,7 @@ class PodcastDomainTest : DescribeSpec({
             stubFeedProvider = FeedInfoProvider { FeedInfo("Show", "Desc", "img.png", episodeInfos) }
             addFeed = AddFeed(persistence, episodePersistence, stubFeedProvider, fixedClock)
 
-            val podcast = addFeed("https://example.com/rss")
+            val podcast = addFeed(FeedUrl("https://example.com/rss"))
             val episodes = listEpisodes(podcast.id)
 
             episodes shouldHaveSize 2

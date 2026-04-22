@@ -12,9 +12,10 @@ import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
 import podcast.core.PodcastException
 import podcast.core.model.Episode
+import podcast.core.model.FeedUrl
 import podcast.core.model.Podcast
+import podcast.core.model.PodcastId
 import podcast.core.model.formatted
-import kotlin.time.Duration
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
 
@@ -31,7 +32,7 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         post {
             val request = call.receive<AddPodcastRequest>()
             try {
-                val podcast = addFeed(url = request.feed)
+                val podcast = addFeed(url = FeedUrl(request.feed))
                 val episodes = listEpisodes(podcast.id)
                 call.respond(podcastDetailDto(podcast, episodes))
             } catch (e: PodcastException.FeedFetchFailed) {
@@ -40,7 +41,7 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         }
 
         get("{id}") {
-            val id = call.parameters["id"]!!
+            val id = PodcastId(call.parameters["id"]!!)
             val podcast = getPodcast(id) ?: return@get call.respond(HttpStatusCode.NotFound)
             val episodes = listEpisodes(id)
             call.respond(podcastDetailDto(podcast, episodes))
@@ -49,12 +50,12 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
 }
 
 private fun podcastSummaryDto(podcast: Podcast) =
-    PodcastSummaryDto(podcast.id, podcast.url, podcast.name, podcast.image, podcast.createdAt.toString())
+    PodcastSummaryDto(podcast.id.value, podcast.url.value, podcast.name, podcast.image, podcast.createdAt.toString())
 
 private fun podcastDetailDto(podcast: Podcast, episodes: List<Episode>) =
     PodcastDetailDto(
-        id = podcast.id,
-        url = podcast.url,
+        id = podcast.id.value,
+        url = podcast.url.value,
         name = podcast.name,
         image = podcast.image,
         createdAt = podcast.createdAt.toString(),
@@ -63,7 +64,7 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<Episode>) =
 
 private fun episodeDto(episode: Episode) =
     EpisodeDto(
-        id = episode.id,
+        id = episode.id.value,
         title = episode.title,
         description = episode.description,
         audioUrl = episode.audioUrl,

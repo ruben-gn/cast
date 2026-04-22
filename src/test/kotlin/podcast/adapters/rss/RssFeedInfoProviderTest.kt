@@ -9,6 +9,7 @@ import io.ktor.http.*
 import java.time.Instant
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import podcast.core.model.FeedUrl
 
 class RssFeedInfoProviderTest : StringSpec({
     fun providerWithResponse(url: String, xml: String): RssFeedInfoProvider {
@@ -38,7 +39,7 @@ class RssFeedInfoProviderTest : StringSpec({
             </rss>
         """.trimIndent()
 
-        providerWithResponse(url, xml).fetch(url).image shouldBe "https://example.com/itunes.png"
+        providerWithResponse(url, xml).fetch(FeedUrl(url)).image shouldBe "https://example.com/itunes.png"
     }
 
     "should fallback to standard rss image if itunes image is missing" {
@@ -52,7 +53,7 @@ class RssFeedInfoProviderTest : StringSpec({
             </rss>
         """.trimIndent()
 
-        providerWithResponse(url, xml).fetch(url).image shouldBe "https://example.com/standard.png"
+        providerWithResponse(url, xml).fetch(FeedUrl(url)).image shouldBe "https://example.com/standard.png"
     }
 
     "should use empty string if no image is found" {
@@ -65,7 +66,7 @@ class RssFeedInfoProviderTest : StringSpec({
             </rss>
         """.trimIndent()
 
-        providerWithResponse(url, xml).fetch(url).image shouldBe ""
+        providerWithResponse(url, xml).fetch(FeedUrl(url)).image shouldBe ""
     }
 
     "should map episode fields from feed items" {
@@ -92,7 +93,7 @@ class RssFeedInfoProviderTest : StringSpec({
             </rss>
         """.trimIndent()
 
-        val feedInfo = providerWithResponse(url, xml).fetch(url)
+        val feedInfo = providerWithResponse(url, xml).fetch(FeedUrl(url))
 
         feedInfo.episodes shouldHaveSize 2
         with(feedInfo.episodes[0]) {
@@ -122,7 +123,7 @@ class RssFeedInfoProviderTest : StringSpec({
             </rss>
         """.trimIndent()
 
-        val episode = providerWithResponse(url, xml).fetch(url).episodes.first()
+        val episode = providerWithResponse(url, xml).fetch(FeedUrl(url)).episodes.first()
         episode.audioUrl shouldBe ""
     }
 
@@ -143,7 +144,7 @@ class RssFeedInfoProviderTest : StringSpec({
             </rss>
         """.trimIndent()
 
-        val episodes = providerWithResponse(url, xml).fetch(url).episodes
+        val episodes = providerWithResponse(url, xml).fetch(FeedUrl(url)).episodes
         episodes[0].publishedAt shouldBe null
         episodes[1].publishedAt shouldBe null
     }

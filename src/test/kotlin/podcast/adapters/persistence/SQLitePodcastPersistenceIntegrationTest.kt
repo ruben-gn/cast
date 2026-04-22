@@ -8,7 +8,10 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import podcast.core.model.Episode
+import podcast.core.model.EpisodeId
+import podcast.core.model.FeedUrl
 import podcast.core.model.Podcast
+import podcast.core.model.PodcastId
 import java.sql.DriverManager
 import java.time.Instant
 import java.util.*
@@ -38,20 +41,20 @@ class SQLitePodcastPersistenceIT : DescribeSpec({
             val podcast = createPodcast("1")
             podcasts.save(podcast)
 
-            val found = podcasts.findById("1")!!
+            val found = podcasts.findById(PodcastId("1"))!!
             found.name shouldBe "Name 1"
         }
 
         it("should update an existing podcast (upsert logic)") {
-            val id = "same-id"
-            podcasts.save(Podcast(id, "url", "Old Name", "img", Instant.now()))
-            podcasts.save(Podcast(id, "url", "New Name", "img", Instant.now()))
+            val id = PodcastId("same-id")
+            podcasts.save(Podcast(id, FeedUrl("url"), "Old Name", "img", Instant.now()))
+            podcasts.save(Podcast(id, FeedUrl("url"), "New Name", "img", Instant.now()))
 
             podcasts.findById(id)?.name shouldBe "New Name"
         }
 
         it("should return null for a missing podcast") {
-            podcasts.findById("non-existent") shouldBe null
+            podcasts.findById(PodcastId("non-existent")) shouldBe null
         }
 
         it("should return all saved podcasts") {
@@ -66,33 +69,33 @@ class SQLitePodcastPersistenceIT : DescribeSpec({
 
     describe("SQLiteEpisodePersistence") {
         it("should persist and retrieve episodes by podcast id") {
-            val podcastId = UUID.randomUUID().toString()
-            podcasts.save(createPodcast(podcastId))
+            val podcastId = PodcastId(UUID.randomUUID().toString())
+            podcasts.save(createPodcast(podcastId.value))
 
             episodes.saveAll(listOf(
-                createEpisode("e1", podcastId),
-                createEpisode("e2", podcastId)
+                createEpisode("e1", podcastId.value),
+                createEpisode("e2", podcastId.value)
             ))
 
             val found = episodes.findByPodcastId(podcastId)
             found shouldHaveSize 2
-            found.map { it.id }.toSet() shouldBe setOf("e1", "e2")
+            found.map { it.id }.toSet() shouldBe setOf(EpisodeId("e1"), EpisodeId("e2"))
         }
 
         it("should return empty list when podcast has no episodes") {
-            val podcastId = UUID.randomUUID().toString()
-            podcasts.save(createPodcast(podcastId))
+            val podcastId = PodcastId(UUID.randomUUID().toString())
+            podcasts.save(createPodcast(podcastId.value))
 
             episodes.findByPodcastId(podcastId).shouldBeEmpty()
         }
 
         it("should not return episodes for a different podcast") {
-            val id1 = UUID.randomUUID().toString()
-            val id2 = UUID.randomUUID().toString()
-            podcasts.save(createPodcast(id1))
-            podcasts.save(createPodcast(id2))
+            val id1 = PodcastId(UUID.randomUUID().toString())
+            val id2 = PodcastId(UUID.randomUUID().toString())
+            podcasts.save(createPodcast(id1.value))
+            podcasts.save(createPodcast(id2.value))
 
-            episodes.saveAll(listOf(createEpisode("e1", id1)))
+            episodes.saveAll(listOf(createEpisode("e1", id1.value)))
 
             episodes.findByPodcastId(id2).shouldBeEmpty()
         }
@@ -100,16 +103,16 @@ class SQLitePodcastPersistenceIT : DescribeSpec({
 })
 
 private fun createPodcast(id: String) = Podcast(
-    id = id,
-    url = "url-$id",
+    id = PodcastId(id),
+    url = FeedUrl("url-$id"),
     name = "Name $id",
     image = "img",
     createdAt = Instant.now()
 )
 
 private fun createEpisode(id: String, podcastId: String) = Episode(
-    id = id,
-    podcastId = podcastId,
+    id = EpisodeId(id),
+    podcastId = PodcastId(podcastId),
     title = "Episode $id",
     description = "Desc",
     audioUrl = "https://audio/$id.mp3",

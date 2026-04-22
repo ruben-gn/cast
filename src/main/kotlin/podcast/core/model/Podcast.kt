@@ -3,9 +3,19 @@ package podcast.core.model
 import java.time.Instant
 
 data class Podcast(
-    val id: String,
-    val url: String,
+    val id: PodcastId,
+    val url: FeedUrl,
     val name: String,
     val image: String,
     val createdAt: Instant
 )
+
+@JvmInline
+value class PodcastId(val value: String) {
+    override fun toString() = value
+}
+
+@JvmInline
+value class FeedUrl(val value: String) {
+    override fun toString() = value
+}

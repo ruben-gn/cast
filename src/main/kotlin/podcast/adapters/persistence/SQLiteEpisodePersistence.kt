@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import podcast.core.model.Episode
+import podcast.core.model.EpisodeId
+import podcast.core.model.PodcastId
 import podcast.core.port.EpisodePersistence
 import java.sql.ResultSet
 import java.sql.Types
@@ -21,8 +23,8 @@ class SQLiteEpisodePersistence(private val db: DatabaseContext) : EpisodePersist
                 db.connection.autoCommit = false
                 db.connection.prepareStatement(INSERT_EPISODE_STATEMENT).use { statement ->
                     episodes.forEach { episode ->
-                        statement.setString(1, episode.id)
-                        statement.setString(2, episode.podcastId)
+                        statement.setString(1, episode.id.value)
+                        statement.setString(2, episode.podcastId.value)
                         statement.setString(3, episode.title)
                         statement.setString(4, episode.description)
                         statement.setString(5, episode.audioUrl)
@@ -45,10 +47,10 @@ class SQLiteEpisodePersistence(private val db: DatabaseContext) : EpisodePersist
         }
     }
 
-    override suspend fun findByPodcastId(podcastId: String): List<Episode> = withContext(Dispatchers.IO) {
+    override suspend fun findByPodcastId(podcastId: PodcastId): List<Episode> = withContext(Dispatchers.IO) {
         db.mutex.withLock {
             db.connection.prepareStatement("SELECT * FROM episodes WHERE podcast_id = ?").use { statement ->
-                statement.setString(1, podcastId)
+                statement.setString(1, podcastId.value)
                 val rs = statement.executeQuery()
                 val episodes = mutableListOf<Episode>()
                 while (rs.next()) {
@@ -63,8 +65,8 @@ class SQLiteEpisodePersistence(private val db: DatabaseContext) : EpisodePersist
 private fun ResultSet.toEpisode(): Episode {
     val durationSeconds = getLong("duration")
     return Episode(
-        id = getString("id"),
-        podcastId = getString("podcast_id"),
+        id = EpisodeId(getString("id")),
+        podcastId = PodcastId(getString("podcast_id")),
         title = getString("title"),
         description = getString("description"),
         audioUrl = getString("audio_url"),

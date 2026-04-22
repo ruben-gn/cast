@@ -16,6 +16,8 @@ import podcast.core.GetPodcast
 import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
 import podcast.core.PodcastException
+import podcast.core.model.FeedUrl
+import podcast.core.model.PodcastId
 
 fun Route.podcastView(dependencies: DependencyRegistry) {
 
@@ -45,7 +47,7 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
             val url = params["url"] ?: return@post call.respond(HttpStatusCode.BadRequest, "Missing URL")
 
             try {
-                addFeed(url)
+                addFeed(FeedUrl(url))
                 val podcasts = listPodcasts()
                 val isHtmx = call.request.headers["HX-Request"] == "true"
 
@@ -64,7 +66,7 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
         }
 
         get("{id}") {
-            val id = call.parameters["id"]!!
+            val id = PodcastId(call.parameters["id"]!!)
             val podcast = getPodcast(id) ?: return@get call.respond(HttpStatusCode.NotFound, "Podcast not found")
             val episodes = listEpisodes(id)
             val isHtmx = call.request.headers["HX-Request"] == "true"

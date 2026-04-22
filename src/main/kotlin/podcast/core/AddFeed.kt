@@ -2,7 +2,10 @@ package podcast.core
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import podcast.core.model.Episode
+import podcast.core.model.EpisodeId
+import podcast.core.model.FeedUrl
 import podcast.core.model.Podcast
+import podcast.core.model.PodcastId
 import podcast.core.port.EpisodeInfo
 import podcast.core.port.EpisodePersistence
 import podcast.core.port.FeedInfoProvider
@@ -18,7 +21,7 @@ class AddFeed(
     private val feedInfoProvider: FeedInfoProvider,
     private val clock: Clock
 ) {
-    suspend operator fun invoke(url: String): Podcast {
+    suspend operator fun invoke(url: FeedUrl): Podcast {
         log.info { "Adding feed $url." }
 
         podcasts.findByUrl(url)?.let {
@@ -33,7 +36,7 @@ class AddFeed(
         }
 
         val podcast = Podcast(
-            id = UUID.randomUUID().toString(),
+            id = PodcastId(UUID.randomUUID().toString()),
             url = url,
             name = feedInfo.title,
             image = feedInfo.image,
@@ -50,8 +53,8 @@ class AddFeed(
     }
 }
 
-private fun episode(episode: EpisodeInfo, podcastId: String) = Episode(
-    id = UUID.randomUUID().toString(),
+private fun episode(episode: EpisodeInfo, podcastId: PodcastId) = Episode(
+    id = EpisodeId(UUID.randomUUID().toString()),
     podcastId = podcastId,
     title = episode.title,
     description = episode.description,

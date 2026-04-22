@@ -1,17 +1,19 @@
 package podcast.adapters.persistence
 
+import podcast.core.model.FeedUrl
 import podcast.core.model.Podcast
+import podcast.core.model.PodcastId
 import podcast.core.port.PodcastPersistence
 
 class InMemoryPodcastPersistence : PodcastPersistence {
 
-    private val storage = mutableMapOf<String, Podcast>()
+    private val storage = mutableMapOf<PodcastId, Podcast>()
 
     override suspend fun save(podcast: Podcast) { storage[podcast.id] = podcast }
 
     override suspend fun findAll() = storage.values.toList()
 
-    override suspend fun findById(id: String) = storage[id]
+    override suspend fun findById(id: PodcastId) = storage[id]
 
-    override suspend fun findByUrl(url: String) = storage.values.find { it.url == url }
+    override suspend fun findByUrl(url: FeedUrl) = storage.values.find { it.url == url }
 }

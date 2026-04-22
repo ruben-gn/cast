@@ -9,6 +9,7 @@ import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
+import podcast.core.model.FeedUrl
 import podcast.core.port.EpisodeInfo
 import podcast.core.port.FeedInfo
 import podcast.core.port.FeedInfoProvider
@@ -26,9 +27,9 @@ private val weekdayPrefix = Regex("^[A-Za-z]{3},\\s*")
 class RssFeedInfoProvider(
     private val httpClient: HttpClient
 ) : FeedInfoProvider {
-    override suspend fun fetch(url: String): FeedInfo =
+    override suspend fun fetch(url: FeedUrl): FeedInfo =
         httpClient
-            .get(url).bodyAsText()
+            .get(url.value).bodyAsText()
             .let(::parseXml)
             .let(::toFeedInfo)
 }
