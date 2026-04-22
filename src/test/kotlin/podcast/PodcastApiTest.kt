@@ -1,6 +1,7 @@
 package podcast
 
 import installCommon
+import installHttpClient
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -11,9 +12,12 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.testing.*
 import podcast.adapters.web.api.AddPodcastRequest
 import podcast.adapters.web.api.PodcastSummaryDto
+import podcast.core.port.PodcastPersistence
+import podcast.fakes.FakePersistence
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -49,7 +53,13 @@ class PodcastApiTest : DescribeSpec({
 
             testApplication {
                 application {
-                    installCommon(httpClient = testHttpClient)
+                    installHttpClient(testHttpClient)
+                    installCommon()
+
+                    dependencies {
+                        provide<PodcastPersistence> { FakePersistence() }
+                    }
+
                     installPodcastModule(clock = fixedClock)
                 }
                 val client = createClient {

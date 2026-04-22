@@ -15,9 +15,12 @@ import podcast.core.port.FeedInfo
 import podcast.core.port.FeedInfoProvider
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
 import java.util.*
 
-private val pubDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH)
+private val pubDateFormatter = DateTimeFormatter.ofPattern("dd MMM uuuu HH:mm:ss Z", Locale.ENGLISH)
+    .withResolverStyle(ResolverStyle.LENIENT)
+private val weekdayPrefix = Regex("^[A-Za-z]{3},\\s*")
 
 class RssFeedInfoProvider(
     private val httpClient: HttpClient
@@ -41,7 +44,7 @@ private fun toFeedInfo(channel: RssChannel) =
                 audioUrl = item.enclosure?.url ?: "",
                 duration = item.duration,
                 publishedAt = item.pubDate.takeIf { it.isNotBlank() }?.trim()?.let {
-                    runCatching { ZonedDateTime.parse(it, pubDateFormatter).toInstant() }.getOrNull()
+                    runCatching { ZonedDateTime.parse(weekdayPrefix.replace(it, ""), pubDateFormatter).toInstant() }.getOrNull()
                 }
             )
         }
@@ -51,11 +54,9 @@ private fun parseXml(xml: String) = xmlParser.decodeFromString<RssEnvelope>(xml)
 
 @OptIn(ExperimentalXmlUtilApi::class)
 private val xmlParser = XML {
-    policy = DefaultXmlSerializationPolicy.Builder().apply {
+    defaultPolicy {
         ignoreUnknownChildren()
-        autoPolymorphic = true
-    }.build()
-
+    }
     repairNamespaces = true
 }
 
@@ -72,13 +73,15 @@ data class RssChannel(
     @XmlElement(true) val description: String = "",
     @XmlSerialName("image", "http://www.itunes.com/dtds/podcast-1.0.dtd", "itunes")
     val itunesImage: ItunesImage? = null,
+    @XmlSerialName("image", "", "")
     val image: RssImage? = null,
+    @XmlSerialName("item", "", "")
     val items: List<RssItem> = emptyList()
 )
 
 @Serializable
 data class ItunesImage(
-    @XmlSerialName("href", "", "") val href: String
+    val href: String
 )
 
 @Serializable
@@ -93,7 +96,7 @@ data class RssItem(
     @XmlElement(true) val title: String = "",
     @XmlElement(true) val description: String = "",
     val enclosure: RssEnclosure? = null,
-    @XmlSerialName("pubDate", "", "") @XmlElement(true) val pubDate: String = "",
+    @XmlElement(true) val pubDate: String = "",
     @XmlSerialName("duration", "http://www.itunes.com/dtds/podcast-1.0.dtd", "itunes")
     @XmlElement(true) val duration: String? = null
 )

@@ -3,7 +3,7 @@ package podcast.fakes
 import podcast.core.model.Podcast
 import podcast.core.port.PodcastPersistence
 
-class PersistenceFake : PodcastPersistence {
+class FakePersistence : PodcastPersistence {
     private val storage = mutableMapOf<String, Podcast>()
 
     override fun save(podcast: Podcast) {

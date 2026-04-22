@@ -1,15 +1,20 @@
 package configuration
 
+import io.ktor.server.application.*
+import io.ktor.server.plugins.di.dependencies
 import java.sql.Connection
 import java.sql.DriverManager
 
-
-fun installDatabase(): Connection {
+fun Application.installDatabase(): Connection {
     val connection = DriverManager.getConnection("jdbc:sqlite:podcasts.db")
 
     connection.createStatement().use { statement ->
         statement.executeUpdate(CREATE_PODCASTS_TABLE)
         statement.executeUpdate(CREATE_EPISODES_TABLE)
+    }
+
+    dependencies {
+        provide<Connection> { connection }
     }
 
     return connection

@@ -7,7 +7,7 @@ import podcast.core.port.EpisodeInfo
 import podcast.core.port.FeedInfo
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastPersistence
-import podcast.fakes.PersistenceFake
+import podcast.fakes.FakePersistence
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -25,7 +25,7 @@ class PodcastDomainTest : DescribeSpec({
         lateinit var getPodcast: GetPodcast
 
         beforeEach {
-            persistence = PersistenceFake()
+            persistence = FakePersistence()
             stubFeedProvider = FeedInfoProvider { url -> FeedInfo(title = "Show for $url", description = "Desc", image = "img.png") }
 
             addFeed = AddFeed(persistence, stubFeedProvider, fixedClock)

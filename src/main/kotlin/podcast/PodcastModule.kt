@@ -17,14 +17,18 @@ import java.time.Clock
 
 
 fun Application.installPodcastModule(
-    clock: Clock = Clock.systemUTC(),
-    databaseConnection: Connection,
-    persistence: PodcastPersistence = SQLitePodcastPersistence(databaseConnection)
+    clock: Clock = Clock.systemUTC()
 ) {
     dependencies {
         provide<Clock> { clock }
 
-        provide<PodcastPersistence> { persistence }
+        provide<PodcastPersistence> {
+            try {
+                resolve<PodcastPersistence>()
+            } catch (_: Exception) {
+                SQLitePodcastPersistence(resolve<Connection>())
+            }
+        }
         provide<FeedInfoProvider> { RssFeedInfoProvider(resolve()) }
 
         provide<ListPodcasts> { ListPodcasts(resolve()) }
