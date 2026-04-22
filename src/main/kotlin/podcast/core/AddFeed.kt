@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import podcast.core.model.Episode
 import podcast.core.model.Podcast
 import podcast.core.port.EpisodeInfo
+import podcast.core.port.EpisodePersistence
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastPersistence
 import java.time.Clock
@@ -13,6 +14,7 @@ private val log = KotlinLogging.logger {}
 
 class AddFeed(
     private val podcasts: PodcastPersistence,
+    private val episodes: EpisodePersistence,
     private val feedInfoProvider: FeedInfoProvider,
     private val clock: Clock
 ) {
@@ -30,26 +32,27 @@ class AddFeed(
             throw PodcastException.FeedFetchFailed(url, e)
         }
 
-        val episodes = feedInfo.episodes.map(::episode)
-
         val podcast = Podcast(
             id = UUID.randomUUID().toString(),
             url = url,
             name = feedInfo.title,
             image = feedInfo.image,
-            createdAt = clock.instant(),
-            episodes = episodes
+            createdAt = clock.instant()
         )
 
         podcasts.save(podcast)
 
-        log.info { "Added  feed $url: ${podcast.name} (${episodes.size} episodes)." }
+        val episodeList = feedInfo.episodes.map { episode(it, podcast.id) }
+        episodes.saveAll(episodeList)
+
+        log.info { "Added feed $url: ${podcast.name} (${episodeList.size} episodes)." }
         return podcast
     }
 }
 
-private fun episode(episode: EpisodeInfo) = Episode(
+private fun episode(episode: EpisodeInfo, podcastId: String) = Episode(
     id = UUID.randomUUID().toString(),
+    podcastId = podcastId,
     title = episode.title,
     description = episode.description,
     audioUrl = episode.audioUrl,

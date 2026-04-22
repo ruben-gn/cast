@@ -3,9 +3,8 @@ package podcast.adapters.web.view.components
 import kotlinx.html.*
 import podcast.core.model.Episode
 import podcast.core.model.Podcast
-import podcast.core.model.PodcastSummary
 
-fun FlowContent.podcastList(podcasts: List<PodcastSummary>) {
+fun FlowContent.podcastList(podcasts: List<Podcast>) {
     div {
         style = "max-width: 1100px; margin: 0 auto;"
         podcastGrid(podcasts)
@@ -26,7 +25,7 @@ fun FlowContent.addFeedModal() {
     }
 }
 
-fun FlowContent.podcastGrid(podcasts: List<PodcastSummary>) {
+fun FlowContent.podcastGrid(podcasts: List<Podcast>) {
     div {
         style = "display: grid; grid-template-columns: repeat(auto-fill, 200px); justify-content: center; gap: 7px;"
         podcasts.forEach { podcastCard(it) }
@@ -62,7 +61,7 @@ private fun FlowContent.subscribeForm() {
     }
 }
 
-private fun FlowContent.podcastCard(podcast: PodcastSummary) {
+private fun FlowContent.podcastCard(podcast: Podcast) {
     div {
         attributes["hx-get"] = "/podcasts/${podcast.id}"
         attributes["hx-target"] = "#content-container"
@@ -88,7 +87,7 @@ private fun FlowContent.podcastCard(podcast: PodcastSummary) {
     }
 }
 
-fun FlowContent.podcastDetails(podcast: Podcast) {
+fun FlowContent.podcastDetails(podcast: Podcast, episodes: List<Episode>) {
     div {
         style = "max-width: 800px; margin: 0 auto;"
 
@@ -108,14 +107,14 @@ fun FlowContent.podcastDetails(podcast: Podcast) {
             }
             div {
                 h1 { style = "margin: 0 0 8px; font-size: 24px;"; +podcast.name }
-                p { style = "margin: 0; font-size: 13px; color: #888;"; +"${podcast.episodes.size} episodes" }
+                p { style = "margin: 0; font-size: 13px; color: #888;"; +"${episodes.size} episodes" }
             }
         }
 
-        if (podcast.episodes.isEmpty()) {
+        if (episodes.isEmpty()) {
             p { style = "color: #888; font-size: 14px;"; +"No episodes available." }
         } else {
-            podcast.episodes.forEach { episodeItem(it) }
+            episodes.forEach { episodeItem(it) }
         }
     }
 }

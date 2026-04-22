@@ -7,7 +7,8 @@ import podcast.core.port.EpisodeInfo
 import podcast.core.port.FeedInfo
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastPersistence
-import podcast.fakes.FakePersistence
+import podcast.fakes.FakeEpisodePersistence
+import podcast.fakes.FakePodcastPersistence
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -18,35 +19,36 @@ class PodcastDomainTest : DescribeSpec({
 
     describe("Podcast Domain Hexagon") {
         lateinit var persistence: PodcastPersistence
+        lateinit var episodePersistence: FakeEpisodePersistence
         lateinit var stubFeedProvider: FeedInfoProvider
 
         lateinit var addFeed: AddFeed
         lateinit var listPodcasts: ListPodcasts
         lateinit var getPodcast: GetPodcast
+        lateinit var listEpisodes: ListEpisodes
 
         beforeEach {
-            persistence = FakePersistence()
+            persistence = FakePodcastPersistence()
+            episodePersistence = FakeEpisodePersistence()
             stubFeedProvider = FeedInfoProvider { url -> FeedInfo(title = "Show for $url", description = "Desc", image = "img.png") }
 
-            addFeed = AddFeed(persistence, stubFeedProvider, fixedClock)
+            addFeed = AddFeed(persistence, episodePersistence, stubFeedProvider, fixedClock)
             listPodcasts = ListPodcasts(persistence)
             getPodcast = GetPodcast(persistence)
+            listEpisodes = ListEpisodes(episodePersistence)
         }
 
         it("should register a new podcast and make it available for listing and retrieval") {
             val url = "https://example.com/rss"
 
-            // Registration
             val created = addFeed(url)
             created.name shouldBe "Show for $url"
             created.createdAt shouldBe fixedInstant
 
-            // Listing
             val all = listPodcasts()
             all shouldHaveSize 1
             all.first().id shouldBe created.id
 
-            // Retrieval by ID
             val retrieved = getPodcast(created.id)
             retrieved shouldBe created
         }
@@ -54,7 +56,6 @@ class PodcastDomainTest : DescribeSpec({
         it("should not create duplicate entries for the same feed URL") {
             val url = "https://duplicate.com/rss"
 
-            // Act: Add twice
             val first = addFeed(url)
             val second = addFeed(url)
 
@@ -63,8 +64,7 @@ class PodcastDomainTest : DescribeSpec({
         }
 
         it("should return null when retrieving a non-existent podcast") {
-            val result = getPodcast("non-existent-id")
-            result shouldBe null
+            getPodcast("non-existent-id") shouldBe null
         }
 
         it("should map all episodes from the feed") {
@@ -73,21 +73,22 @@ class PodcastDomainTest : DescribeSpec({
                 EpisodeInfo("Ep 2", "Desc 2", "https://cdn/ep2.mp3", "00:30:00", Instant.parse("2026-01-02T00:00:00Z"))
             )
             stubFeedProvider = FeedInfoProvider { FeedInfo("Show", "Desc", "img.png", episodeInfos) }
-            addFeed = AddFeed(persistence, stubFeedProvider, fixedClock)
+            addFeed = AddFeed(persistence, episodePersistence, stubFeedProvider, fixedClock)
 
             val podcast = addFeed("https://example.com/rss")
+            val episodes = listEpisodes(podcast.id)
 
-            podcast.episodes shouldHaveSize 2
-            with(podcast.episodes[0]) {
+            episodes shouldHaveSize 2
+            with(episodes[0]) {
                 title shouldBe "Ep 1"
                 audioUrl shouldBe "https://cdn/ep1.mp3"
                 publishedAt shouldBe Instant.parse("2026-01-01T00:00:00Z")
             }
-            with(podcast.episodes[1]) {
+            with(episodes[1]) {
                 title shouldBe "Ep 2"
                 duration shouldBe "00:30:00"
             }
-            podcast.episodes.map { it.id }.toSet() shouldHaveSize 2
+            episodes.map { it.id }.toSet() shouldHaveSize 2
         }
     }
 })

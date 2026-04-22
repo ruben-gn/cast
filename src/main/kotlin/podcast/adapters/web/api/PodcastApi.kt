@@ -8,29 +8,30 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import podcast.core.AddFeed
 import podcast.core.GetPodcast
+import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
 import podcast.core.PodcastException
 import podcast.core.model.Episode
 import podcast.core.model.Podcast
-import podcast.core.model.PodcastSummary
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
 
     val addFeed: AddFeed by dependencies
     val listPodcasts: ListPodcasts by dependencies
     val getPodcast: GetPodcast by dependencies
+    val listEpisodes: ListEpisodes by dependencies
 
     route("podcasts") {
         get {
-            val podcasts = listPodcasts().map(::podcastSummaryDto)
-            call.respond(podcasts)
+            call.respond(listPodcasts().map(::podcastSummaryDto))
         }
 
         post {
             val request = call.receive<AddPodcastRequest>()
             try {
                 val podcast = addFeed(url = request.feed)
-                call.respond(podcastDetailDto(podcast))
+                val episodes = listEpisodes(podcast.id)
+                call.respond(podcastDetailDto(podcast, episodes))
             } catch (e: PodcastException.FeedFetchFailed) {
                 call.respond(HttpStatusCode.BadGateway, mapOf("error" to (e.message ?: "Failed to fetch feed")))
             }
@@ -39,22 +40,23 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         get("{id}") {
             val id = call.parameters["id"]!!
             val podcast = getPodcast(id) ?: return@get call.respond(HttpStatusCode.NotFound)
-            call.respond(podcastDetailDto(podcast))
+            val episodes = listEpisodes(id)
+            call.respond(podcastDetailDto(podcast, episodes))
         }
     }
 }
 
-private fun podcastSummaryDto(podcast: PodcastSummary) =
+private fun podcastSummaryDto(podcast: Podcast) =
     PodcastSummaryDto(podcast.id, podcast.url, podcast.name, podcast.image, podcast.createdAt.toString())
 
-private fun podcastDetailDto(podcast: Podcast) =
+private fun podcastDetailDto(podcast: Podcast, episodes: List<Episode>) =
     PodcastDetailDto(
         id = podcast.id,
         url = podcast.url,
         name = podcast.name,
         image = podcast.image,
         createdAt = podcast.createdAt.toString(),
-        episodes = podcast.episodes.map(::episodeDto)
+        episodes = episodes.map(::episodeDto)
     )
 
 private fun episodeDto(episode: Episode) =

@@ -15,7 +15,8 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
 import podcast.adapters.web.api.AddPodcastRequest
 import podcast.adapters.web.api.PodcastSummaryDto
-import podcast.fakes.FakePersistence
+import podcast.fakes.FakeEpisodePersistence
+import podcast.fakes.FakePodcastPersistence
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -42,34 +43,29 @@ class PodcastApiTest : DescribeSpec({
                 </channel></rss>
             """.trimIndent()
 
-            val testHttpClient = HttpClient(
-                configureMockEngine(
-                    feed to rssResponse,
-                    feed2 to rssResponse2
-                )
-            )
+            val testHttpClient = HttpClient(configureMockEngine(feed to rssResponse, feed2 to rssResponse2))
 
             testApplication {
                 application {
                     installHttpClient(testHttpClient)
                     installCommon()
-                    installPodcastModule(clock = fixedClock, persistence = FakePersistence())
+                    installPodcastModule(
+                        clock = fixedClock,
+                        podcastPersistence = FakePodcastPersistence(),
+                        episodePersistence = FakeEpisodePersistence()
+                    )
                 }
-                val client = createClient {
-                    this.install(ContentNegotiation) { json() }
-                }
+                val client = createClient { install(ContentNegotiation) { json() } }
 
-                val response1 = client.post("/api/podcasts") {
+                client.post("/api/podcasts") {
                     contentType(ContentType.Application.Json)
                     setBody(AddPodcastRequest(feed))
-                }
-                response1.status shouldBe HttpStatusCode.OK
+                }.status shouldBe HttpStatusCode.OK
 
-                val response2 = client.post("/api/podcasts") {
+                client.post("/api/podcasts") {
                     contentType(ContentType.Application.Json)
                     setBody(AddPodcastRequest(feed2))
-                }
-                response2.status shouldBe HttpStatusCode.OK
+                }.status shouldBe HttpStatusCode.OK
 
                 val podcasts = client.get("/api/podcasts").body<List<PodcastSummaryDto>>()
 
@@ -83,17 +79,10 @@ class PodcastApiTest : DescribeSpec({
 })
 
 private fun configureMockEngine(vararg mappings: Pair<String, String>): MockEngine =
-    mappings.toMap()
-        .let { responses ->
-            MockEngine { request ->
-                responses[request.url.toString()]
-                    ?.let {
-                        respond(
-                            content = it,
-                            status = HttpStatusCode.OK,
-                            headers = headersOf(HttpHeaders.ContentType, "application/xml")
-                        )
-                    }
-                    ?: respondError(HttpStatusCode.NotFound)
-            }
+    mappings.toMap().let { responses ->
+        MockEngine { request ->
+            responses[request.url.toString()]
+                ?.let { respond(it, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/xml")) }
+                ?: respondError(HttpStatusCode.NotFound)
         }
+    }

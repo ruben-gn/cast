@@ -13,6 +13,7 @@ import podcast.adapters.web.view.components.podcastDetails
 import podcast.adapters.web.view.components.podcastList
 import podcast.core.AddFeed
 import podcast.core.GetPodcast
+import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
 import podcast.core.PodcastException
 
@@ -21,6 +22,7 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
     val listPodcasts: ListPodcasts by dependencies
     val getPodcast: GetPodcast by dependencies
     val addFeed: AddFeed by dependencies
+    val listEpisodes: ListEpisodes by dependencies
 
     route("podcasts") {
         get {
@@ -64,15 +66,16 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
         get("{id}") {
             val id = call.parameters["id"]!!
             val podcast = getPodcast(id) ?: return@get call.respond(HttpStatusCode.NotFound, "Podcast not found")
+            val episodes = listEpisodes(id)
             val isHtmx = call.request.headers["HX-Request"] == "true"
 
             if (isHtmx) {
                 call.respondText(ContentType.Text.Html) {
-                    buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastDetails(podcast) } }
+                    buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastDetails(podcast, episodes) } }
                 }
             } else {
                 call.respondHtml {
-                    layout(podcast.name) { podcastDetails(podcast) }
+                    layout(podcast.name) { podcastDetails(podcast, episodes) }
                 }
             }
         }
