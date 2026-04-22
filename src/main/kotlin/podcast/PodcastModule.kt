@@ -3,8 +3,8 @@ package podcast
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.*
-import podcast.adapters.RssFeedInfoProvider
 import podcast.adapters.persistence.SQLitePodcastPersistence
+import podcast.adapters.rss.RssFeedInfoProvider
 import podcast.adapters.web.api.podcastApi
 import podcast.adapters.web.view.podcastView
 import podcast.core.AddFeed
@@ -17,17 +17,14 @@ import java.time.Clock
 
 
 fun Application.installPodcastModule(
-    clock: Clock = Clock.systemUTC()
+    clock: Clock = Clock.systemUTC(),
+    persistence: PodcastPersistence? = null
 ) {
     dependencies {
         provide<Clock> { clock }
 
         provide<PodcastPersistence> {
-            try {
-                resolve<PodcastPersistence>()
-            } catch (_: Exception) {
-                SQLitePodcastPersistence(resolve<Connection>())
-            }
+            persistence ?: SQLitePodcastPersistence(resolve<Connection>())
         }
         provide<FeedInfoProvider> { RssFeedInfoProvider(resolve()) }
 

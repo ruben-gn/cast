@@ -1,7 +1,12 @@
 package podcast.adapters.persistence
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import podcast.core.model.Episode
 import podcast.core.model.Podcast
+import podcast.core.model.PodcastSummary
 import podcast.core.port.PodcastPersistence
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -10,46 +15,76 @@ import java.time.Instant
 
 class SQLitePodcastPersistence(private val connection: Connection) : PodcastPersistence {
 
-    override fun save(podcast: Podcast) {
-        val originalAutoCommit = connection.autoCommit
-        try {
-            connection.autoCommit = false
+    private val mutex = Mutex()
 
-            connection.savePodcast(podcast)
-            connection.saveEpisodes(podcast)
-
-            connection.commit()
-        } catch (e: Exception) {
-            connection.rollback()
-            throw e
-        } finally {
-            connection.autoCommit = originalAutoCommit
-        }
-    }
-
-    override fun findAll(): List<Podcast> =
-        connection.prepareStatement("SELECT * FROM podcasts").use { statement ->
-            val result = statement.executeQuery()
-            val podcasts = mutableListOf<Podcast>()
-            while (result.next()) {
-                podcasts.add(mapRowToPodcast(result))
+    override suspend fun save(podcast: Podcast) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val originalAutoCommit = connection.autoCommit
+            try {
+                connection.autoCommit = false
+                connection.savePodcast(podcast)
+                connection.saveEpisodes(podcast)
+                connection.commit()
+            } catch (e: Exception) {
+                connection.rollback()
+                throw e
+            } finally {
+                connection.autoCommit = originalAutoCommit
             }
-            podcasts
-        }
-
-    override fun findById(id: String): Podcast? {
-        return connection.prepareStatement("SELECT * FROM podcasts WHERE id = ?").use { statement ->
-            statement.setString(1, id)
-            val result = statement.executeQuery()
-            if (result.next()) mapRowToPodcast(result) else null
         }
     }
 
-    override fun findByUrl(url: String): Podcast? {
-        return connection.prepareStatement("SELECT * FROM podcasts WHERE url = ?").use { statement ->
-            statement.setString(1, url)
-            val result = statement.executeQuery()
-            if (result.next()) mapRowToPodcast(result) else null
+    override suspend fun findAllSummaries(): List<PodcastSummary> = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            connection.prepareStatement("SELECT id, url, name, image, created_at FROM podcasts").use { statement ->
+                val result = statement.executeQuery()
+                val summaries = mutableListOf<PodcastSummary>()
+                while (result.next()) {
+                    summaries.add(
+                        PodcastSummary(
+                            id = result.getString("id"),
+                            url = result.getString("url"),
+                            name = result.getString("name"),
+                            image = result.getString("image"),
+                            createdAt = Instant.parse(result.getString("created_at"))
+                        )
+                    )
+                }
+                summaries
+            }
+        }
+    }
+
+    override suspend fun findAll(): List<Podcast> = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            connection.prepareStatement("SELECT * FROM podcasts").use { statement ->
+                val result = statement.executeQuery()
+                val podcasts = mutableListOf<Podcast>()
+                while (result.next()) {
+                    podcasts.add(mapRowToPodcast(result))
+                }
+                podcasts
+            }
+        }
+    }
+
+    override suspend fun findById(id: String): Podcast? = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            connection.prepareStatement("SELECT * FROM podcasts WHERE id = ?").use { statement ->
+                statement.setString(1, id)
+                val result = statement.executeQuery()
+                if (result.next()) mapRowToPodcast(result) else null
+            }
+        }
+    }
+
+    override suspend fun findByUrl(url: String): Podcast? = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            connection.prepareStatement("SELECT * FROM podcasts WHERE url = ?").use { statement ->
+                statement.setString(1, url)
+                val result = statement.executeQuery()
+                if (result.next()) mapRowToPodcast(result) else null
+            }
         }
     }
 
@@ -62,7 +97,6 @@ class SQLitePodcastPersistence(private val connection: Connection) : PodcastPers
             createdAt = Instant.parse(resultSet.getString("created_at")),
             episodes = fetchEpisodesForPodcast(resultSet.getString("id"))
         )
-
 
     private fun fetchEpisodesForPodcast(podcastId: String): List<Episode> {
         return connection.prepareStatement("SELECT * FROM episodes WHERE podcast_id = ?").use { statement ->
@@ -119,24 +153,24 @@ private fun Connection.savePodcast(podcast: Podcast) {
 }
 
 private val INSERT_PODCAST_STATEMENT = """
-                    INSERT INTO podcasts (id, url, name, image, created_at) 
-                    VALUES (?, ?, ?, ?, ?)
-                    ON CONFLICT(id) DO UPDATE SET
-                        url = excluded.url,
-                        name = excluded.name,
-                        image = excluded.image,
-                        created_at = excluded.created_at
-                    """.trimIndent()
+    INSERT INTO podcasts (id, url, name, image, created_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+        url = excluded.url,
+        name = excluded.name,
+        image = excluded.image,
+        created_at = excluded.created_at
+    """.trimIndent()
 
 private val INSERT_EPISODE_STATEMENT = """
-                        INSERT INTO episodes
-                        (id, podcast_id, title, description, audio_url, duration, published_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                        ON CONFLICT(id) DO UPDATE SET
-                            podcast_id = excluded.podcast_id,
-                            title = excluded.title,
-                            description = excluded.description,
-                            audio_url = excluded.audio_url,
-                            duration = excluded.duration,
-                            published_at = excluded.published_at
-                        """.trimIndent()
+    INSERT INTO episodes
+    (id, podcast_id, title, description, audio_url, duration, published_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+        podcast_id = excluded.podcast_id,
+        title = excluded.title,
+        description = excluded.description,
+        audio_url = excluded.audio_url,
+        duration = excluded.duration,
+        published_at = excluded.published_at
+    """.trimIndent()

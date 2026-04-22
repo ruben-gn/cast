@@ -3,8 +3,9 @@ package podcast.adapters.web.view.components
 import kotlinx.html.*
 import podcast.core.model.Episode
 import podcast.core.model.Podcast
+import podcast.core.model.PodcastSummary
 
-fun FlowContent.podcastList(podcasts: List<Podcast>) {
+fun FlowContent.podcastList(podcasts: List<PodcastSummary>) {
     div {
         style = "max-width: 1100px; margin: 0 auto;"
         podcastGrid(podcasts)
@@ -25,7 +26,7 @@ fun FlowContent.addFeedModal() {
     }
 }
 
-fun FlowContent.podcastGrid(podcasts: List<Podcast>) {
+fun FlowContent.podcastGrid(podcasts: List<PodcastSummary>) {
     div {
         style = "display: grid; grid-template-columns: repeat(auto-fill, 200px); justify-content: center; gap: 7px;"
         podcasts.forEach { podcastCard(it) }
@@ -61,7 +62,7 @@ private fun FlowContent.subscribeForm() {
     }
 }
 
-private fun FlowContent.podcastCard(podcast: Podcast) {
+private fun FlowContent.podcastCard(podcast: PodcastSummary) {
     div {
         attributes["hx-get"] = "/podcasts/${podcast.id}"
         attributes["hx-target"] = "#content-container"

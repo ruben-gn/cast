@@ -14,6 +14,7 @@ import podcast.adapters.web.view.components.podcastList
 import podcast.core.AddFeed
 import podcast.core.GetPodcast
 import podcast.core.ListPodcasts
+import podcast.core.PodcastException
 
 fun Route.podcastView(dependencies: DependencyRegistry) {
 
@@ -53,8 +54,10 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
                 } else {
                     call.respondRedirect("/podcasts")
                 }
+            } catch (e: PodcastException.FeedFetchFailed) {
+                call.respond(HttpStatusCode.BadGateway, "Failed to add feed: ${e.message}")
             } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, "Failed to add feed: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Unexpected error: ${e.message}")
             }
         }
 

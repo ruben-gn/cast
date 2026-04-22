@@ -6,11 +6,13 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import podcast.core.model.Episode
-import podcast.core.model.Podcast
 import podcast.core.AddFeed
 import podcast.core.GetPodcast
 import podcast.core.ListPodcasts
+import podcast.core.PodcastException
+import podcast.core.model.Episode
+import podcast.core.model.Podcast
+import podcast.core.model.PodcastSummary
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
 
@@ -26,8 +28,12 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
 
         post {
             val request = call.receive<AddPodcastRequest>()
-            val podcast = addFeed(url = request.feed)
-            call.respond(podcastDetailDto(podcast))
+            try {
+                val podcast = addFeed(url = request.feed)
+                call.respond(podcastDetailDto(podcast))
+            } catch (e: PodcastException.FeedFetchFailed) {
+                call.respond(HttpStatusCode.BadGateway, mapOf("error" to (e.message ?: "Failed to fetch feed")))
+            }
         }
 
         get("{id}") {
@@ -38,7 +44,7 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
     }
 }
 
-private fun podcastSummaryDto(podcast: Podcast) =
+private fun podcastSummaryDto(podcast: PodcastSummary) =
     PodcastSummaryDto(podcast.id, podcast.url, podcast.name, podcast.image, podcast.createdAt.toString())
 
 private fun podcastDetailDto(podcast: Podcast) =

@@ -7,8 +7,6 @@ import podcast.core.port.EpisodeInfo
 import podcast.core.port.FeedInfoProvider
 import podcast.core.port.PodcastPersistence
 import java.time.Clock
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 private val log = KotlinLogging.logger {}
@@ -26,7 +24,11 @@ class AddFeed(
             return it
         }
 
-        val feedInfo = feedInfoProvider.fetch(url)
+        val feedInfo = try {
+            feedInfoProvider.fetch(url)
+        } catch (e: Exception) {
+            throw PodcastException.FeedFetchFailed(url, e)
+        }
 
         val episodes = feedInfo.episodes.map(::episode)
 
