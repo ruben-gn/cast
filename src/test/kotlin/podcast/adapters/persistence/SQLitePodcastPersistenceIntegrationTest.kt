@@ -9,7 +9,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import podcast.core.model.Episode
-import podcast.core.model.EpisodeId
+import shared.model.EpisodeId
 import podcast.core.model.FeedUrl
 import podcast.core.model.Podcast
 import podcast.core.model.PodcastId

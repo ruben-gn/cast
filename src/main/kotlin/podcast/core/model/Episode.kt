@@ -1,5 +1,6 @@
 package podcast.core.model
 
+import shared.model.EpisodeId
 import java.time.Instant
 import kotlin.time.Duration
 
@@ -12,8 +13,3 @@ data class Episode(
     val duration: Duration?,
     val publishedAt: Instant?
 )
-
-@JvmInline
-value class EpisodeId(val value: String) {
-    override fun toString() = value
-}

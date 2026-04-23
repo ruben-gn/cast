@@ -2,7 +2,7 @@ package podcast.adapters.persistence
 
 import configuration.ConnectionProvider
 import podcast.core.model.Episode
-import podcast.core.model.EpisodeId
+import shared.model.EpisodeId
 import podcast.core.model.FeedUrl
 import podcast.core.model.Podcast
 import podcast.core.model.PodcastId
