@@ -1,6 +1,5 @@
-package podcast.adapters.web.view.components
-
 import kotlinx.html.*
+import podcast.addFeedModal
 
 fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
     head {

@@ -1,4 +1,4 @@
-package podcast.adapters.web.view.components
+package podcast
 
 import kotlinx.html.*
 import podcast.core.models.Episode

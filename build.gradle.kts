@@ -16,6 +16,9 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":core"))
+    implementation(project(":web"))
+
     implementation(libs.ktor.server.netty)
 
     implementation(libs.logback.classic)
@@ -25,33 +28,6 @@ dependencies {
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.di)
     implementation(libs.ktor.server.content.negotiation)
-    implementation(libs.ktor.server.html.builder.jvm)
-
-    implementation(libs.ktor.client.cio)
-    implementation(libs.ktor.client.content.negotiation)
 
     implementation(libs.ktor.serialization.kotlinx.json)
-    implementation(libs.ktor.serialization.kotlinx.xml)
-
-    implementation(libs.kotlinx.html.jvm)
-
-    implementation(libs.sqlite.jdbc)
-}
-
-testing {
-    suites {
-        val test by getting(JvmTestSuite::class) {
-            useJUnitJupiter()
-
-            dependencies {
-                implementation(project())
-                implementation(libs.ktor.client.content.negotiation) // TODO see if we can inherit these
-                implementation(libs.ktor.serialization.kotlinx.json) // TODO see if we can inherit these
-                implementation(libs.ktor.server.test.host)
-                implementation(libs.ktor.client.mock)
-                implementation(libs.kotest.assertions)
-                implementation(libs.kotest.runner)
-            }
-        }
-    }
 }

@@ -13,8 +13,8 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
-import podcast.adapters.web.api.AddPodcastRequest
-import podcast.adapters.web.api.PodcastSummaryDto
+import podcast.adapters.api.AddPodcastRequest
+import podcast.adapters.api.PodcastSummaryDto
 import podcast.fakes.FakePodcastCatalog
 import java.time.Clock
 import java.time.Instant

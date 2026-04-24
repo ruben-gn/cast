@@ -1,4 +1,6 @@
 rootProject.name = "Cast"
+include("core")
+include("web")
 
 dependencyResolutionManagement {
     repositories {
@@ -12,4 +14,3 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-
