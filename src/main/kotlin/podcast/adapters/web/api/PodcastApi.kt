@@ -6,15 +6,16 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
+import podcast.PODCAST_ROUTE
 import podcast.core.AddFeed
 import podcast.core.GetPodcast
 import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
 import podcast.core.PodcastException
-import podcast.core.model.Episode
-import podcast.core.model.FeedUrl
-import podcast.core.model.Podcast
-import podcast.core.model.PodcastId
+import podcast.core.models.Episode
+import podcast.core.models.FeedUrl
+import podcast.core.models.Podcast
+import podcast.core.models.PodcastId
 import podcast.adapters.web.formatted
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
@@ -24,7 +25,7 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
     val getPodcast: GetPodcast by dependencies
     val listEpisodes: ListEpisodes by dependencies
 
-    route("podcasts") {
+    route(PODCAST_ROUTE) {
         get {
             call.respond(listPodcasts().map(::podcastSummaryDto))
         }

@@ -1,14 +1,14 @@
 package podcast.core
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import podcast.core.model.Episode
+import podcast.core.models.Episode
 import shared.model.EpisodeId
-import podcast.core.model.FeedUrl
-import podcast.core.model.Podcast
-import podcast.core.model.PodcastId
-import podcast.core.port.EpisodeInfo
-import podcast.core.port.FeedInfoProvider
-import podcast.core.port.PodcastCatalog
+import podcast.core.models.FeedUrl
+import podcast.core.models.Podcast
+import podcast.core.models.PodcastId
+import podcast.core.ports.EpisodeInfo
+import podcast.core.ports.FeedInfoProvider
+import podcast.core.ports.PodcastCatalog
 import java.time.Clock
 import java.util.*
 

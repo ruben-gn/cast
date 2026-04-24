@@ -16,8 +16,8 @@ import podcast.core.GetPodcast
 import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
 import podcast.core.PodcastException
-import podcast.core.model.FeedUrl
-import podcast.core.model.PodcastId
+import podcast.core.models.FeedUrl
+import podcast.core.models.PodcastId
 
 fun Route.podcastView(dependencies: DependencyRegistry) {
 

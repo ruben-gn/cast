@@ -1,6 +1,6 @@
-package podcast.core.port
+package podcast.core.ports
 
-import podcast.core.model.FeedUrl
+import podcast.core.models.FeedUrl
 import java.time.Instant
 import kotlin.time.Duration
 

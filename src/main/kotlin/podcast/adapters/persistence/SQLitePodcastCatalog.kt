@@ -1,12 +1,12 @@
 package podcast.adapters.persistence
 
 import configuration.ConnectionProvider
-import podcast.core.model.Episode
+import podcast.core.models.Episode
 import shared.model.EpisodeId
-import podcast.core.model.FeedUrl
-import podcast.core.model.Podcast
-import podcast.core.model.PodcastId
-import podcast.core.port.PodcastCatalog
+import podcast.core.models.FeedUrl
+import podcast.core.models.Podcast
+import podcast.core.models.PodcastId
+import podcast.core.ports.PodcastCatalog
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.Types

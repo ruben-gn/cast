@@ -1,9 +1,9 @@
-package podcast.core.port
+package podcast.core.ports
 
-import podcast.core.model.Episode
-import podcast.core.model.FeedUrl
-import podcast.core.model.Podcast
-import podcast.core.model.PodcastId
+import podcast.core.models.Episode
+import podcast.core.models.FeedUrl
+import podcast.core.models.Podcast
+import podcast.core.models.PodcastId
 
 interface PodcastCatalog {
     suspend fun add(podcast: Podcast, episodes: List<Episode>)

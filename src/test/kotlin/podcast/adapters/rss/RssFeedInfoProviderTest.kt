@@ -9,7 +9,7 @@ import io.ktor.http.*
 import java.time.Instant
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
-import podcast.core.model.FeedUrl
+import podcast.core.models.FeedUrl
 
 class RssFeedInfoProviderTest : DescribeSpec({
 

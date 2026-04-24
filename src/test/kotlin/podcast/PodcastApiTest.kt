@@ -47,11 +47,8 @@ class PodcastApiTest : DescribeSpec({
             testApplication {
                 application {
                     installHttpClient(testHttpClient)
-                    installCommon()
-                    installPodcastModule(
-                        clock = fixedClock,
-                        podcastCatalog = FakePodcastCatalog()
-                    )
+                    installCommon(clock = fixedClock)
+                    installPodcastModule(podcastCatalog = FakePodcastCatalog())
                 }
                 val client = createClient { install(ContentNegotiation) { json() } }
 

@@ -12,16 +12,16 @@ import podcast.core.AddFeed
 import podcast.core.GetPodcast
 import podcast.core.ListEpisodes
 import podcast.core.ListPodcasts
-import podcast.core.port.FeedInfoProvider
-import podcast.core.port.PodcastCatalog
+import podcast.core.ports.FeedInfoProvider
+import podcast.core.ports.PodcastCatalog
 import java.time.Clock
 
+const val PODCAST_ROUTE = "podcasts"
+
 fun Application.installPodcastModule(
-    clock: Clock = Clock.systemUTC(),
     podcastCatalog: PodcastCatalog? = null
 ) {
     dependencies {
-        provide<Clock> { clock }
         provide<PodcastCatalog> { podcastCatalog ?: SQLitePodcastCatalog(resolve<ConnectionProvider>()) }
         provide<FeedInfoProvider> { RssFeedInfoProvider(resolve()) }
 

@@ -9,10 +9,10 @@ import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
-import podcast.core.model.FeedUrl
-import podcast.core.port.EpisodeInfo
-import podcast.core.port.FeedInfo
-import podcast.core.port.FeedInfoProvider
+import podcast.core.models.FeedUrl
+import podcast.core.ports.EpisodeInfo
+import podcast.core.ports.FeedInfo
+import podcast.core.ports.FeedInfoProvider
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle

@@ -1,4 +1,4 @@
-package podcast.core.model
+package podcast.core.models
 
 import java.time.Instant
 

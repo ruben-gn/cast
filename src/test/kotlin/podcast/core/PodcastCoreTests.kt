@@ -1,13 +1,14 @@
 package podcast.core
 
+import fakes.TestClock
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import podcast.core.model.FeedUrl
-import podcast.core.model.PodcastId
-import podcast.core.port.EpisodeInfo
-import podcast.core.port.FeedInfo
-import podcast.core.port.FeedInfoProvider
+import podcast.core.models.FeedUrl
+import podcast.core.models.PodcastId
+import podcast.core.ports.EpisodeInfo
+import podcast.core.ports.FeedInfo
+import podcast.core.ports.FeedInfoProvider
 import podcast.fakes.FakePodcastCatalog
 import java.time.Clock
 import java.time.Instant
@@ -15,9 +16,9 @@ import java.time.ZoneId
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-class PodcastDomainTests : DescribeSpec({
+class PodcastCoreTests : DescribeSpec({
     val fixedInstant = Instant.parse("2026-04-10T10:00:00Z")
-    val fixedClock = Clock.fixed(fixedInstant, ZoneId.of("UTC"))
+    val fixedClock = TestClock(fixedInstant)
 
     describe("Podcast Domain Hexagon") {
         lateinit var catalog: FakePodcastCatalog

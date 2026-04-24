@@ -1,8 +1,8 @@
 package podcast.adapters.web.view.components
 
 import kotlinx.html.*
-import podcast.core.model.Episode
-import podcast.core.model.Podcast
+import podcast.core.models.Episode
+import podcast.core.models.Podcast
 import podcast.adapters.web.formatted
 
 fun FlowContent.podcastList(podcasts: List<Podcast>) {

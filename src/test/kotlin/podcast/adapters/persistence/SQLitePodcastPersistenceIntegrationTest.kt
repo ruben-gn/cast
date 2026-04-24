@@ -8,11 +8,11 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import podcast.core.model.Episode
+import podcast.core.models.Episode
 import shared.model.EpisodeId
-import podcast.core.model.FeedUrl
-import podcast.core.model.Podcast
-import podcast.core.model.PodcastId
+import podcast.core.models.FeedUrl
+import podcast.core.models.Podcast
+import podcast.core.models.PodcastId
 import java.sql.DriverManager
 import java.time.Instant
 import java.util.*

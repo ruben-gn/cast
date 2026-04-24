@@ -1,8 +1,8 @@
 package podcast.core
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import podcast.core.model.Podcast
-import podcast.core.port.PodcastCatalog
+import podcast.core.models.Podcast
+import podcast.core.ports.PodcastCatalog
 
 private val log = KotlinLogging.logger { }
 
