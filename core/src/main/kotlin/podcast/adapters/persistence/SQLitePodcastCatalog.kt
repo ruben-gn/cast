@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog {
 
-    override suspend fun add(podcast: Podcast, episodes: List<Episode>) = db.withConnection { conn ->
+    override suspend fun save(podcast: Podcast, episodes: List<Episode>) = db.withConnection { conn ->
         val originalAutoCommit = conn.autoCommit
         try {
             conn.autoCommit = false
@@ -68,7 +68,8 @@ private fun Connection.insertPodcast(podcast: Podcast) {
         stmt.setString(2, podcast.url.value)
         stmt.setString(3, podcast.name)
         stmt.setString(4, podcast.image)
-        stmt.setString(5, podcast.createdAt.toString())
+        stmt.setString(5, podcast.created.toString())
+        stmt.setString(6, podcast.updated.toString())
         stmt.executeUpdate()
     }
 }
@@ -97,7 +98,8 @@ private fun ResultSet.toPodcast() = Podcast(
     url = FeedUrl(getString("url")),
     name = getString("name"),
     image = getString("image"),
-    createdAt = Instant.parse(getString("created_at"))
+    created = Instant.parse(getString("created")),
+    updated = Instant.parse(getString("updated"))
 )
 
 private fun ResultSet.toEpisode(): Episode {
@@ -114,13 +116,14 @@ private fun ResultSet.toEpisode(): Episode {
 }
 
 private val INSERT_PODCAST = """
-    INSERT INTO podcasts (id, url, name, image, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO podcasts (id, url, name, image, created, updated)
+    VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
         url = excluded.url,
         name = excluded.name,
         image = excluded.image,
-        created_at = excluded.created_at
+        created = excluded.created,
+        updated = excluded.updated
 """.trimIndent()
 
 private val INSERT_EPISODE = """

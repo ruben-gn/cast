@@ -1,6 +1,10 @@
 package podcast.core.ports
 
+import podcast.core.models.Episode
 import podcast.core.models.FeedUrl
+import podcast.core.models.Podcast
+import podcast.core.models.PodcastId
+import shared.model.EpisodeId
 import java.time.Instant
 import kotlin.time.Duration
 
@@ -10,15 +14,36 @@ fun interface FeedInfoProvider {
 
 data class FeedInfo(
     val title: String,
+    val url: String,
     val description: String,
     val image: String,
     val episodes: List<EpisodeInfo> = emptyList()
 )
 
 data class EpisodeInfo(
+    val id: String,
     val title: String,
     val description: String,
     val audioUrl: String,
     val duration: Duration?,
     val publishedAt: Instant?
+)
+
+fun FeedInfo.toPodcast(id: PodcastId, created: Instant, updated: Instant) = Podcast(
+    id = id,
+    url = FeedUrl(url),
+    name = title,
+    image = image,
+    created = created,
+    updated = updated
+)
+
+fun EpisodeInfo.toEpisode(podcastId: PodcastId) = Episode(
+    id = EpisodeId(id),
+    podcastId = podcastId,
+    title = title,
+    description = description,
+    audioUrl = audioUrl,
+    duration = duration,
+    publishedAt = publishedAt
 )

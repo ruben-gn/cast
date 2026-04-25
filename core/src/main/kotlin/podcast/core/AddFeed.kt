@@ -1,14 +1,13 @@
 package podcast.core
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import podcast.core.models.Episode
-import shared.model.EpisodeId
 import podcast.core.models.FeedUrl
 import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
-import podcast.core.ports.EpisodeInfo
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.ports.PodcastCatalog
+import podcast.core.ports.toEpisode
+import podcast.core.ports.toPodcast
 import java.time.Clock
 import java.util.*
 
@@ -17,44 +16,30 @@ private val log = KotlinLogging.logger {}
 class AddFeed(
     private val catalog: PodcastCatalog,
     private val feedInfoProvider: FeedInfoProvider,
+    private val updateFeed: UpdateFeed,
     private val clock: Clock
 ) {
     suspend operator fun invoke(url: FeedUrl): Podcast {
         log.info { "Adding feed $url." }
 
-        catalog.findByUrl(url)?.let {
-            log.info { "Feed $url already exists [${it.name}, ${it.id}]." }
-            return it
+        catalog.findByUrl(url)?.let { podcast ->
+            log.info { "Feed $url already exists [${podcast.name}, ${podcast.id}]." }
+            return updateFeed(podcast)
         }
 
-        val feedInfo = try {
-            feedInfoProvider.fetch(url)
-        } catch (e: Exception) {
-            throw PodcastException.FeedFetchFailed(url, e)
-        }
+        val feedInfo = feedInfoProvider.fetch(url)
 
-        val podcast = Podcast(
-            id = PodcastId(UUID.randomUUID().toString()),
-            url = url,
-            name = feedInfo.title,
-            image = feedInfo.image,
-            createdAt = clock.instant()
+        val podcast = feedInfo.toPodcast(
+            PodcastId(UUID.randomUUID().toString()),
+            clock.instant(),
+            clock.instant()
         )
 
-        val episodeList = feedInfo.episodes.map { episode(it, podcast.id) }
-        catalog.add(podcast, episodeList)
+        val episodeList = feedInfo.episodes.map { it.toEpisode(podcast.id) }
+
+        catalog.save(podcast, episodeList)
 
         log.info { "Added feed $url: ${podcast.name} (${episodeList.size} episodes)." }
         return podcast
     }
 }
-
-private fun episode(episode: EpisodeInfo, podcastId: PodcastId) = Episode(
-    id = EpisodeId(UUID.randomUUID().toString()),
-    podcastId = podcastId,
-    title = episode.title,
-    description = episode.description,
-    audioUrl = episode.audioUrl,
-    duration = episode.duration,
-    publishedAt = episode.publishedAt
-)

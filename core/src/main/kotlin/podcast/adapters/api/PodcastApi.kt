@@ -51,7 +51,7 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
 }
 
 private fun podcastSummaryDto(podcast: Podcast) =
-    PodcastSummaryDto(podcast.id.value, podcast.url.value, podcast.name, podcast.image, podcast.createdAt.toString())
+    PodcastSummaryDto(podcast.id.value, podcast.url.value, podcast.name, podcast.image, podcast.created.toString(), podcast.updated.toString())
 
 private fun podcastDetailDto(podcast: Podcast, episodes: List<Episode>) =
     PodcastDetailDto(
@@ -59,7 +59,8 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<Episode>) =
         url = podcast.url.value,
         name = podcast.name,
         image = podcast.image,
-        createdAt = podcast.createdAt.toString(),
+        created = podcast.created.toString(),
+        updated = podcast.updated.toString(),
         episodes = episodes.map(::episodeDto)
     )
 
@@ -77,7 +78,7 @@ private fun episodeDto(episode: Episode) =
 data class AddPodcastRequest(val feed: String)
 
 @Serializable
-data class PodcastSummaryDto(val id: String, val url: String, val name: String, val image: String, val createdAt: String)
+data class PodcastSummaryDto(val id: String, val url: String, val name: String, val image: String, val created: String, val updated: String)
 
 @Serializable
 data class EpisodeDto(
@@ -95,6 +96,7 @@ data class PodcastDetailDto(
     val url: String,
     val name: String,
     val image: String,
-    val createdAt: String,
+    val created: String,
+    val updated: String,
     val episodes: List<EpisodeDto>
 )

@@ -25,7 +25,8 @@ val CREATE_PODCASTS_TABLE = """
         url TEXT NOT NULL,
         name TEXT NOT NULL,
         image TEXT NOT NULL,
-        created_at TEXT NOT NULL
+        created TEXT NOT NULL,
+        updated TEXT NOT NULL
     )
 """.trimIndent()
 

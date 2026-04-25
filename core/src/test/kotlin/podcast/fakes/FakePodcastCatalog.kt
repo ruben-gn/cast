@@ -11,7 +11,7 @@ class FakePodcastCatalog : PodcastCatalog {
     private val podcasts = mutableMapOf<PodcastId, Podcast>()
     private val episodes = mutableMapOf<EpisodeId, Episode>()
 
-    override suspend fun add(podcast: Podcast, episodes: List<Episode>) {
+    override suspend fun save(podcast: Podcast, episodes: List<Episode>) {
         podcasts[podcast.id] = podcast
         episodes.forEach { this.episodes[it.id] = it }
     }

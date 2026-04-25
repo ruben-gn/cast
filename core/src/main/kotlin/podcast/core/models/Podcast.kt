@@ -7,7 +7,9 @@ data class Podcast(
     val url: FeedUrl,
     val name: String,
     val image: String,
-    val createdAt: Instant
+
+    val created: Instant,
+    val updated: Instant
 )
 
 @JvmInline

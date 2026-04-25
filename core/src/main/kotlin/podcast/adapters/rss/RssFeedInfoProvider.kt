@@ -9,6 +9,7 @@ import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
+import podcast.core.PodcastException
 import podcast.core.models.FeedUrl
 import podcast.core.ports.EpisodeInfo
 import podcast.core.ports.FeedInfo
@@ -27,23 +28,28 @@ private val weekdayPrefix = Regex("^[A-Za-z]{3},\\s*")
 class RssFeedInfoProvider(
     private val httpClient: HttpClient
 ) : FeedInfoProvider {
-    override suspend fun fetch(url: FeedUrl): FeedInfo =
-        httpClient
-            .get(url.value).bodyAsText()
-            .let(::parseXml)
-            .let(::toFeedInfo)
+    override suspend fun fetch(url: FeedUrl): FeedInfo = try {
+        val xml = httpClient.get(url.value).bodyAsText()
+        val feed = parseXml(xml)
+        toFeedInfo(feed, url)
+    } catch (e: Exception) {
+        throw PodcastException.FeedFetchFailed(url, e)
+    }
 }
 
-private fun toFeedInfo(channel: RssChannel) =
+private fun toFeedInfo(channel: RssChannel, url: FeedUrl) =
     FeedInfo(
         title = channel.title,
         description = channel.description,
         image = channel.itunesImage?.href ?: channel.image?.url ?: "",
+        url = url.value,
         episodes = channel.items.map { item ->
+            val audioUrl = item.enclosure?.url ?: ""
             EpisodeInfo(
+                id = item.guid ?: audioUrl,
                 title = item.title,
                 description = item.description,
-                audioUrl = item.enclosure?.url ?: "",
+                audioUrl = audioUrl,
                 duration = parseDuration(item.duration),
                 publishedAt = item.pubDate.takeIf { it.isNotBlank() }?.trim()?.let {
                     runCatching { ZonedDateTime.parse(weekdayPrefix.replace(it, ""), pubDateFormatter).toInstant() }.getOrNull()
@@ -118,7 +124,8 @@ data class RssItem(
     val enclosure: RssEnclosure? = null,
     @XmlElement(true) val pubDate: String = "",
     @XmlSerialName("duration", "http://www.itunes.com/dtds/podcast-1.0.dtd", "itunes")
-    @XmlElement(true) val duration: String? = null
+    @XmlElement(true) val duration: String? = null,
+    @XmlElement(true) val guid: String? = null
 )
 
 @Serializable

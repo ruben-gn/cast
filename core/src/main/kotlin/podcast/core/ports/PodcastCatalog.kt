@@ -6,7 +6,7 @@ import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
 
 interface PodcastCatalog {
-    suspend fun add(podcast: Podcast, episodes: List<Episode>)
+    suspend fun save(podcast: Podcast, episodes: List<Episode>)
     suspend fun findAll(): List<Podcast>
     suspend fun findById(id: PodcastId): Podcast?
     suspend fun findByUrl(url: FeedUrl): Podcast?

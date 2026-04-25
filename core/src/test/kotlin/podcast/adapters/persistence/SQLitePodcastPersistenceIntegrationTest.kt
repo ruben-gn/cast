@@ -37,7 +37,7 @@ class SQLitePodcastCatalogIT : DescribeSpec({
     describe("add") {
         it("should persist a podcast with its episodes atomically") {
             val podcastId = PodcastId(UUID.randomUUID().toString())
-            catalog.add(createPodcast(podcastId.value), listOf(
+            catalog.save(createPodcast(podcastId.value), listOf(
                 createEpisode("e1", podcastId.value),
                 createEpisode("e2", podcastId.value)
             ))
@@ -48,7 +48,7 @@ class SQLitePodcastCatalogIT : DescribeSpec({
 
         it("should persist a podcast with no episodes") {
             val podcastId = PodcastId(UUID.randomUUID().toString())
-            catalog.add(createPodcast(podcastId.value), emptyList())
+            catalog.save(createPodcast(podcastId.value), emptyList())
 
             catalog.findById(podcastId) shouldNotBe null
             catalog.episodesFor(podcastId).shouldBeEmpty()
@@ -56,8 +56,8 @@ class SQLitePodcastCatalogIT : DescribeSpec({
 
         it("should upsert on podcast id conflict") {
             val id = PodcastId("same-id")
-            catalog.add(Podcast(id, FeedUrl("url"), "Old Name", "img", Instant.now()), emptyList())
-            catalog.add(Podcast(id, FeedUrl("url"), "New Name", "img", Instant.now()), emptyList())
+            catalog.save(Podcast(id, FeedUrl("url"), "Old Name", "img", Instant.now(), Instant.now()), emptyList())
+            catalog.save(Podcast(id, FeedUrl("url"), "New Name", "img", Instant.now(), Instant.now()), emptyList())
 
             catalog.findById(id)?.name shouldBe "New Name"
         }
@@ -66,8 +66,8 @@ class SQLitePodcastCatalogIT : DescribeSpec({
     describe("findAll") {
         it("should return all added podcasts") {
             catalog.findAll().shouldBeEmpty()
-            catalog.add(createPodcast("1"), emptyList())
-            catalog.add(createPodcast("2"), emptyList())
+            catalog.save(createPodcast("1"), emptyList())
+            catalog.save(createPodcast("2"), emptyList())
             catalog.findAll() shouldHaveSize 2
         }
     }
@@ -82,8 +82,8 @@ class SQLitePodcastCatalogIT : DescribeSpec({
         it("should not return episodes belonging to a different podcast") {
             val id1 = PodcastId(UUID.randomUUID().toString())
             val id2 = PodcastId(UUID.randomUUID().toString())
-            catalog.add(createPodcast(id1.value), listOf(createEpisode("e1", id1.value)))
-            catalog.add(createPodcast(id2.value), emptyList())
+            catalog.save(createPodcast(id1.value), listOf(createEpisode("e1", id1.value)))
+            catalog.save(createPodcast(id2.value), emptyList())
 
             catalog.episodesFor(id2).shouldBeEmpty()
         }
@@ -95,7 +95,8 @@ private fun createPodcast(id: String) = Podcast(
     url = FeedUrl("url-$id"),
     name = "Name $id",
     image = "img",
-    createdAt = Instant.now()
+    created = Instant.now(),
+    updated = Instant.now()
 )
 
 private fun createEpisode(id: String, podcastId: String) = Episode(
