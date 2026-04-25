@@ -77,5 +77,101 @@ body#main-body {
     background-color: #e4e4e4;
     margin: 0;
     padding: 40px;
+    padding-bottom: 100px;
     color: #333;
+    overflow-y: scroll;
+}
+
+/* Episode play button */
+.episode-play-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #333;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 1;
+    transition: background 0.15s;
+}
+.episode-play-btn:hover {
+    background: #555;
+}
+
+/* Persistent audio player bar */
+#player-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #222;
+    color: white;
+    padding: 12px 20px;
+    z-index: 500;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.25);
+    display: none;
+}
+#player-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: white;
+    color: #222;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+#player-btn:hover {
+    background: #ddd;
+}
+#player-middle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+#player-title {
+    font-size: 14px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: 'Montserrat', sans-serif;
+}
+#player-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#player-current,
+#player-duration {
+    font-size: 11px;
+    color: #aaa;
+    white-space: nowrap;
+    font-family: monospace;
+    min-width: 34px;
+}
+#player-duration {
+    text-align: right;
+}
+#player-progress {
+    flex: 1;
+    height: 4px;
+    accent-color: white;
+    cursor: pointer;
 }

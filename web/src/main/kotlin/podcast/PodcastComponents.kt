@@ -123,7 +123,15 @@ fun FlowContent.podcastDetails(podcast: Podcast, episodes: List<Episode>) {
 
 private fun FlowContent.episodeItem(episode: Episode) {
     div {
-        style = "background: white; border-radius: 12px; padding: 20px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative;"
+        style = "background: white; border-radius: 12px; padding: 20px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; padding-right: 64px;"
+
+        button(classes = "episode-play-btn") {
+            attributes["data-audio-url"] = episode.audioUrl
+            attributes["data-title"] = episode.title
+            attributes["onclick"] = "playEpisode(this.dataset.audioUrl, this.dataset.title)"
+            attributes["title"] = "Play ${episode.title}"
+            unsafe { +"&#9654;" }
+        }
 
         val toggleId = "tgl-${episode.id.value}"
         input(type = InputType.checkBox) {
