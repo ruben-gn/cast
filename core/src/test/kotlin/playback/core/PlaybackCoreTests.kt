@@ -3,6 +3,8 @@ package playback.core
 import fakes.TestClock
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import playback.core.usecase.GetPlaybackState
+import playback.core.usecase.UpdatePlaybackState
 import playback.fakes.FakePlaybackPersistence
 import shared.model.EpisodeId
 import java.time.Instant
@@ -18,7 +20,7 @@ class PlaybackCoreTests : DescribeSpec({
         lateinit var getPlaybackState: GetPlaybackState
 
         beforeEach {
-            clock = TestClock(fixedInstant) // Reset clock to fixedInstant before every test
+            clock = TestClock(fixedInstant)
             persistence = FakePlaybackPersistence()
             updatePlaybackState = UpdatePlaybackState(clock, persistence)
             getPlaybackState = GetPlaybackState(clock, persistence)

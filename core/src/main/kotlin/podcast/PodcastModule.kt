@@ -10,12 +10,15 @@ import kotlinx.coroutines.launch
 import podcast.adapters.api.podcastApi
 import podcast.adapters.persistence.SQLitePodcastCatalog
 import podcast.adapters.rss.RssFeedInfoProvider
-import podcast.core.*
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.ports.PodcastCatalog
+import podcast.core.usecase.AddFeed
+import podcast.core.usecase.GetPodcast
+import podcast.core.usecase.ListEpisodes
+import podcast.core.usecase.ListPodcasts
+import podcast.core.usecase.UpdateFeed
+import podcast.core.usecase.UpdateFeeds
 import kotlin.time.Duration.Companion.minutes
-
-const val PODCAST_ROUTE = "podcasts"
 
 fun Application.installPodcastModule(
     podcastCatalog: PodcastCatalog? = null
@@ -36,7 +39,7 @@ fun Application.installPodcastModule(
     }
 
     routing {
-        route("/api") { podcastApi(dependencies) }
+        route("/api/podcast") { podcastApi(dependencies) }
     }
 
     launch {

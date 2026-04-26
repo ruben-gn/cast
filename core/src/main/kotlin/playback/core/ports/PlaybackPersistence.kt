@@ -4,6 +4,6 @@ import playback.core.models.PlaybackState
 import shared.model.EpisodeId
 
 interface PlaybackPersistence {
-    fun update(playbackState: PlaybackState)
-    fun get(episodeId: EpisodeId): PlaybackState?
+    suspend fun update(playbackState: PlaybackState)
+    suspend fun get(episodeId: EpisodeId): PlaybackState?
 }

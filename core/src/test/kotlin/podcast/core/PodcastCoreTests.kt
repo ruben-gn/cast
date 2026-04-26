@@ -10,6 +10,12 @@ import podcast.core.models.PodcastId
 import podcast.core.ports.EpisodeInfo
 import podcast.core.ports.FeedInfo
 import podcast.core.ports.FeedInfoProvider
+import podcast.core.usecase.AddFeed
+import podcast.core.usecase.GetPodcast
+import podcast.core.usecase.ListEpisodes
+import podcast.core.usecase.ListPodcasts
+import podcast.core.usecase.UpdateFeed
+import podcast.core.usecase.UpdateFeeds
 import podcast.fakes.FakePodcastCatalog
 import java.time.Instant
 import kotlin.time.Duration.Companion.hours

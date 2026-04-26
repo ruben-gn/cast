@@ -1,4 +1,4 @@
-package podcast.core
+package podcast.core.usecase
 
 import podcast.core.ports.PodcastCatalog
 import kotlinx.coroutines.coroutineScope

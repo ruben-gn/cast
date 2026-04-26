@@ -1,4 +1,4 @@
-package playback.core
+package playback.core.usecase
 
 import playback.core.models.PlaybackState
 import playback.core.ports.PlaybackPersistence
@@ -9,7 +9,7 @@ class GetPlaybackState(
     private val clock: Clock,
     private val persistence: PlaybackPersistence,
 ) {
-    operator fun invoke(episodeId: String) =
+    suspend operator fun invoke(episodeId: String) =
         persistence.get(EpisodeId(episodeId))
             ?: PlaybackState(EpisodeId(episodeId), 0, clock.instant())
 }

@@ -1,4 +1,4 @@
-package podcast.core
+package podcast.core.usecase
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import podcast.core.models.Podcast

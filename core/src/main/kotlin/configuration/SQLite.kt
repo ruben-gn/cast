@@ -10,6 +10,7 @@ fun Application.installDatabase() {
     connection.createStatement().use { statement ->
         statement.executeUpdate(CREATE_PODCASTS_TABLE)
         statement.executeUpdate(CREATE_EPISODES_TABLE)
+        statement.executeUpdate(CREATE_PLAYBACK_STATE_TABLE)
     }
 
     val db = SingleConnectionProvider(connection)
@@ -41,4 +42,12 @@ val CREATE_EPISODES_TABLE = """
         published_at TEXT,
         FOREIGN KEY (podcast_id) REFERENCES podcasts(id) ON DELETE CASCADE
     )
+""".trimIndent()
+
+val CREATE_PLAYBACK_STATE_TABLE = """
+    CREATE TABLE IF NOT EXISTS playback_state (
+        episode_id TEXT PRIMARY KEY,
+        progress_ms INTEGER NOT NULL,
+        updated_at TEXT NOT NULL
+    );
 """.trimIndent()

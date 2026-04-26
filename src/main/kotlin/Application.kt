@@ -6,7 +6,6 @@ import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import playback.installPlaybackModule
-import podcast.PODCAST_ROUTE
 import podcast.installPodcastModule
 import routes.podcastView
 
@@ -29,8 +28,8 @@ fun Application.installDefaultRouting() {
     routing {
         staticResources("/static", "static")
         get("/") {
-            call.respondRedirect("/$PODCAST_ROUTE/")
+            call.respondRedirect("/podcasts")
         }
-        podcastView(dependencies)
+        route("podcasts") { podcastView(dependencies) }
     }
 }

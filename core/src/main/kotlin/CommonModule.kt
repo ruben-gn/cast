@@ -5,6 +5,7 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.routing.*
+import io.ktor.server.websocket.WebSockets
 import java.time.Clock
 
 fun Application.installHttpClient(httpClient: HttpClient? = null) {
@@ -23,6 +24,7 @@ fun Application.installCommon(clock: Clock = Clock.systemUTC()) {
     }
 
     install(IgnoreTrailingSlash)
+    install(WebSockets)
 
     dependencies {
         provide<Clock> { clock }

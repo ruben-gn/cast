@@ -1,4 +1,4 @@
-package podcast.core
+package podcast.core.usecase
 
 import podcast.core.models.Episode
 import podcast.core.models.PodcastId

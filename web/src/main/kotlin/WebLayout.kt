@@ -99,6 +99,10 @@ fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
                     var playerCurrent = document.getElementById('player-current');
                     var playerDuration = document.getElementById('player-duration');
 
+                    var currentEpisodeId = null;
+                    var lastReportedTime = 0;
+                    var ws = new WebSocket('ws://' + window.location.host + '/api/playback');
+
                     function fmt(s) {
                         if (isNaN(s) || s < 0) return '0:00';
                         var m = Math.floor(s / 60);
@@ -122,6 +126,14 @@ fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
                         if (!isNaN(dur) && dur > 0) {
                             playerProgress.value = (cur / dur) * 100;
                         }
+
+                        if (currentEpisodeId && ws.readyState === WebSocket.OPEN && Math.abs(cur - lastReportedTime) > 0.5) {
+                            ws.send(JSON.stringify({
+                                episodeId: currentEpisodeId,
+                                progressMs: Math.floor(cur * 1000)
+                            }));
+                            lastReportedTime = cur;
+                        }
                     });
 
                     playerProgress.addEventListener('input', function() {
@@ -131,18 +143,33 @@ fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
                         }
                     });
 
-                    function playEpisode(url, title) {
+                    function playEpisode(id, url, title) {
+                        currentEpisodeId = id;
+                        lastReportedTime = 0;
                         playerAudio.src = url;
                         playerTitle.textContent = title;
                         playerBar.style.display = 'flex';
                         playerProgress.value = 0;
                         playerCurrent.textContent = '0:00';
                         playerDuration.textContent = '0:00';
-                        playerAudio.play();
+                        
+                        var playPromise = playerAudio.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(function(error) {
+                                console.error("Playback failed:", error);
+                            });
+                        }
                     }
 
                     function togglePlay() {
-                        if (playerAudio.paused) { playerAudio.play(); } else { playerAudio.pause(); }
+                        if (playerAudio.paused) { 
+                            var playPromise = playerAudio.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(function(error) { console.error("Playback failed:", error); });
+                            }
+                        } else { 
+                            playerAudio.pause(); 
+                        }
                     }
                 """.trimIndent()
             }

@@ -6,17 +6,16 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import podcast.PODCAST_ROUTE
-import podcast.core.AddFeed
-import podcast.core.GetPodcast
-import podcast.core.ListEpisodes
-import podcast.core.ListPodcasts
+import podcast.adapters.web.formatted
 import podcast.core.PodcastException
 import podcast.core.models.Episode
 import podcast.core.models.FeedUrl
 import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
-import podcast.adapters.web.formatted
+import podcast.core.usecase.AddFeed
+import podcast.core.usecase.GetPodcast
+import podcast.core.usecase.ListEpisodes
+import podcast.core.usecase.ListPodcasts
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
 
@@ -25,28 +24,26 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
     val getPodcast: GetPodcast by dependencies
     val listEpisodes: ListEpisodes by dependencies
 
-    route(PODCAST_ROUTE) {
-        get {
-            call.respond(listPodcasts().map(::podcastSummaryDto))
-        }
+    get {
+        call.respond(listPodcasts().map(::podcastSummaryDto))
+    }
 
-        post {
-            val request = call.receive<AddPodcastRequest>()
-            try {
-                val podcast = addFeed(url = FeedUrl(request.feed))
-                val episodes = listEpisodes(podcast.id)
-                call.respond(podcastDetailDto(podcast, episodes))
-            } catch (e: PodcastException.FeedFetchFailed) {
-                call.respond(HttpStatusCode.BadGateway, mapOf("error" to (e.message ?: "Failed to fetch feed")))
-            }
-        }
-
-        get("{id}") {
-            val id = PodcastId(call.parameters["id"]!!)
-            val podcast = getPodcast(id) ?: return@get call.respond(HttpStatusCode.NotFound)
-            val episodes = listEpisodes(id)
+    post {
+        val request = call.receive<AddPodcastRequest>()
+        try {
+            val podcast = addFeed(url = FeedUrl(request.feed))
+            val episodes = listEpisodes(podcast.id)
             call.respond(podcastDetailDto(podcast, episodes))
+        } catch (e: PodcastException.FeedFetchFailed) {
+            call.respond(HttpStatusCode.BadGateway, mapOf("error" to (e.message ?: "Failed to fetch feed")))
         }
+    }
+
+    get("{id}") {
+        val id = PodcastId(call.parameters["id"]!!)
+        val podcast = getPodcast(id) ?: return@get call.respond(HttpStatusCode.NotFound)
+        val episodes = listEpisodes(id)
+        call.respond(podcastDetailDto(podcast, episodes))
     }
 }
 
