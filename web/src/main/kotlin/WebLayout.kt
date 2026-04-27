@@ -21,32 +21,12 @@ fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
         }
         div {
             id = "player-bar"
-            button {
-                id = "player-btn"
-                attributes["onclick"] = "togglePlay()"
-                unsafe { +"&#9654;" }
-            }
-            div {
-                id = "player-middle"
-                span {
-                    id = "player-title"
-                    +""
-                }
-                div {
-                    id = "player-progress-row"
-                    span { id = "player-current"; +"0:00" }
-                    input(type = InputType.range) {
-                        id = "player-progress"
-                        attributes["min"] = "0"
-                        attributes["max"] = "100"
-                        attributes["value"] = "0"
-                        attributes["step"] = "0.1"
-                    }
-                    span { id = "player-duration"; +"0:00" }
-                }
+            span {
+                id = "player-title"
             }
             audio {
                 id = "player-audio"
+                attributes["controls"] = ""
             }
         }
         script {

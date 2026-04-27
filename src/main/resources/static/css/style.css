@@ -354,64 +354,25 @@ body#main-body {
     right: 0;
     background: #222;
     color: white;
-    padding: 12px 20px;
+    padding: 10px 20px;
     z-index: 500;
+    display: none;
     align-items: center;
     gap: 16px;
     box-shadow: 0 -2px 8px rgba(0,0,0,0.25);
-    display: none;
 }
-#player-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: white;
-    color: #222;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: background 0.15s;
-}
-#player-btn:hover {
-    background: #ddd;
-}
-#player-middle {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-}
+
 #player-title {
     font-size: 14px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-family: 'Montserrat', sans-serif;
-}
-#player-progress-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-#player-current,
-#player-duration {
-    font-size: 11px;
-    color: #aaa;
-    white-space: nowrap;
-    font-family: monospace;
-    min-width: 34px;
-}
-#player-duration {
-    text-align: right;
-}
-#player-progress {
     flex: 1;
-    height: 4px;
+    min-width: 0;
+}
+
+#player-audio {
+    flex: 1;
+    min-width: 0;
     accent-color: white;
-    cursor: pointer;
 }
