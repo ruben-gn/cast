@@ -115,7 +115,7 @@
 
 .podcast-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 200px);
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     justify-content: center;
     gap: 7px;
 }
@@ -128,7 +128,7 @@
 }
 
 .podcast-card {
-    width: 200px;
+    width: 100%;
     background: white;
     border-radius: 12px;
     overflow: hidden;
@@ -375,4 +375,69 @@ body#main-body {
     flex: 1;
     min-width: 0;
     accent-color: white;
+}
+
+@media (max-width: 600px) {
+    body#main-body {
+        padding: 16px;
+        padding-bottom: 120px;
+    }
+
+    .podcast-card-img {
+        height: 140px;
+    }
+
+    .fab {
+        top: auto;
+        bottom: 80px;
+        right: 16px;
+    }
+
+    .podcast-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .podcast-cover {
+        width: 120px;
+        height: 120px;
+    }
+
+    .podcast-title {
+        font-size: 20px;
+        text-align: center;
+    }
+
+    .podcast-subtitle {
+        text-align: center;
+    }
+
+    #player-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        padding: 8px 16px;
+    }
+
+    #player-title {
+        font-size: 12px;
+        flex: none;
+    }
+
+    #player-audio {
+        flex: none;
+        width: 100%;
+    }
+
+    .episode-row {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .episode-title {
+        min-width: 0;
+        flex: 1 1 60%;
+    }
 }

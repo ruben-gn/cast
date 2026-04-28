@@ -3,6 +3,7 @@ import podcast.addFeedModal
 
 fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
     head {
+        meta(name = "viewport", content = "width=device-width, initial-scale=1.0")
         montserratFont()
         link(rel = "stylesheet", href = "/static/css/style.css")
         script { src = "https://unpkg.com/htmx.org@1.9.10" }
