@@ -1,11 +1,14 @@
 package podcast.adapters.api
 
+import cast.api.AddPodcastRequest
+import cast.api.EpisodeDto
+import cast.api.PodcastDetailDto
+import cast.api.PodcastSummaryDto
 import io.ktor.http.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
 import podcast.adapters.web.formatted
 import podcast.core.PodcastException
 import podcast.core.models.Episode
@@ -71,29 +74,3 @@ private fun episodeDto(episode: Episode) =
         publishedAt = episode.publishedAt?.toString()
     )
 
-@Serializable
-data class AddPodcastRequest(val feed: String)
-
-@Serializable
-data class PodcastSummaryDto(val id: String, val url: String, val name: String, val image: String, val created: String, val updated: String)
-
-@Serializable
-data class EpisodeDto(
-    val id: String,
-    val title: String,
-    val description: String,
-    val audioUrl: String,
-    val duration: String?,
-    val publishedAt: String?
-)
-
-@Serializable
-data class PodcastDetailDto(
-    val id: String,
-    val url: String,
-    val name: String,
-    val image: String,
-    val created: String,
-    val updated: String,
-    val episodes: List<EpisodeDto>
-)

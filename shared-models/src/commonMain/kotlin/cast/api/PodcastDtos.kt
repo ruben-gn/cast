@@ -1,0 +1,37 @@
+package cast.api
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class PodcastSummaryDto(
+    val id: String,
+    val url: String,
+    val name: String,
+    val image: String,
+    val created: String,
+    val updated: String,
+)
+
+@Serializable
+data class EpisodeDto(
+    val id: String,
+    val title: String,
+    val description: String,
+    val audioUrl: String,
+    val duration: String?,
+    val publishedAt: String?,
+)
+
+@Serializable
+data class PodcastDetailDto(
+    val id: String,
+    val url: String,
+    val name: String,
+    val image: String,
+    val created: String,
+    val updated: String,
+    val episodes: List<EpisodeDto>,
+)
+
+@Serializable
+data class AddPodcastRequest(val feed: String)

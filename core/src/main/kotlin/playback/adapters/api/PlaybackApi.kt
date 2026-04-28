@@ -1,11 +1,11 @@
 package playback.adapters.api
 
+import cast.api.PlaybackStateResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.plugins.di.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import playback.core.usecase.GetPlaybackState
@@ -49,9 +49,3 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
     }
 }
 
-@Serializable
-data class PlaybackStateResponse(
-    val type: String,
-    val episodeId: String,
-    val progressMs: Long
-)

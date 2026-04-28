@@ -2,9 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Modules
+
+| Module | Description |
+|--------|-------------|
+| `core/` | Shared domain + adapters (Ktor server, SQLite, RSS) |
+| `web/` | SSR HTML views (kotlinx-html + HTMX) |
+| `android/` | Native Android app (Jetpack Compose, Media3, Android Auto) |
+
 ## Commands
 
 ```bash
+# Backend (run from repo root)
 ./gradlew build          # compile + test
 ./gradlew run            # start server on :8080
 ./gradlew test           # run all tests
@@ -13,6 +22,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew test --tests "podcast.PodcastApiTest"
 ./gradlew test --tests "podcast.core.PodcastDomainTest"
 ./gradlew test --tests "podcast.adapters.RssFeedInfoProviderTest"
+
+# Android (run from android/ directory or via IDE)
+cd android && ./gradlew assembleDebug    # build debug APK
+cd android && ./gradlew installDebug     # build + install on connected device
+cd android && ./gradlew test            # unit tests
+cd android && ./gradlew connectedAndroidTest  # instrumented tests
 ```
 
 ## Architecture
