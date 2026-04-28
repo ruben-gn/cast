@@ -39,7 +39,7 @@ fun Application.installPodcastModule(
     }
 
     routing {
-        route("/api/podcast") { podcastApi(dependencies) }
+        route("/api/podcasts") { podcastApi(dependencies) }
     }
 
     launch {

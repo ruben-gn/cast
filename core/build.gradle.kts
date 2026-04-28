@@ -28,6 +28,7 @@ testing {
                 implementation(libs.kotest.assertions)
                 implementation(libs.ktor.server.test.host)
                 implementation(libs.ktor.client.mock)
+                implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
             }
