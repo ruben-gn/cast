@@ -33,18 +33,18 @@
 - [x] 1.3 Update `core` to depend on `:shared-models`; remove old DTO definitions
 - [x] 1.4 Server build + tests green
 
-## Phase 2 — Android module scaffold
-- [ ] 2.1 Create `android/build.gradle.kts`, wire into root `settings.gradle.kts`
-- [ ] 2.2 Kotlin 2.3 + K2, AGP 8.x, compileSdk/targetSdk/minSdk = 36
-- [ ] 2.3 Version catalog: Compose BOM, Material 3, Media3, Ktor client + WebSockets, Coil 3, DataStore, Navigation Compose, Hilt
-- [ ] 2.4 Depend on `:shared-models` (add `androidTarget()` to shared-models)
-- [ ] 2.5 `MainActivity` — `enableEdgeToEdge()`, Hilt, Compose scaffold, NavHost
+## Phase 2 — Android module scaffold ✅
+- [x] 2.1 Create `android/build.gradle.kts`, wire into root `settings.gradle.kts`
+- [x] 2.2 Kotlin 2.3 + K2, AGP 8.x, compileSdk/targetSdk/minSdk = 36
+- [x] 2.3 Version catalog: Compose BOM, Material 3, Media3, Ktor client + WebSockets, Coil 3, DataStore, Navigation Compose, Hilt
+- [x] 2.4 Depend on `:shared-models` (add `androidTarget()` to shared-models)
+- [x] 2.5 `MainActivity` — `enableEdgeToEdge()`, Hilt, Compose scaffold, NavHost
 
-## Phase 3 — Network + data layer
-- [ ] 3.1 Ktor HTTP client — base URL `http://cast.local:8100`, configurable
-- [ ] 3.2 `PodcastRepository` — list podcasts, get podcast detail
-- [ ] 3.3 DataStore for settings (server base URL)
-- [ ] 3.4 WebSocket client — `getPosition(episodeId)` and `updatePosition(episodeId, ms)` suspend funs
+## Phase 3 — Network + data layer ✅
+- [x] 3.1 Ktor HTTP client — base URL `http://cast.local:8100`, configurable; `network_security_config.xml` for cleartext on Tailscale IP
+- [x] 3.2 `PodcastRepository` — list podcasts, get podcast detail
+- [x] 3.3 DataStore for settings (server base URL)
+- [x] 3.4 WebSocket client — `getPosition(episodeId)` and `updatePosition(episodeId, ms)` suspend funs
 
 ## Phase 4 — Background media playback
 - [ ] 4.1 `CastMediaLibraryService` extending Media3 `MediaLibraryService`
