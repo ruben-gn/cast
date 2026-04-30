@@ -2,14 +2,18 @@ package cast.android.ui.player
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
+import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import cast.android.media.CastMediaLibraryService
+import cast.api.EpisodeDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CompletableDeferred
@@ -33,9 +37,17 @@ class PlayerViewModel @Inject constructor(
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
 
+    private val _currentMediaItem = MutableStateFlow<MediaItem?>(null)
+    val currentMediaItem: StateFlow<MediaItem?> = _currentMediaItem.asStateFlow()
+
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _isPlaying.value = isPlaying
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            _currentMediaItem.value = mediaItem
+            _currentPosition.value = 0L
         }
 
         override fun onPositionDiscontinuity(
@@ -62,9 +74,23 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    fun playEpisode(episodeId: String, audioUrl: String) {
+    fun playEpisode(episode: EpisodeDto, artworkUrl: String) {
         val ctrl = _controller.value ?: return
-        ctrl.setMediaItem(MediaItem.Builder().setMediaId(episodeId).setUri(audioUrl).build())
+        val extras = Bundle().apply {
+            putLong("durationMs", episode.duration.parseDurationMs() ?: 0L)
+        }
+        val item = MediaItem.Builder()
+            .setMediaId(episode.id)
+            .setUri(episode.audioUrl)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(episode.title)
+                    .setArtworkUri(Uri.parse(artworkUrl))
+                    .setExtras(extras)
+                    .build()
+            )
+            .build()
+        ctrl.setMediaItem(item)
         ctrl.prepare()
         ctrl.play()
     }
@@ -73,5 +99,15 @@ class PlayerViewModel @Inject constructor(
         _controller.value?.removeListener(playerListener)
         _controller.value?.release()
         super.onCleared()
+    }
+}
+
+private fun String?.parseDurationMs(): Long? {
+    if (this == null) return null
+    val parts = split(":").mapNotNull { it.toLongOrNull() }
+    return when (parts.size) {
+        2 -> (parts[0] * 60 + parts[1]) * 1000
+        3 -> (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000
+        else -> null
     }
 }
