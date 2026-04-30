@@ -7,6 +7,7 @@ kotlinxHtml = "0.11.0"
 kotest = "6.1.11"
 sqlite-jdbc = "3.53.0.0"
 kotlinx-serialization = "1.8.1"
+kotlinx-coroutines = "1.10.2"
 
 agp = "9.2.0"
 ksp = "2.3.7"
@@ -45,6 +46,7 @@ kotlinx-html-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-html-jvm",
 sqlite-jdbc = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqlite-jdbc" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-coroutines-guava = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-guava", version.ref = "kotlinx-coroutines" }
 
 kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
 

@@ -15,6 +15,10 @@ class CastSettings @Inject constructor(
 ) {
     companion object {
         private val KEY_SERVER_URL = stringPreferencesKey("server_url")
+        private val KEY_LAST_EPISODE_ID = stringPreferencesKey("last_episode_id")
+        private val KEY_LAST_EPISODE_TITLE = stringPreferencesKey("last_episode_title")
+        private val KEY_LAST_EPISODE_URL = stringPreferencesKey("last_episode_url")
+        private val KEY_LAST_PODCAST_IMAGE = stringPreferencesKey("last_podcast_image")
         const val DEFAULT_SERVER_URL = "http://cast.local:8100"
     }
 
@@ -22,7 +26,21 @@ class CastSettings @Inject constructor(
         prefs[KEY_SERVER_URL] ?: DEFAULT_SERVER_URL
     }
 
+    val lastEpisodeId: Flow<String?> = dataStore.data.map { it[KEY_LAST_EPISODE_ID] }
+    val lastEpisodeTitle: Flow<String?> = dataStore.data.map { it[KEY_LAST_EPISODE_TITLE] }
+    val lastEpisodeUrl: Flow<String?> = dataStore.data.map { it[KEY_LAST_EPISODE_URL] }
+    val lastPodcastImage: Flow<String?> = dataStore.data.map { it[KEY_LAST_PODCAST_IMAGE] }
+
     suspend fun setServerUrl(url: String) {
         dataStore.edit { it[KEY_SERVER_URL] = url }
+    }
+
+    suspend fun saveLastPlayed(episodeId: String, title: String, audioUrl: String, imageUrl: String) {
+        dataStore.edit { prefs ->
+            prefs[KEY_LAST_EPISODE_ID] = episodeId
+            prefs[KEY_LAST_EPISODE_TITLE] = title
+            prefs[KEY_LAST_EPISODE_URL] = audioUrl
+            prefs[KEY_LAST_PODCAST_IMAGE] = imageUrl
+        }
     }
 }
