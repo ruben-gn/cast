@@ -3,6 +3,7 @@ package cast.android.media
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -101,6 +102,7 @@ class CastMediaLibraryService : MediaLibraryService() {
             val audioUrl = settings.lastEpisodeUrl.first() ?: return@launch
             val title = settings.lastEpisodeTitle.first() ?: ""
             val imageUrl = settings.lastPodcastImage.first() ?: ""
+            val positionMs = settings.lastPositionMs.first()
             val item = MediaItem.Builder()
                 .setMediaId(episodeId)
                 .setUri(audioUrl)
@@ -110,7 +112,7 @@ class CastMediaLibraryService : MediaLibraryService() {
                         .setArtworkUri(imageUrl.takeIf { it.isNotEmpty() }?.let { Uri.parse(it) })
                         .build()
                 ).build()
-            player.setMediaItem(item)
+            player.setMediaItem(item, positionMs)
             player.prepare()
         }
     }
@@ -141,7 +143,10 @@ class CastMediaLibraryService : MediaLibraryService() {
                         val (id, posMs) = withContext(Dispatchers.Main) {
                             player.currentMediaItem?.mediaId to player.currentPosition
                         }
-                        if (id != null) send(Frame.Text(json.encodeToString(WsUpdateRequest(episodeId = id, progressMs = posMs))))
+                        if (id != null) {
+                            send(Frame.Text(json.encodeToString(WsUpdateRequest(episodeId = id, progressMs = posMs))))
+                            settings.saveLastPosition(posMs)
+                        }
                     }
                 }
             }
@@ -159,6 +164,37 @@ class CastMediaLibraryService : MediaLibraryService() {
     @Serializable private data class WsUpdateRequest(val type: String = "update", val episodeId: String, val progressMs: Long)
 
     private inner class AutoCallback : MediaLibrarySession.Callback {
+
+        @Suppress("OVERRIDE_DEPRECATION")
+        override fun onPlaybackResumption(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = scope.future {
+            val episodeId = settings.lastEpisodeId.first()
+            val audioUrl = settings.lastEpisodeUrl.first()
+            if (episodeId == null || audioUrl == null) {
+                throw UnsupportedOperationException("No last played episode")
+            }
+            val title = settings.lastEpisodeTitle.first() ?: ""
+            val imageUrl = settings.lastPodcastImage.first() ?: ""
+            val positionMs = settings.lastPositionMs.first()
+            val item = MediaItem.Builder()
+                .setMediaId(episodeId)
+                .setUri(audioUrl)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(title)
+                        .setArtworkUri(imageUrl.takeIf { it.isNotEmpty() }?.let { Uri.parse(it) })
+                        .setIsPlayable(true)
+                        .setIsBrowsable(false)
+                        .build()
+                ).build()
+            MediaSession.MediaItemsWithStartPosition(
+                ImmutableList.of(item),
+                /* startIndex = */ 0,
+                /* startPositionMs = */ positionMs.takeIf { it > 0 } ?: C.TIME_UNSET,
+            )
+        }
 
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
