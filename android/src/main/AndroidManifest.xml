@@ -25,6 +25,15 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name=".media.CastMediaLibraryService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>
