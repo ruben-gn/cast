@@ -85,6 +85,7 @@ class PlayerViewModel @Inject constructor(
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(episode.title)
+                    .setDescription(episode.description)
                     .setArtworkUri(Uri.parse(artworkUrl))
                     .setExtras(extras)
                     .build()

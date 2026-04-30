@@ -1,5 +1,6 @@
 package cast.android.ui.podcasts
 
+import android.text.Html
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -114,6 +115,15 @@ private fun EpisodeRow(episode: EpisodeDto, onClick: () -> Unit) {
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
+            if (episode.description.isNotBlank()) {
+                Text(
+                    text = episode.description.stripHtml(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
         }
         val duration = episode.duration
         if (duration != null) {
@@ -126,3 +136,7 @@ private fun EpisodeRow(episode: EpisodeDto, onClick: () -> Unit) {
         }
     }
 }
+
+
+private fun String.stripHtml(): String =
+    Html.fromHtml(this, Html.FROM_HTML_MODE_COMPACT).toString().trim()

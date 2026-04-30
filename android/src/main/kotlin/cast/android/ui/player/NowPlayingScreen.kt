@@ -1,5 +1,6 @@
 package cast.android.ui.player
 
+import android.text.Html
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,7 +75,8 @@ fun NowPlayingScreen(
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -150,6 +154,19 @@ fun NowPlayingScreen(
                     Text("+30s", style = MaterialTheme.typography.labelLarge)
                 }
             }
+
+            val description = mediaItem?.mediaMetadata?.description?.toString()
+            if (!description.isNullOrBlank()) {
+                Spacer(Modifier.height(24.dp))
+                Text(
+                    text = description.stripHtml(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                )
+            }
         }
     }
 }
@@ -162,3 +179,6 @@ private fun formatMs(ms: Long): String {
     return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
     else "%d:%02d".format(minutes, seconds)
 }
+
+private fun String.stripHtml(): String =
+    Html.fromHtml(this, Html.FROM_HTML_MODE_COMPACT).toString().trim()
