@@ -60,7 +60,7 @@ private fun FlowContent.subscribeForm() {
         attributes["hx-on::after-request"] = "handleSubResult(event)"
         attributes["hx-on::before-request"] = "document.getElementById('sub-error').classList.remove('visible')"
         classes = setOf("subscribe-form")
-        noValidate = true
+        novalidate = true
 
         label(classes = "url-label") {
             htmlFor = "rss-url-input"
