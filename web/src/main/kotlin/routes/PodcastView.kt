@@ -34,7 +34,12 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
 
         if (call.isHtmx) {
             call.respondText(ContentType.Text.Html) {
-                buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastList(podcasts) } }
+                buildString {
+                    appendHTML(false).div {
+                        attributes["id"] = "content-container"
+                        div(classes = "page-content") { podcastList(podcasts) }
+                    }
+                }
             }
         } else {
             call.respondHtml {
@@ -53,7 +58,12 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
 
             if (call.isHtmx) {
                 call.respondText(ContentType.Text.Html) {
-                    buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastList(podcasts) } }
+                    buildString {
+                        appendHTML(false).div {
+                            attributes["id"] = "content-container"
+                            div(classes = "page-content") { podcastList(podcasts) }
+                        }
+                    }
                 }
             } else {
                 call.respondRedirect("/podcasts")
@@ -72,7 +82,12 @@ fun Route.podcastView(dependencies: DependencyRegistry) {
 
         if (call.isHtmx) {
             call.respondText(ContentType.Text.Html) {
-                buildString { appendHTML(false).div { attributes["id"] = "content-container"; podcastDetails(podcast, episodes) } }
+                buildString {
+                    appendHTML(false).div {
+                        attributes["id"] = "content-container"
+                        div(classes = "page-content") { podcastDetails(podcast, episodes) }
+                    }
+                }
             }
         } else {
             call.respondHtml {

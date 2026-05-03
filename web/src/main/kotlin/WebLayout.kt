@@ -11,19 +11,25 @@ fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
     }
     body {
         id = "main-body"
-        button(classes = "fab") {
-            attributes["onclick"] = "document.getElementById('add-feed-modal').classList.add('open')"
-            +"+"
+        header(classes = "app-header") {
+            span(classes = "app-logo") { +"Cast" }
+            button(classes = "header-add-btn") {
+                attributes["onclick"] = "document.getElementById('add-feed-modal').classList.add('open')"
+                +"＋ Add podcast"
+            }
         }
         addFeedModal()
         div {
             id = "content-container"
-            content()
+            div(classes = "page-content") {
+                content()
+            }
         }
         div {
             id = "player-bar"
-            span {
-                id = "player-title"
+            div(classes = "player-info") {
+                span(classes = "player-now-playing") { +"Now playing" }
+                span { id = "player-title" }
             }
             audio {
                 id = "player-audio"
@@ -39,5 +45,5 @@ fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
 private fun HEAD.montserratFont() {
     link(rel = "preconnect", href = "https://fonts.googleapis.com")
     link(rel = "preconnect", href = "https://fonts.gstatic.com") { attributes["crossorigin"] = "anonymous" }
-    link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap")
+    link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap")
 }

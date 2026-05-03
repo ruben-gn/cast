@@ -7,7 +7,19 @@ import podcast.adapters.web.formatted
 
 fun FlowContent.podcastList(podcasts: List<Podcast>) {
     div(classes = "podcast-list") {
-        podcastGrid(podcasts)
+        if (podcasts.isEmpty()) podcastEmptyState() else podcastGrid(podcasts)
+    }
+}
+
+private fun FlowContent.podcastEmptyState() {
+    div(classes = "empty-state") {
+        div(classes = "empty-state-icon") { +"🎙" }
+        h2(classes = "empty-state-title") { +"No podcasts yet" }
+        p(classes = "empty-state-body") {
+            +"Add your first podcast by clicking "
+            strong { +"＋ Add podcast" }
+            +" above."
+        }
     }
 }
 
@@ -133,7 +145,8 @@ private fun FlowContent.episodeItem(episode: Episode) {
                     episode.duration?.let { duration ->
                         span(classes = "episode-duration") { +duration.formatted() }
                     }
-                    span("toggle-icon") { +"▼" }
+                    span(classes = "toggle-hint") {}
+                    span(classes = "toggle-icon") {}
                 }
             }
         }
