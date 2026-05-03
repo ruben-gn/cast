@@ -505,7 +505,6 @@ input:focus {
     justify-content: center;
     flex-shrink: 0;
     z-index: 1;
-    padding-left: 2px;
     transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
     box-shadow: 0 2px 8px rgba(27,153,139,0.35);
 }

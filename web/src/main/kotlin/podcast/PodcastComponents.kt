@@ -129,7 +129,7 @@ private fun FlowContent.episodeItem(episode: Episode) {
             attributes["data-title"] = episode.title
             attributes["onclick"] = "playEpisode(this.dataset.id, this.dataset.audioUrl, this.dataset.title)"
             attributes["title"] = "Play ${episode.title}"
-            unsafe { +"&#9654;" }
+            unsafe { +"""<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>""" }
         }
 
         if (hasDescription) {

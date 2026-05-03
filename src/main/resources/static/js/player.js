@@ -27,6 +27,8 @@ function checkDescriptionOverflow() {
 document.addEventListener('DOMContentLoaded', checkDescriptionOverflow);
 document.addEventListener('htmx:afterSettle', checkDescriptionOverflow);
 
+var ICON_PLAY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 var currentEpisodeId = null;
 var lastReportedTime = 0;
 var audio = document.getElementById('player-audio');
@@ -53,17 +55,17 @@ audio.addEventListener('timeupdate', function() {
 
 audio.addEventListener('play', function() {
     var btn = episodeBtn(currentEpisodeId);
-    if (btn) btn.innerHTML = '&#9208;';
+    if (btn) btn.innerHTML = ICON_PAUSE;
 });
 
 audio.addEventListener('pause', function() {
     var btn = episodeBtn(currentEpisodeId);
-    if (btn) btn.innerHTML = '&#9654;';
+    if (btn) btn.innerHTML = ICON_PLAY;
 });
 
 audio.addEventListener('ended', function() {
     var btn = episodeBtn(currentEpisodeId);
-    if (btn) btn.innerHTML = '&#9654;';
+    if (btn) btn.innerHTML = ICON_PLAY;
     currentEpisodeId = null;
 });
 
@@ -91,7 +93,7 @@ function playEpisode(id, url, title) {
     }
 
     var old = episodeBtn(currentEpisodeId);
-    if (old) old.innerHTML = '&#9654;';
+    if (old) old.innerHTML = ICON_PLAY;
 
     currentEpisodeId = id;
     lastReportedTime = 0;
