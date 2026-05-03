@@ -447,6 +447,12 @@ input:focus {
     background: var(--surface-alt);
 }
 
+.episode-header--static,
+.episode-header--static:hover {
+    cursor: default;
+    background: none;
+}
+
 .episode-row {
     display: flex;
     justify-content: space-between;

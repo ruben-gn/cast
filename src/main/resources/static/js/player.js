@@ -6,8 +6,26 @@ window.addEventListener('popstate', function(e) {
             var el = document.getElementById('content-container');
             el.outerHTML = html;
             htmx.process(document.getElementById('content-container'));
+            checkDescriptionOverflow();
         });
 }, true);
+
+function checkDescriptionOverflow() {
+    document.querySelectorAll('.description-container').forEach(function(el) {
+        if (el.scrollHeight <= el.clientHeight + 1) {
+            el.querySelector('.description-fade').style.display = 'none';
+            var item = el.closest('.episode-item');
+            var toggle = item && item.querySelector('.episode-toggle');
+            if (toggle) {
+                toggle.disabled = true;
+                item.querySelector('.episode-header').style.cursor = 'default';
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', checkDescriptionOverflow);
+document.addEventListener('htmx:afterSettle', checkDescriptionOverflow);
 
 var currentEpisodeId = null;
 var lastReportedTime = 0;

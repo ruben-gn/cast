@@ -118,6 +118,9 @@ fun FlowContent.podcastDetails(podcast: Podcast, episodes: List<Episode>) {
 }
 
 private fun FlowContent.episodeItem(episode: Episode) {
+    val hasDescription = episode.description.isNotBlank()
+    val toggleId = "tgl-${episode.id.value}"
+
     div(classes = "episode-item") {
 
         button(classes = "episode-play-btn") {
@@ -129,16 +132,14 @@ private fun FlowContent.episodeItem(episode: Episode) {
             unsafe { +"&#9654;" }
         }
 
-        val toggleId = "tgl-${episode.id.value}"
-        input(type = InputType.checkBox) {
-            id = toggleId
-            classes = setOf("episode-toggle")
+        if (hasDescription) {
+            input(type = InputType.checkBox) {
+                id = toggleId
+                classes = setOf("episode-toggle")
+            }
         }
 
-        label {
-            htmlFor = toggleId
-            classes = setOf("episode-header")
-
+        val headerRow: FlowContent.() -> Unit = {
             div(classes = "episode-row") {
                 span(classes = "episode-title") { +episode.title }
                 div(classes = "episode-extras") {
@@ -149,19 +150,31 @@ private fun FlowContent.episodeItem(episode: Episode) {
             }
         }
 
-        div("description-container") {
-            unsafe { raw(episode.description) }
-            div("description-fade") {
-                label(classes = "show-more-btn") {
-                    htmlFor = toggleId
-                    +"Show more"
-                }
+        if (hasDescription) {
+            label {
+                htmlFor = toggleId
+                classes = setOf("episode-header")
+                headerRow()
             }
+        } else {
+            div(classes = "episode-header episode-header--static") { headerRow() }
         }
 
-        label(classes = "show-less-btn") {
-            htmlFor = toggleId
-            +"Show less"
+        if (hasDescription) {
+            div("description-container") {
+                unsafe { raw(episode.description) }
+                div("description-fade") {
+                    label(classes = "show-more-btn") {
+                        htmlFor = toggleId
+                        +"Show more"
+                    }
+                }
+            }
+
+            label(classes = "show-less-btn") {
+                htmlFor = toggleId
+                +"Show less"
+            }
         }
     }
 }
