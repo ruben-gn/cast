@@ -357,30 +357,50 @@ input:focus {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 3em;
+    height: 4em;
     background: linear-gradient(transparent, var(--surface));
     pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 6px;
     opacity: 1;
     transition: opacity 0.2s ease-in-out;
 }
 
-.toggle-icon {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-right: 2px solid var(--text-muted);
-    border-bottom: 2px solid var(--text-muted);
-    transform: rotate(45deg);
-    transition: transform 0.3s ease-in-out, border-color 0.15s;
-    margin-bottom: 2px;
-    flex-shrink: 0;
-}
-
-.toggle-hint::before {
-    content: "Show more";
+.show-more-btn {
+    pointer-events: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 14px;
     font-size: 11px;
     font-weight: 600;
     color: var(--accent);
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+.show-more-btn:hover {
+    background: var(--accent-light);
+}
+
+.show-less-btn {
+    display: none;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    text-align: center;
+    padding: 6px 0 2px;
+    font-family: inherit;
+}
+
+.show-less-btn:hover {
+    text-decoration: underline;
 }
 
 /* Expansion Logic */
@@ -391,14 +411,11 @@ input:focus {
 
 .episode-toggle:checked ~ .description-container .description-fade {
     opacity: 0;
+    pointer-events: none;
 }
 
-.episode-toggle:checked ~ .episode-header .toggle-icon {
-    transform: rotate(-135deg);
-}
-
-.episode-toggle:checked ~ .episode-header .toggle-hint::before {
-    content: "Show less";
+.episode-toggle:checked ~ .show-less-btn {
+    display: block;
 }
 
 /* Episode item */

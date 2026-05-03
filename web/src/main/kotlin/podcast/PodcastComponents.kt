@@ -145,15 +145,23 @@ private fun FlowContent.episodeItem(episode: Episode) {
                     episode.duration?.let { duration ->
                         span(classes = "episode-duration") { +duration.formatted() }
                     }
-                    span(classes = "toggle-hint") {}
-                    span(classes = "toggle-icon") {}
                 }
             }
         }
 
         div("description-container") {
             unsafe { raw(episode.description) }
-            div("description-fade") {}
+            div("description-fade") {
+                label(classes = "show-more-btn") {
+                    htmlFor = toggleId
+                    +"Show more"
+                }
+            }
+        }
+
+        label(classes = "show-less-btn") {
+            htmlFor = toggleId
+            +"Show less"
         }
     }
 }
