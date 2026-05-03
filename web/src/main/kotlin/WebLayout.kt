@@ -14,7 +14,7 @@ fun HTML.layout(titleText: String, content: FlowContent.() -> Unit) {
         header(classes = "app-header") {
             span(classes = "app-logo") { +"Cast" }
             button(classes = "header-add-btn") {
-                attributes["onclick"] = "document.getElementById('add-feed-modal').classList.add('open')"
+                attributes["onclick"] = "document.getElementById('add-feed-modal').showModal()"
                 +"＋ Add podcast"
             }
         }

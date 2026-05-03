@@ -27,6 +27,15 @@ function checkDescriptionOverflow() {
 document.addEventListener('DOMContentLoaded', checkDescriptionOverflow);
 document.addEventListener('htmx:afterSettle', checkDescriptionOverflow);
 
+function handleSubResult(event) {
+    if (event.detail.successful) {
+        document.getElementById('add-feed-modal').close();
+    } else {
+        var err = document.getElementById('sub-error');
+        if (err) { err.textContent = 'Could not add podcast — check the RSS URL and try again.'; err.classList.add('visible'); }
+    }
+}
+
 var ICON_PLAY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 var currentEpisodeId = null;
