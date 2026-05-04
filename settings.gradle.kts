@@ -1,7 +1,6 @@
 rootProject.name = "Cast"
 include("shared-models")
 include("core")
-include("web")
 include("android")
 
 dependencyResolutionManagement {

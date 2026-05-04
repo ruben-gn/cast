@@ -5,7 +5,8 @@ import io.ktor.server.plugins.di.dependencies
 import java.sql.DriverManager
 
 fun Application.installDatabase() {
-    val connection = DriverManager.getConnection("jdbc:sqlite:podcasts.db")
+    val dbPath = System.getenv("DB_PATH") ?: "podcasts.db"
+    val connection = DriverManager.getConnection("jdbc:sqlite:$dbPath")
 
     connection.createStatement().use { statement ->
         statement.executeUpdate(CREATE_PODCASTS_TABLE)

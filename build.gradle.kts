@@ -32,7 +32,6 @@ kotlin {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":web"))
 
     implementation(libs.ktor.server.netty)
 
@@ -41,8 +40,6 @@ dependencies {
 
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.config.yaml)
-    implementation(libs.ktor.server.di)
-    implementation(libs.ktor.server.content.negotiation)
 
     implementation(libs.ktor.serialization.kotlinx.json)
 }

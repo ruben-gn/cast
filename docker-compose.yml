@@ -1,0 +1,27 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    volumes:
+      - ./data:/app/data
+    environment:
+      DB_PATH: /app/data/podcasts.db
+    networks:
+      - internal
+
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      KOTLIN_API: http://api:8100
+    depends_on:
+      - api
+    networks:
+      - internal
+
+networks:
+  internal:

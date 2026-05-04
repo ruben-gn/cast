@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Module | Description |
 |--------|-------------|
 | `core/` | Shared domain + adapters (Ktor server, SQLite, RSS) |
-| `web/` | SSR HTML views (kotlinx-html + HTMX) |
+| `webapp/` | SSR web frontend (Bun + Hono + HTMX, TypeScript/JSX) |
 | `android/` | Native Android app (Jetpack Compose, Media3, Android Auto) |
 
 ## Commands
@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Backend (run from repo root)
 ./gradlew build          # compile + test
-./gradlew run            # start server on :8080
+./gradlew run            # start server on :8100
 ./gradlew test           # run all tests
 
 # Run a specific test class
@@ -44,7 +44,6 @@ podcast/
     port/             — PodcastPersistence, FeedInfoProvider interfaces (EpisodeInfo, FeedInfo DTOs)
   adapters/
     web/api/          — JSON REST API at /api/podcasts (GET, POST, GET /{id})
-    web/view/         — SSR HTML views at /podcasts using kotlinx-html + HTMX
     persistence/      — SQLitePodcastPersistence (production), InMemoryPodcastPersistence
     RssFeedInfoProvider.kt — fetches and parses RSS XML via Ktor HTTP client
 configuration/
@@ -63,9 +62,29 @@ Ktor's built-in `ktor-server-di` plugin is used throughout.
 
 `installPodcastModule()` registers all use cases and adapters. Tests override `PodcastPersistence` by providing `FakePersistence` *before* calling `installPodcastModule`.
 
-### HTMX / SSR
+### Webapp (Bun + Hono)
 
-The view layer (`PodcastView.kt`) checks the `HX-Request` header on every request. If present, it returns a bare HTML fragment (a `<div id="content-container">`). Otherwise it returns the full page via `call.respondHtml { layout(...) { ... } }`.
+```bash
+# Webapp (run from webapp/ directory)
+cd webapp && bun run server.tsx        # start on :3000, proxies to Kotlin on :8100
+cd webapp && bun --watch run server.tsx  # dev mode with auto-reload
+```
+
+`KOTLIN_API` env var controls where the webapp calls the backend (default: `http://localhost:8100`).
+
+The view layer (`server.tsx`) checks the `HX-Request` header on every request. If present, it returns a bare HTML fragment (`<div id="content-container">`). Otherwise it returns the full page via `<Layout>`.
+
+The WebSocket at `/api/playback` is proxied through Bun to the Kotlin backend. Messages arriving while the Kotlin connection is still opening are buffered and flushed on `onopen`.
+
+### Docker
+
+```bash
+docker compose up          # start api (:8100 internal) + webapp (:3000 exposed)
+docker compose up --build  # rebuild images first
+```
+
+`Dockerfile.api` wraps the fat jar (`./gradlew buildFatJar` on dev machine, copy to Pi).
+`webapp/Dockerfile` installs deps with `bun install` and runs `server.tsx` directly — no compilation.
 
 ### Testing conventions
 
