@@ -32,4 +32,5 @@ export interface PlaybackStateResponse {
   type: string
   episodeId: string
   progressMs: number
+  played: boolean
 }
