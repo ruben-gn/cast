@@ -1,7 +1,7 @@
 rootProject.name = "Cast"
 include("shared-models")
 include("core")
-include("android")
+// include("android")
 
 dependencyResolutionManagement {
     repositories {
