@@ -1,8 +1,10 @@
-window.addEventListener('popstate', function(e) {
+window.addEventListener('popstate', function (e) {
     e.stopImmediatePropagation();
-    fetch(location.href, { headers: { 'HX-Request': 'true' } })
-        .then(function(r) { return r.text(); })
-        .then(function(html) {
+    fetch(location.href, {headers: {'HX-Request': 'true'}})
+        .then(function (r) {
+            return r.text();
+        })
+        .then(function (html) {
             var el = document.getElementById('content-container');
             el.outerHTML = html;
             htmx.process(document.getElementById('content-container'));
@@ -11,7 +13,7 @@ window.addEventListener('popstate', function(e) {
 }, true);
 
 function checkDescriptionOverflow() {
-    document.querySelectorAll('.description-container').forEach(function(el) {
+    document.querySelectorAll('.description-container').forEach(function (el) {
         if (el.scrollHeight <= el.clientHeight + 1) {
             el.querySelector('.description-fade').style.display = 'none';
             var item = el.closest('.episode-item');
@@ -32,7 +34,10 @@ function handleSubResult(event) {
         document.getElementById('add-feed-modal').close();
     } else {
         var err = document.getElementById('sub-error');
-        if (err) { err.textContent = 'Could not add podcast — check the RSS URL and try again.'; err.classList.add('visible'); }
+        if (err) {
+            err.textContent = 'Could not add podcast — check the RSS URL and try again.';
+            err.classList.add('visible');
+        }
     }
 }
 
@@ -47,32 +52,32 @@ function episodeBtn(id) {
     return id ? document.querySelector('.episode-play-btn[data-id="' + id + '"]') : null;
 }
 
-ws.onmessage = function(event) {
+ws.onmessage = function (event) {
     var msg = JSON.parse(event.data);
     if (msg.type === 'state' && msg.episodeId === currentEpisodeId) {
         applyResume(msg.progressMs);
     }
 };
 
-audio.addEventListener('timeupdate', function() {
+audio.addEventListener('timeupdate', function () {
     var cur = this.currentTime;
     if (currentEpisodeId && ws.readyState === WebSocket.OPEN && Math.abs(cur - lastReportedTime) > 0.5) {
-        ws.send(JSON.stringify({ type: 'update', episodeId: currentEpisodeId, progressMs: Math.floor(cur * 1000) }));
+        ws.send(JSON.stringify({type: 'update', episodeId: currentEpisodeId, progressMs: Math.floor(cur * 1000)}));
         lastReportedTime = cur;
     }
 });
 
-audio.addEventListener('play', function() {
+audio.addEventListener('play', function () {
     var btn = episodeBtn(currentEpisodeId);
     if (btn) btn.innerHTML = ICON_PAUSE;
 });
 
-audio.addEventListener('pause', function() {
+audio.addEventListener('pause', function () {
     var btn = episodeBtn(currentEpisodeId);
     if (btn) btn.innerHTML = ICON_PLAY;
 });
 
-audio.addEventListener('ended', function() {
+audio.addEventListener('ended', function () {
     var btn = episodeBtn(currentEpisodeId);
     if (btn) btn.innerHTML = ICON_PLAY;
     if (currentEpisodeId && ws.readyState === WebSocket.OPEN) {
@@ -97,7 +102,9 @@ function applyResume(progressMs) {
 function playEpisode(id, url, title) {
     if (currentEpisodeId === id) {
         if (audio.paused) {
-            audio.play().catch(function(e) { console.error('Playback failed:', e); });
+            audio.play().catch(function (e) {
+                console.error('Playback failed:', e);
+            });
         } else {
             audio.pause();
         }
@@ -112,8 +119,10 @@ function playEpisode(id, url, title) {
     document.getElementById('player-title').textContent = title;
     document.getElementById('player-bar').style.display = 'flex';
     audio.src = url;
-    audio.play().catch(function(e) { console.error('Playback failed:', e); });
+    audio.play().catch(function (e) {
+        console.error('Playback failed:', e);
+    });
     if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'get', episodeId: id }));
+        ws.send(JSON.stringify({type: 'get', episodeId: id}));
     }
 }

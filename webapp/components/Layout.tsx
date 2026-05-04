@@ -1,7 +1,7 @@
-import type { FC } from 'hono/jsx'
+import type {Child, FC} from 'hono/jsx'
 import { AddFeedModal } from './AddFeedModal'
 
-export const Layout: FC<{ title: string }> = ({ title, children }) => (
+export const Layout: FC<{ title: string, children: Child }> = ({ title, children }) => (
   <html lang="en">
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
