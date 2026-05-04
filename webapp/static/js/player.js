@@ -75,6 +75,9 @@ audio.addEventListener('pause', function() {
 audio.addEventListener('ended', function() {
     var btn = episodeBtn(currentEpisodeId);
     if (btn) btn.innerHTML = ICON_PLAY;
+    if (currentEpisodeId && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ended', episodeId: currentEpisodeId }));
+    }
     currentEpisodeId = null;
 });
 

@@ -4,7 +4,8 @@ import fakes.TestClock
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import playback.core.usecase.GetPlaybackState
-import playback.core.usecase.UpdatePlaybackState
+import playback.core.usecase.MarkPlayed
+import playback.core.usecase.UpdateProgress
 import playback.fakes.FakePlaybackPersistence
 import shared.model.EpisodeId
 import java.time.Instant
@@ -16,26 +17,29 @@ class PlaybackCoreTests : DescribeSpec({
     describe("Playback Domain Hexagon") {
         lateinit var clock: TestClock
         lateinit var persistence: FakePlaybackPersistence
-        lateinit var updatePlaybackState: UpdatePlaybackState
+        lateinit var updateProgress: UpdateProgress
         lateinit var getPlaybackState: GetPlaybackState
+        lateinit var markPlayed: MarkPlayed
 
         beforeEach {
             clock = TestClock(fixedInstant)
             persistence = FakePlaybackPersistence()
-            updatePlaybackState = UpdatePlaybackState(clock, persistence)
+            updateProgress = UpdateProgress(clock, persistence)
             getPlaybackState = GetPlaybackState(clock, persistence)
+            markPlayed = MarkPlayed(persistence)
         }
 
         it("should update and retrieve the playback state for an episode") {
             val episodeId = "ep-123"
             val progressMs = 5000L
 
-            updatePlaybackState(episodeId, progressMs)
+            updateProgress(episodeId, progressMs)
 
             val retrieved = getPlaybackState(episodeId)
             retrieved.episodeId shouldBe EpisodeId(episodeId)
             retrieved.progressMs shouldBe progressMs
             retrieved.updatedAt shouldBe fixedInstant
+            retrieved.played shouldBe false
         }
 
         it("should return no progress when retrieving state for an episode with no progress") {
@@ -43,20 +47,40 @@ class PlaybackCoreTests : DescribeSpec({
             retrieved.episodeId shouldBe EpisodeId("non-existent")
             retrieved.progressMs shouldBe 0
             retrieved.updatedAt shouldBe fixedInstant
+            retrieved.played shouldBe false
         }
 
         it("should overwrite existing state and update the timestamp when ticking") {
             val episodeId = "ep-123"
 
-            updatePlaybackState(episodeId, 1000L)
-            
+            updateProgress(episodeId, 1000L)
+
             clock.tick(1.hours)
 
-            updatePlaybackState(episodeId, 2000L)
+            updateProgress(episodeId, 2000L)
 
             val finalState = getPlaybackState(episodeId)
             finalState.progressMs shouldBe 2000L
             finalState.updatedAt shouldBe Instant.parse("2026-04-24T13:00:00Z")
+        }
+
+        it("should mark an episode as played") {
+            val episodeId = "ep-123"
+
+            updateProgress(episodeId, 5000L)
+            markPlayed(episodeId)
+
+            val state = getPlaybackState(episodeId)
+            state.played shouldBe true
+            state.progressMs shouldBe 5000L
+        }
+
+        it("should mark an episode as played even with no prior progress") {
+            markPlayed("ep-456")
+
+            val state = getPlaybackState("ep-456")
+            state.played shouldBe true
+            state.progressMs shouldBe 0
         }
     }
 })

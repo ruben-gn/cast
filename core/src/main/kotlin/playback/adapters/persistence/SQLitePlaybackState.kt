@@ -12,14 +12,33 @@ class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersiste
     override suspend fun update(playbackState: PlaybackState) {
         db.withConnection { conn ->
             val sql = """
-                INSERT OR REPLACE INTO playback_state (episode_id, progress_ms, updated_at)
-                VALUES (?, ?, ?)
+                INSERT INTO playback_state (episode_id, progress_ms, updated_at, played)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(episode_id) DO UPDATE SET
+                    progress_ms = excluded.progress_ms,
+                    updated_at = excluded.updated_at
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, playbackState.episodeId.value)
                 stmt.setLong(2, playbackState.progressMs)
                 stmt.setString(3, playbackState.updatedAt.toString())
+                stmt.setBoolean(4, playbackState.played)
+                stmt.executeUpdate()
+            }
+        }
+    }
+
+    override suspend fun markPlayed(episodeId: EpisodeId) {
+        db.withConnection { conn ->
+            val sql = """
+                INSERT INTO playback_state (episode_id, progress_ms, updated_at, played)
+                VALUES (?, 0, datetime('now'), 1)
+                ON CONFLICT(episode_id) DO UPDATE SET played = 1, updated_at = datetime('now')
+            """.trimIndent()
+
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, episodeId.value)
                 stmt.executeUpdate()
             }
         }
@@ -38,6 +57,7 @@ class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersiste
     private fun ResultSet.toPlaybackState() = PlaybackState(
         episodeId = EpisodeId(getString("episode_id")),
         progressMs = getLong("progress_ms"),
-        updatedAt = Instant.parse(getString("updated_at"))
+        updatedAt = Instant.parse(getString("updated_at")),
+        played = getBoolean("played"),
     )
 }

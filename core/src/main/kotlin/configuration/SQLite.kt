@@ -49,6 +49,7 @@ val CREATE_PLAYBACK_STATE_TABLE = """
     CREATE TABLE IF NOT EXISTS playback_state (
         episode_id TEXT PRIMARY KEY,
         progress_ms INTEGER NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        played INTEGER NOT NULL DEFAULT 0
     );
 """.trimIndent()

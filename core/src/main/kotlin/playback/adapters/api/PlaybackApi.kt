@@ -9,14 +9,16 @@ import io.ktor.websocket.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import playback.core.usecase.GetPlaybackState
-import playback.core.usecase.UpdatePlaybackState
+import playback.core.usecase.MarkPlayed
+import playback.core.usecase.UpdateProgress
 
 private val log = KotlinLogging.logger { }
 private val json = Json
 
 fun Route.playbackApi(dependencies: DependencyRegistry) {
-    val updatePlaybackState: UpdatePlaybackState by dependencies
+    val updateProgress: UpdateProgress by dependencies
     val getPlaybackState: GetPlaybackState by dependencies
+    val markPlayed: MarkPlayed by dependencies
 
     webSocket {
         for (frame in incoming) {
@@ -29,14 +31,16 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
                     when (obj["type"]?.jsonPrimitive?.content) {
                         "update" -> {
                             val progressMs = obj["progressMs"]!!.jsonPrimitive.long
-                            updatePlaybackState(episodeId = episodeId, progressMs = progressMs)
+                            updateProgress(episodeId = episodeId, progressMs = progressMs)
                         }
+                        "ended" -> markPlayed(episodeId)
                         "get" -> {
                             val state = getPlaybackState(episodeId)
                             send(json.encodeToString(PlaybackStateResponse(
                                 type = "state",
                                 episodeId = state.episodeId.value,
-                                progressMs = state.progressMs
+                                progressMs = state.progressMs,
+                                played = state.played,
                             )))
                         }
                         else -> log.warn { "Unknown message type in: $text" }

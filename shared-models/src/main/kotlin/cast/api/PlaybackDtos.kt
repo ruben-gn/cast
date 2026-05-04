@@ -7,4 +7,5 @@ data class PlaybackStateResponse(
     val type: String,
     val episodeId: String,
     val progressMs: Long,
+    val played: Boolean,
 )

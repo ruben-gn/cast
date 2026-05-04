@@ -5,5 +5,6 @@ import shared.model.EpisodeId
 
 interface PlaybackPersistence {
     suspend fun update(playbackState: PlaybackState)
+    suspend fun markPlayed(episodeId: EpisodeId)
     suspend fun get(episodeId: EpisodeId): PlaybackState?
 }
