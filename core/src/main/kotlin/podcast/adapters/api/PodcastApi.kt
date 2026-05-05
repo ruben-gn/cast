@@ -9,7 +9,6 @@ import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import podcast.adapters.web.formatted
 import podcast.core.PodcastException
 import podcast.core.models.Episode
 import podcast.core.models.FeedUrl
@@ -19,6 +18,7 @@ import podcast.core.usecase.AddFeed
 import podcast.core.usecase.GetPodcast
 import podcast.core.usecase.ListEpisodes
 import podcast.core.usecase.ListPodcasts
+import kotlin.time.Duration
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
 
@@ -74,3 +74,8 @@ private fun episodeDto(episode: Episode) =
         publishedAt = episode.publishedAt?.toString()
     )
 
+private fun Duration.formatted(): String =
+    toComponents { _, hours, minutes, seconds, _ ->
+        if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+        else "%d:%02d".format(minutes, seconds)
+    }
