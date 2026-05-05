@@ -32,8 +32,8 @@ class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersiste
         db.withConnection { conn ->
             val sql = """
                 INSERT INTO playback_state (episode_id, progress_ms, updated_at, played)
-                VALUES (?, 0, datetime('now'), 1)
-                ON CONFLICT(episode_id) DO UPDATE SET played = 1, updated_at = datetime('now')
+                VALUES (?, 0, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), 1)
+                ON CONFLICT(episode_id) DO UPDATE SET played = 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
