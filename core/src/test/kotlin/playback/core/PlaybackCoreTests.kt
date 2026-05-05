@@ -82,5 +82,16 @@ class PlaybackCoreTests : DescribeSpec({
             state.played shouldBe true
             state.progressMs shouldBe 0
         }
+
+        it("should not reset played when progress update arrives after markPlayed") {
+            val episodeId = "ep-123"
+            updateProgress(episodeId, 5000L)
+            markPlayed(episodeId)
+            updateProgress(episodeId, 9000L)
+
+            val state = getPlaybackState(episodeId)
+            state.played shouldBe true
+            state.progressMs shouldBe 9000L
+        }
     }
 })
