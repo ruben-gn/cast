@@ -1,16 +1,25 @@
 package cast.api
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.*
-import kotlinx.serialization.serializer
+import java.io.File
 
 fun main() {
-    val serializers = listOf(
-        serializer<EpisodeDto>(),
-        serializer<PodcastSummaryDto>(),
-        serializer<PodcastDetailDto>(),
-        serializer<AddPodcastRequest>(),
-        serializer<PlaybackStateResponse>(),
-    )
+    val classLoader = Thread.currentThread().contextClassLoader
+    val packageUrl = classLoader.getResource("cast/api") ?: error("cast/api not on classpath")
+
+    val serializers = File(packageUrl.toURI())
+        .listFiles { f -> f.extension == "class" && '$' !in f.name }
+        .orEmpty()
+        .sortedBy { it.name }
+        .mapNotNull { file ->
+            val className = "cast.api.${file.nameWithoutExtension}"
+            runCatching {
+                val klass = Class.forName(className, true, classLoader)
+                val companion = klass.getDeclaredField("Companion").get(null)
+                companion.javaClass.getMethod("serializer").invoke(companion) as KSerializer<*>
+            }.getOrNull()
+        }
 
     println("// Generated from Kotlin shared-models -- do not edit manually")
     println()
