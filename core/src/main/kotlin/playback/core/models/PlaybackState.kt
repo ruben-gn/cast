@@ -7,5 +7,5 @@ data class PlaybackState(
     val episodeId: EpisodeId,
     val progressMs: Long,
     val updatedAt: Instant,
-    val played: Boolean = false,
+    val played: Boolean,
 )

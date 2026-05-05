@@ -9,21 +9,20 @@ import java.time.Instant
 
 class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersistence {
 
-    override suspend fun update(playbackState: PlaybackState) {
+    override suspend fun updateProgress(episodeId: EpisodeId, progressMs: Long, updatedAt: Instant) {
         db.withConnection { conn ->
             val sql = """
                 INSERT INTO playback_state (episode_id, progress_ms, updated_at, played)
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?, 0)
                 ON CONFLICT(episode_id) DO UPDATE SET
                     progress_ms = excluded.progress_ms,
                     updated_at = excluded.updated_at
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
-                stmt.setString(1, playbackState.episodeId.value)
-                stmt.setLong(2, playbackState.progressMs)
-                stmt.setString(3, playbackState.updatedAt.toString())
-                stmt.setBoolean(4, playbackState.played)
+                stmt.setString(1, episodeId.value)
+                stmt.setLong(2, progressMs)
+                stmt.setString(3, updatedAt.toString())
                 stmt.executeUpdate()
             }
         }

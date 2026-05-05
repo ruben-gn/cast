@@ -2,10 +2,11 @@ package playback.core.ports
 
 import playback.core.models.PlaybackState
 import shared.model.EpisodeId
+import java.time.Instant
 
 interface PlaybackPersistence {
-    // Must not overwrite `played` if already true — a late progress update must not undo a markPlayed() that arrived first.
-    suspend fun update(playbackState: PlaybackState)
+    // Creates the row if absent (played = false); on conflict updates progress fields only — never touches played.
+    suspend fun updateProgress(episodeId: EpisodeId, progressMs: Long, updatedAt: Instant)
     suspend fun markPlayed(episodeId: EpisodeId)
     suspend fun get(episodeId: EpisodeId): PlaybackState?
 }

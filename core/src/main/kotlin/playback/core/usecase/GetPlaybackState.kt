@@ -11,6 +11,6 @@ class GetPlaybackState(
 ) {
     suspend operator fun invoke(episodeId: String) =
         persistence.get(EpisodeId(episodeId))
-            ?: PlaybackState(EpisodeId(episodeId), 0, clock.instant())
+            ?: PlaybackState(EpisodeId(episodeId), 0, clock.instant(), played = false)
 }
 
