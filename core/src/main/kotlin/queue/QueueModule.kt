@@ -22,5 +22,4 @@ fun Application.installQueueModule(
         provide<AddEpisodeAt> { AddEpisodeAt(resolve()) }
         provide<DequeueEpisode> { DequeueEpisode(resolve()) }
     }
-
 }

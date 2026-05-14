@@ -20,5 +20,4 @@ fun Application.installPlaybackModule(
         provide<UpdateProgress> { UpdateProgress(resolve(), resolve()) }
         provide<MarkPlayed> { MarkPlayed(resolve()) }
     }
-
 }
