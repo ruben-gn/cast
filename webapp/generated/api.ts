@@ -9,6 +9,7 @@ export interface EpisodeDetailDto {
   description: string
   audioUrl: string
   duration: string | null
+  durationMs: number | null
   publishedAt: string | null
   played: boolean
   progressMs: number

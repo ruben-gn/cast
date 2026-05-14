@@ -1,7 +1,7 @@
 import type {FC} from 'hono/jsx'
 
 export const AddFeedModal: FC = () => (
-    <dialog id="add-feed-modal" onclick="if(event.target===this)this.close()">
+    <dialog id="add-feed-modal" onclick="if(event.target===this)this.close()" onclose="document.getElementById('rss-url-input').value='';document.getElementById('sub-error').classList.remove('visible')">
         <div class="modal-content">
             <form method="dialog">
                 <button class="close-modal" aria-label="Close">

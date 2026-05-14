@@ -70,6 +70,7 @@ private fun episodeDetailDto(ep: EpisodeWithPlayback) =
         description = ep.episode.description,
         audioUrl = ep.episode.audioUrl,
         duration = ep.episode.duration?.formatted(),
+        durationMs = ep.episode.duration?.inWholeMilliseconds,
         publishedAt = ep.episode.publishedAt?.toString(),
         played = ep.played,
         progressMs = ep.progressMs,

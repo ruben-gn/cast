@@ -30,6 +30,7 @@ const PodcastCard: FC<{ podcast: Podcast }> = ({podcast}) => (
         hx-target="#content-container"
         hx-swap="outerHTML"
         hx-push-url="true"
+        hx-indicator="#nav-spinner"
     >
         <div class="podcast-card">
             <img src={podcast.image} alt={podcast.name} class="podcast-card-img"/>

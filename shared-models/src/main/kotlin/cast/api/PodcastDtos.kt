@@ -19,6 +19,7 @@ data class EpisodeDetailDto(
     val description: String,
     val audioUrl: String,
     val duration: String?,
+    val durationMs: Long?,
     val publishedAt: String?,
     val played: Boolean,
     val progressMs: Long,

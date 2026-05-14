@@ -20,6 +20,7 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
         </button>
       </header>
       <AddFeedModal />
+      <div id="nav-spinner" class="htmx-indicator nav-spinner"></div>
       <div id="content-container">
         <div class="page-content">
           {children}

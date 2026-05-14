@@ -26,6 +26,25 @@
     opacity: 1;
 }
 
+.nav-spinner {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+    z-index: 300;
+    transform-origin: left;
+    animation: nav-progress 1.2s ease-in-out infinite;
+    display: block !important;
+}
+
+@keyframes nav-progress {
+    0%   { transform: scaleX(0); opacity: 1; }
+    80%  { transform: scaleX(0.9); opacity: 1; }
+    100% { transform: scaleX(1); opacity: 0; }
+}
+
 /* Global */
 body#main-body {
     font-family: 'Montserrat', sans-serif;
@@ -397,86 +416,68 @@ input:focus {
     font-size: 14px;
 }
 
-/* Toggle Logic */
-.episode-toggle {
+/* Episode progress bar */
+.episode-progress {
+    display: block;
+    width: 100%;
+    height: 3px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 2px;
+    accent-color: var(--accent);
+    background: var(--border);
+}
+
+/* Publish date */
+.episode-pubdate {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Description expand/collapse via <details> */
+.episode-description-details {
+    margin-top: 6px;
+}
+
+.episode-description-summary {
+    list-style: none;
+    font-size: 0;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    display: inline-block;
+    padding: 2px 0;
+    user-select: none;
+}
+
+.episode-description-summary::-webkit-details-marker {
     display: none;
 }
 
-.description-container {
-    position: relative;
-    max-height: 6em;
-    overflow: hidden;
-    transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+.episode-description-summary::before {
+    content: 'Show more';
+    font-size: 11px;
+}
+
+details[open] .episode-description-summary::before {
+    content: 'Show less';
+}
+
+.episode-description-summary:hover::before {
+    text-decoration: underline;
+}
+
+.episode-description-body {
     font-size: 14px;
     line-height: 1.5;
     color: var(--text-muted);
     margin-top: 8px;
 }
 
-.description-fade {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 4em;
-    background: linear-gradient(transparent, var(--surface));
-    pointer-events: none;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 6px;
-    opacity: 1;
-    transition: opacity 0.2s ease-in-out;
-}
-
-.show-more-btn {
-    pointer-events: auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 3px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--accent);
-    cursor: pointer;
-    white-space: nowrap;
-    box-shadow: var(--shadow-sm);
-    font-family: inherit;
-    transition: background 0.15s;
-}
-
-.show-more-btn:hover {
-    background: var(--accent-light);
-}
-
-.show-less-btn {
-    display: none;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--accent);
-    text-align: center;
-    padding: 6px 0 2px;
-    font-family: inherit;
-}
-
-.show-less-btn:hover {
-    text-decoration: underline;
-}
-
-/* Expansion Logic */
-.episode-toggle:checked ~ .description-container {
-    max-height: 1000px;
-    transition: max-height 0.4s ease-in-out;
-}
-
-.episode-toggle:checked ~ .description-container .description-fade {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.episode-toggle:checked ~ .show-less-btn {
-    display: block;
+.episode-description-body * {
+    max-width: 100%;
 }
 
 /* Episode item */

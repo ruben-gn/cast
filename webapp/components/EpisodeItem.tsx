@@ -3,7 +3,7 @@ import type {Episode} from '../types'
 
 export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
     const hasDescription = episode.description.trim() !== ''
-    const toggleId = `tgl-${episode.id}`
+    const showProgress = episode.progressMs > 0 && !!episode.durationMs && episode.durationMs > 0
 
     return (
         <div class="episode-item">
@@ -20,45 +20,58 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
                 </svg>
             </button>
 
-            {hasDescription && (
-                <input type="checkbox" id={toggleId} class="episode-toggle"/>
-            )}
+            <div class="episode-header episode-header--static">
+                <EpisodeRow episode={episode}/>
+            </div>
 
-            {hasDescription ? (
-                <label for={toggleId} class="episode-header">
-                    <EpisodeRow episode={episode}/>
-                </label>
-            ) : (
-                <div class="episode-header episode-header--static">
-                    <EpisodeRow episode={episode}/>
-                </div>
+            {showProgress && (
+                <progress
+                    class="episode-progress"
+                    value={episode.progressMs}
+                    max={episode.durationMs!}
+                />
             )}
 
             {hasDescription && (
-                <>
-                    <div class="description-container">
-                        <div dangerouslySetInnerHTML={{__html: episode.description}}/>
-                        <div class="description-fade">
-                            <label class="show-more-btn" for={toggleId}>Show more</label>
-                        </div>
-                    </div>
-                    <label class="show-less-btn" for={toggleId}>Show less</label>
-                </>
+                <details class="episode-description-details">
+                    <summary class="episode-description-summary">Show more</summary>
+                    <div class="episode-description-body" dangerouslySetInnerHTML={{__html: episode.description}}/>
+                </details>
             )}
         </div>
     )
 }
 
-const EpisodeRow: FC<{ episode: Episode }> = ({episode}) => (
-    <div class="episode-row">
-        <span class="episode-title">{episode.title}</span>
-        <div class="episode-extras">
-            {episode.duration && (
-                <span class="episode-duration">{episode.duration}</span>
-            )}
-            {episode.played && (
-                <span class="episode-played-badge">Played</span>
-            )}
+function relativeTime(iso: string | null): string | null {
+    if (!iso) return null
+    const diffMs = Date.now() - new Date(iso).getTime()
+    const days = Math.floor(diffMs / 86_400_000)
+    if (days === 0) return 'Today'
+    if (days === 1) return 'Yesterday'
+    if (days < 7) return `${days} days ago`
+    const weeks = Math.floor(days / 7)
+    if (weeks < 5) return `${weeks}w ago`
+    const months = Math.floor(days / 30)
+    if (months < 12) return `${months}mo ago`
+    return `${Math.floor(days / 365)}y ago`
+}
+
+const EpisodeRow: FC<{ episode: Episode }> = ({episode}) => {
+    const pubDate = relativeTime(episode.publishedAt)
+    return (
+        <div class="episode-row">
+            <span class="episode-title">{episode.title}</span>
+            <div class="episode-extras">
+                {pubDate && (
+                    <span class="episode-pubdate">{pubDate}</span>
+                )}
+                {episode.duration && (
+                    <span class="episode-duration">{episode.duration}</span>
+                )}
+                {episode.played && (
+                    <span class="episode-played-badge">Played</span>
+                )}
+            </div>
         </div>
-    </div>
-)
+    )
+}

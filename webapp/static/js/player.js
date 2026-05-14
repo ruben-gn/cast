@@ -8,26 +8,8 @@ window.addEventListener('popstate', function (e) {
             var el = document.getElementById('content-container');
             el.outerHTML = html;
             htmx.process(document.getElementById('content-container'));
-            checkDescriptionOverflow();
         });
 }, true);
-
-function checkDescriptionOverflow() {
-    document.querySelectorAll('.description-container').forEach(function (el) {
-        if (el.scrollHeight <= el.clientHeight + 1) {
-            el.querySelector('.description-fade').style.display = 'none';
-            var item = el.closest('.episode-item');
-            var toggle = item && item.querySelector('.episode-toggle');
-            if (toggle) {
-                toggle.disabled = true;
-                item.querySelector('.episode-header').style.cursor = 'default';
-            }
-        }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', checkDescriptionOverflow);
-document.addEventListener('htmx:afterSettle', checkDescriptionOverflow);
 
 function handleSubResult(event) {
     if (event.detail.successful) {
@@ -46,7 +28,22 @@ var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentC
 var currentEpisodeId = null;
 var lastReportedTime = 0;
 var audio = document.getElementById('player-audio');
-var ws = new WebSocket('ws://' + window.location.host + '/api/playback');
+var ws = null;
+
+function getWs() {
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return ws;
+    ws = new WebSocket('ws://' + window.location.host + '/api/playback');
+    ws.onmessage = function (event) {
+        var msg = JSON.parse(event.data);
+        if (msg.type === 'state') {
+            if (msg.episodeId === currentEpisodeId) applyResume(msg.progressMs);
+            if (msg.played) markPlayed(msg.episodeId);
+        }
+    };
+    ws.onclose = function () { ws = null; };
+    ws.onerror = function () { ws = null; };
+    return ws;
+}
 
 function episodeBtn(id) {
     return id ? document.querySelector('.episode-play-btn[data-id="' + id + '"]') : null;
@@ -64,17 +61,9 @@ function markPlayed(id) {
     extras.appendChild(badge);
 }
 
-ws.onmessage = function (event) {
-    var msg = JSON.parse(event.data);
-    if (msg.type === 'state') {
-        if (msg.episodeId === currentEpisodeId) applyResume(msg.progressMs);
-        if (msg.played) markPlayed(msg.episodeId);
-    }
-};
-
 audio.addEventListener('timeupdate', function () {
     var cur = this.currentTime;
-    if (currentEpisodeId && ws.readyState === WebSocket.OPEN && Math.abs(cur - lastReportedTime) > 0.5) {
+    if (currentEpisodeId && ws && ws.readyState === WebSocket.OPEN && Math.abs(cur - lastReportedTime) > 0.5) {
         ws.send(JSON.stringify({type: 'update', episodeId: currentEpisodeId, progressMs: Math.floor(cur * 1000)}));
         lastReportedTime = cur;
     }
@@ -93,24 +82,21 @@ audio.addEventListener('pause', function () {
 audio.addEventListener('ended', function () {
     var btn = episodeBtn(currentEpisodeId);
     if (btn) btn.innerHTML = ICON_PLAY;
-    if (currentEpisodeId && ws.readyState === WebSocket.OPEN) {
+    if (currentEpisodeId && ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'ended', episodeId: currentEpisodeId }));
     }
     markPlayed(currentEpisodeId);
     currentEpisodeId = null;
+    if (ws) { ws.close(); ws = null; }
 });
 
 function applyResume(progressMs) {
     var seekTo = progressMs / 1000;
     if (seekTo <= 0) return;
-    if (audio.readyState >= 1) {
+    audio.addEventListener('canplay', function onCanPlay() {
+        audio.removeEventListener('canplay', onCanPlay);
         audio.currentTime = seekTo;
-    } else {
-        audio.addEventListener('loadedmetadata', function onMeta() {
-            audio.removeEventListener('loadedmetadata', onMeta);
-            audio.currentTime = seekTo;
-        });
-    }
+    });
 }
 
 function playEpisode(id, url, title) {
@@ -136,7 +122,13 @@ function playEpisode(id, url, title) {
     audio.play().catch(function (e) {
         console.error('Playback failed:', e);
     });
-    if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({type: 'get', episodeId: id}));
+    var conn = getWs();
+    if (conn.readyState === WebSocket.OPEN) {
+        conn.send(JSON.stringify({type: 'get', episodeId: id}));
+    } else {
+        conn.addEventListener('open', function onOpen() {
+            conn.removeEventListener('open', onOpen);
+            conn.send(JSON.stringify({type: 'get', episodeId: id}));
+        });
     }
 }
