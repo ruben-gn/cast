@@ -1,4 +1,4 @@
-package adapters.api
+package api
 
 import application.model.EpisodeWithPlayback
 import application.usecase.GetPodcastDetail

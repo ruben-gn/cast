@@ -1,4 +1,4 @@
-package adapters.api
+package api
 
 import cast.api.QueueDto
 import io.ktor.http.HttpStatusCode

@@ -1,4 +1,4 @@
-import adapters.api.installRoutes
+import api.installRoutes
 import application.installApplicationModule
 import configuration.installDatabase
 import io.ktor.server.application.*

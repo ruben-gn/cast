@@ -1,4 +1,4 @@
-package adapters.api
+package api
 
 import installCommon
 import io.kotest.core.spec.style.DescribeSpec
