@@ -1,7 +1,7 @@
 import type {FC} from 'hono/jsx'
 
 export const AddFeedModal: FC = () => (
-    <dialog id="add-feed-modal" onclick="if(event.target===this)this.close()" onclose="document.getElementById('rss-url-input').value='';document.getElementById('sub-error').classList.remove('visible')">
+    <dialog id="add-feed-modal" onclick="if(event.target===this)this.close()" onclose="document.getElementById('rss-url-input').value='';document.getElementById('opml-input').value='';document.getElementById('sub-error').classList.remove('visible')">
         <div class="modal-content">
             <form method="dialog">
                 <button class="close-modal" aria-label="Close">
@@ -38,6 +38,30 @@ export const AddFeedModal: FC = () => (
                     <button type="submit" class="cancel-btn" form="modal-dismiss">Cancel</button>
                     <button type="submit" class="subscribe-btn">Subscribe</button>
                     <span class="htmx-indicator btn-spinner" id="sub-spinner"></span>
+                </div>
+            </form>
+            <div class="modal-divider"><span>or</span></div>
+            <form
+                class="subscribe-form"
+                hx-post="/podcasts/import"
+                hx-target="#content-container"
+                hx-swap="outerHTML"
+                hx-encoding="multipart/form-data"
+                hx-indicator="#import-spinner"
+                {...{'hx-on::after-request': 'if(event.detail.successful)document.getElementById("add-feed-modal").close()'}}
+            >
+                <label class="url-label" for="opml-input">OPML File</label>
+                <input
+                    type="file"
+                    name="opml"
+                    id="opml-input"
+                    accept=".opml,.xml,text/x-opml,application/xml,text/xml"
+                    class="opml-input"
+                />
+                <div class="form-actions">
+                    <button type="submit" class="cancel-btn" form="modal-dismiss">Cancel</button>
+                    <button type="submit" class="subscribe-btn">Import</button>
+                    <span class="htmx-indicator btn-spinner" id="import-spinner"></span>
                 </div>
             </form>
         </div>

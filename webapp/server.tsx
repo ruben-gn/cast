@@ -60,6 +60,33 @@ app.post('/podcasts', async (c) => {
     return c.redirect('/podcasts')
 })
 
+app.post('/podcasts/import', async (c) => {
+    const body = await c.req.parseBody()
+    const file = body['opml'] as File
+
+    const formData = new FormData()
+    formData.append('opml', file)
+
+    const res = await fetch(`${KOTLIN_API}/api/podcasts/import`, {method: 'POST', body: formData})
+
+    if (!res.ok) {
+        return new Response('', {status: res.status})
+    }
+
+    const podcasts: Podcast[] = await fetch(`${KOTLIN_API}/api/podcasts`).then(r => r.json())
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    const content = <PodcastList podcasts={podcasts}/>
+
+    if (isHtmx) {
+        return c.html(
+            <div id="content-container">
+                <div class="page-content">{content}</div>
+            </div>
+        )
+    }
+    return c.redirect('/podcasts')
+})
+
 app.get('/queue', async (c) => {
     const res = await fetch(`${KOTLIN_API}/api/queue`)
     if (!res.ok) return new Response('', {status: res.status})

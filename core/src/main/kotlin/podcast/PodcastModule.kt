@@ -12,6 +12,7 @@ import podcast.core.ports.FeedInfoProvider
 import podcast.core.ports.PodcastCatalog
 import podcast.core.usecase.AddFeed
 import podcast.core.usecase.GetPodcast
+import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListEpisodes
 import podcast.core.usecase.ListPodcasts
 import podcast.core.usecase.UpdateFeed
@@ -34,6 +35,7 @@ fun Application.installPodcastModule(
         provide<UpdateFeeds> { UpdateFeeds(resolve(), resolve()) }
 
         provide<AddFeed> { AddFeed(resolve(), resolve(), resolve(), resolve()) }
+        provide<ImportOpml> { ImportOpml(resolve()) }
     }
 
     launch {

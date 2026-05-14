@@ -274,6 +274,33 @@ input:focus {
     to { transform: rotate(360deg); }
 }
 
+.modal-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0 4px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.modal-divider::before,
+.modal-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.opml-input {
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+}
+
 /* Podcast grid */
 .podcast-grid {
     display: grid;

@@ -7,15 +7,18 @@ import cast.api.EpisodeDetailDto
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.*
 import podcast.core.PodcastException
 import podcast.core.models.FeedUrl
 import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
 import podcast.core.usecase.AddFeed
+import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListEpisodes
 import podcast.core.usecase.ListPodcasts
 import kotlin.time.Duration
@@ -23,6 +26,7 @@ import kotlin.time.Duration
 fun Route.podcastApi(dependencies: DependencyRegistry) {
 
     val addFeed: AddFeed by dependencies
+    val importOpml: ImportOpml by dependencies
     val listPodcasts: ListPodcasts by dependencies
     val listEpisodes: ListEpisodes by dependencies
     val getPodcastDetail: GetPodcastDetail by dependencies
@@ -40,6 +44,18 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         } catch (e: PodcastException.FeedFetchFailed) {
             call.respond(HttpStatusCode.BadGateway, mapOf("error" to (e.message ?: "Failed to fetch feed")))
         }
+    }
+
+    post("import") {
+        val multipart = call.receiveMultipart()
+        var opmlContent: ByteArray? = null
+        multipart.forEachPart { part ->
+            if (part is PartData.FileItem) opmlContent = part.provider().toByteArray()
+            part.dispose()
+        }
+        val content = opmlContent ?: return@post call.respond(HttpStatusCode.BadRequest)
+        val result = importOpml(content)
+        call.respond(mapOf("imported" to result.imported.size, "failed" to result.failed.size))
     }
 
     get("{id}") {
