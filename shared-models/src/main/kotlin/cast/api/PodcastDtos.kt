@@ -13,16 +13,6 @@ data class PodcastSummaryDto(
 )
 
 @Serializable
-data class EpisodeDto(
-    val id: String,
-    val title: String,
-    val description: String,
-    val audioUrl: String,
-    val duration: String?,
-    val publishedAt: String?,
-)
-
-@Serializable
 data class EpisodeDetailDto(
     val id: String,
     val title: String,

@@ -13,14 +13,6 @@ export interface EpisodeDetailDto {
   played: boolean
   progressMs: number
 }
-export interface EpisodeDto {
-  id: string
-  title: string
-  description: string
-  audioUrl: string
-  duration: string | null
-  publishedAt: string | null
-}
 export interface PlaybackStateResponse {
   type: string
   episodeId: string

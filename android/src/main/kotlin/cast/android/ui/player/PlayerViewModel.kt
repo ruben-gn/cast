@@ -13,7 +13,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import cast.android.media.CastMediaLibraryService
-import cast.api.EpisodeDto
+import cast.api.EpisodeDetailDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CompletableDeferred
@@ -74,7 +74,7 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    fun playEpisode(episode: EpisodeDto, artworkUrl: String) {
+    fun playEpisode(episode: EpisodeDetailDto, artworkUrl: String) {
         val ctrl = _controller.value ?: return
         val extras = Bundle().apply {
             putLong("durationMs", episode.duration.parseDurationMs() ?: 0L)

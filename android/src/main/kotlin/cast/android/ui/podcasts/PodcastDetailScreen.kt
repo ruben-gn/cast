@@ -33,7 +33,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cast.android.ui.UiState
 import cast.android.ui.player.PlayerViewModel
-import cast.api.EpisodeDto
+import cast.api.EpisodeDetailDto
 import cast.api.PodcastDetailDto
 import coil3.compose.AsyncImage
 
@@ -76,7 +76,7 @@ fun PodcastDetailScreen(
 }
 
 @Composable
-private fun PodcastDetail(podcast: PodcastDetailDto, onEpisodeClick: (EpisodeDto) -> Unit) {
+private fun PodcastDetail(podcast: PodcastDetailDto, onEpisodeClick: (EpisodeDetailDto) -> Unit) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
             AsyncImage(
@@ -96,7 +96,7 @@ private fun PodcastDetail(podcast: PodcastDetailDto, onEpisodeClick: (EpisodeDto
 }
 
 @Composable
-private fun EpisodeRow(episode: EpisodeDto, onClick: () -> Unit) {
+private fun EpisodeRow(episode: EpisodeDetailDto, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
