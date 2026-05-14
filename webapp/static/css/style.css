@@ -484,11 +484,10 @@ details[open] .episode-description-summary::before {
 .episode-item {
     background: var(--surface);
     border-radius: var(--radius-md);
-    padding: 18px 20px 18px 20px;
+    padding: 18px 80px 18px 20px;
     margin-bottom: 10px;
     box-shadow: var(--shadow-sm);
     position: relative;
-    padding-right: 68px;
     transition: box-shadow 0.15s;
 }
 
@@ -560,11 +559,18 @@ details[open] .episode-description-summary::before {
     white-space: nowrap;
 }
 
-/* Episode play button */
-.episode-play-btn {
+/* Episode action buttons (play + queue) */
+.episode-actions {
     position: absolute;
-    top: 18px;
-    right: 18px;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.episode-play-btn {
     width: 38px;
     height: 38px;
     border-radius: 50%;
@@ -577,7 +583,6 @@ details[open] .episode-description-summary::before {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    z-index: 1;
     transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
     box-shadow: 0 2px 8px rgba(27,153,139,0.35);
 }
@@ -586,6 +591,157 @@ details[open] .episode-description-summary::before {
     background: var(--accent-hover);
     transform: scale(1.08);
     box-shadow: 0 4px 14px rgba(27,153,139,0.5);
+}
+
+.episode-play-btn--small {
+    width: 28px;
+    height: 28px;
+    box-shadow: 0 1px 4px rgba(27,153,139,0.3);
+}
+
+.episode-queue-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.episode-queue-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Queue badge */
+.queue-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--accent);
+    color: white;
+    border-radius: 9px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.queue-badge:empty {
+    display: none;
+}
+
+/* Header queue button */
+.app-header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-queue-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s;
+    user-select: none;
+}
+
+.header-queue-btn:hover {
+    color: var(--accent);
+}
+
+/* Queue page */
+.queue-title {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.queue-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s;
+}
+
+.queue-row:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.queue-position {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.queue-row-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.queue-row-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.queue-row-extras {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.queue-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.queue-remove-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.queue-remove-btn:hover {
+    background: #fef2f2;
+    color: #d95f5f;
+    border-color: #d95f5f;
 }
 
 /* Persistent audio player bar */

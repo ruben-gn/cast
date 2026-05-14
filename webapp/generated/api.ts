@@ -37,6 +37,3 @@ export interface PodcastSummaryDto {
   created: string
   updated: string
 }
-export interface QueueDto {
-  episodeIds: string[]
-}

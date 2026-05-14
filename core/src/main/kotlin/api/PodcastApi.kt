@@ -63,7 +63,7 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlaybac
         episodes = episodes.map(::episodeDetailDto)
     )
 
-private fun episodeDetailDto(ep: EpisodeWithPlayback) =
+internal fun episodeDetailDto(ep: EpisodeWithPlayback) =
     EpisodeDetailDto(
         id = ep.episode.id.value,
         title = ep.episode.title,
@@ -76,7 +76,7 @@ private fun episodeDetailDto(ep: EpisodeWithPlayback) =
         progressMs = ep.progressMs,
     )
 
-private fun Duration.formatted(): String =
+internal fun Duration.formatted(): String =
     toComponents { _, hours, minutes, seconds, _ ->
         if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
         else "%d:%02d".format(minutes, seconds)

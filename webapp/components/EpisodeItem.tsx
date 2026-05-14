@@ -7,18 +7,35 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
 
     return (
         <div class="episode-item">
-            <button
-                class="episode-play-btn"
-                data-id={episode.id}
-                data-audio-url={episode.audioUrl}
-                data-title={episode.title}
-                onclick="playEpisode(this.dataset.id, this.dataset.audioUrl, this.dataset.title)"
-                title={`Play ${episode.title}`}
-            >
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M8 5v14l11-7z"/>
-                </svg>
-            </button>
+            <div class="episode-actions">
+                <button
+                    class="episode-play-btn"
+                    data-id={episode.id}
+                    data-audio-url={episode.audioUrl}
+                    data-title={episode.title}
+                    onclick="playEpisode(this.dataset.id, this.dataset.audioUrl, this.dataset.title)"
+                    title={`Play ${episode.title}`}
+                >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+                <button
+                    class="episode-queue-btn"
+                    hx-post={`/queue/${episode.id}`}
+                    hx-swap="none"
+                    title="Add to queue"
+                >
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                        <line x1="8" y1="6" x2="21" y2="6"/>
+                        <line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/>
+                        <line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                </button>
+            </div>
 
             <div class="episode-header episode-header--static">
                 <EpisodeRow episode={episode}/>

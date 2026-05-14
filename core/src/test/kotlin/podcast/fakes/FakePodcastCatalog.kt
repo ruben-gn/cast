@@ -24,4 +24,6 @@ class FakePodcastCatalog : PodcastCatalog {
 
     override suspend fun episodesFor(podcastId: PodcastId) =
         episodes.values.filter { it.podcastId == podcastId }
+
+    override suspend fun findEpisodeById(id: EpisodeId) = episodes[id]
 }

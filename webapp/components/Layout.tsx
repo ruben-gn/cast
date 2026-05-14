@@ -14,7 +14,35 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
     </head>
     <body id="main-body">
       <header class="app-header">
-        <span class="app-logo">Cast</span>
+        <div class="app-header-left">
+          <span
+            class="app-logo"
+            hx-get="/podcasts"
+            hx-target="#content-container"
+            hx-swap="outerHTML"
+            hx-push-url="true"
+            style="cursor:pointer"
+          >Cast</span>
+          <div
+            class="header-queue-btn"
+            hx-get="/queue"
+            hx-target="#content-container"
+            hx-swap="outerHTML"
+            hx-push-url="true"
+            hx-indicator="#nav-spinner"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            Queue
+            <span id="queue-badge" class="queue-badge"></span>
+          </div>
+        </div>
         <button class="header-add-btn" onclick="document.getElementById('add-feed-modal').showModal()">
           ＋ Add podcast
         </button>

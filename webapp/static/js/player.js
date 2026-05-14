@@ -88,6 +88,7 @@ audio.addEventListener('ended', function () {
     markPlayed(currentEpisodeId);
     currentEpisodeId = null;
     if (ws) { ws.close(); ws = null; }
+    playNextInQueue();
 });
 
 function applyResume(progressMs) {
@@ -97,6 +98,18 @@ function applyResume(progressMs) {
         audio.removeEventListener('canplay', onCanPlay);
         audio.currentTime = seekTo;
     });
+}
+
+function playNextInQueue() {
+    fetch('/api/queue')
+        .then(function (r) { return r.json(); })
+        .then(function (episodes) {
+            if (!episodes || episodes.length === 0) return;
+            var next = episodes[0];
+            fetch('/queue/' + next.id, {method: 'DELETE'});
+            playEpisode(next.id, next.audioUrl, next.title);
+        })
+        .catch(function () {});
 }
 
 function playEpisode(id, url, title) {

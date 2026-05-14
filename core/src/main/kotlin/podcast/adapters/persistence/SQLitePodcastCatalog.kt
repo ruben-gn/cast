@@ -60,6 +60,14 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
             generateSequence { if (rs.next()) rs.toEpisode() else null }.toList()
         }
     }
+
+    override suspend fun findEpisodeById(id: EpisodeId): Episode? = db.withConnection { conn ->
+        conn.prepareStatement("SELECT * FROM episodes WHERE id = ?").use { stmt ->
+            stmt.setString(1, id.value)
+            val rs = stmt.executeQuery()
+            if (rs.next()) rs.toEpisode() else null
+        }
+    }
 }
 
 private fun Connection.insertPodcast(podcast: Podcast) {

@@ -3,7 +3,8 @@ import {serveStatic} from 'hono/bun'
 import {Layout} from './components/Layout'
 import {PodcastList} from './components/PodcastList'
 import {PodcastDetail} from './components/PodcastDetail'
-import type {Podcast, PodcastDetail as PodcastDetailType} from './types'
+import {QueuePage, QueueList} from './components/QueuePage'
+import type {Podcast, PodcastDetail as PodcastDetailType, Episode} from './types'
 
 const KOTLIN_API = process.env.KOTLIN_API ?? 'http://localhost:8100'
 const WS_API = KOTLIN_API.replace(/^http/, 'ws')
@@ -57,6 +58,47 @@ app.post('/podcasts', async (c) => {
         )
     }
     return c.redirect('/podcasts')
+})
+
+app.get('/queue', async (c) => {
+    const episodes: Episode[] = await fetch(`${KOTLIN_API}/api/queue`).then(r => r.json())
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    const content = <QueuePage episodes={episodes}/>
+
+    if (isHtmx) {
+        return c.html(
+            <div id="content-container">
+                <div class="page-content">{content}</div>
+            </div>
+        )
+    }
+    return c.html(
+        <Layout title="Queue — Cast">{content}</Layout>
+    )
+})
+
+app.post('/queue/:id', async (c) => {
+    const id = c.req.param('id')
+    const res = await fetch(`${KOTLIN_API}/api/queue/${id}`, {method: 'POST'})
+    if (!res.ok) return new Response('', {status: res.status})
+    const episodes: Episode[] = await res.json()
+    return c.html(<QueueList episodes={episodes}/>)
+})
+
+app.delete('/queue/:id', async (c) => {
+    const id = c.req.param('id')
+    const res = await fetch(`${KOTLIN_API}/api/queue/${id}`, {method: 'DELETE'})
+    if (!res.ok) return new Response('', {status: res.status})
+    const episodes: Episode[] = await res.json()
+    return c.html(<QueueList episodes={episodes}/>)
+})
+
+app.get('/api/queue', async (c) => {
+    const res = await fetch(`${KOTLIN_API}/api/queue`)
+    return new Response(res.body, {
+        status: res.status,
+        headers: {'Content-Type': 'application/json'},
+    })
 })
 
 app.get('/podcasts/:id', async (c) => {
