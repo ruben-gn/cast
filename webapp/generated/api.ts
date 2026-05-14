@@ -1,5 +1,8 @@
 // Generated from Kotlin shared-models -- do not edit manually
 
+export interface AddPodcastRequest {
+  feed: string
+}
 export interface EpisodeDto {
   id: string
   title: string
@@ -8,13 +11,11 @@ export interface EpisodeDto {
   duration: string | null
   publishedAt: string | null
 }
-export interface PodcastSummaryDto {
-  id: string
-  url: string
-  name: string
-  image: string
-  created: string
-  updated: string
+export interface PlaybackStateResponse {
+  type: string
+  episodeId: string
+  progressMs: number
+  played: boolean
 }
 export interface PodcastDetailDto {
   id: string
@@ -25,12 +26,11 @@ export interface PodcastDetailDto {
   updated: string
   episodes: EpisodeDto[]
 }
-export interface AddPodcastRequest {
-  feed: string
-}
-export interface PlaybackStateResponse {
-  type: string
-  episodeId: string
-  progressMs: number
-  played: boolean
+export interface PodcastSummaryDto {
+  id: string
+  url: string
+  name: string
+  image: string
+  created: string
+  updated: string
 }
