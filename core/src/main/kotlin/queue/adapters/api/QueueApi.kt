@@ -1,6 +1,7 @@
 package queue.adapters.api
 
 import cast.api.QueueDto
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -43,7 +44,8 @@ fun Route.queueApi(dependencies: DependencyRegistry) {
 
     post("/{episodeId}/{position}") {
         val episodeId = call.parameters.getOrFail("episodeId").let(::EpisodeId)
-        val position = call.parameters.getOrFail("position").toInt()
+        val position = call.parameters.getOrFail("position").toIntOrNull()
+            ?: return@post call.respond(HttpStatusCode.BadRequest, "position must be an integer")
 
         call.respondQueue(addEpisodeAt(episodeId, position))
     }

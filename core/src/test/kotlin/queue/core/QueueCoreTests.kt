@@ -30,26 +30,26 @@ class QueueCoreTests : DescribeSpec({
         describe("AddFirst") {
             it("should prepend an episode to an empty queue") {
                 addEpisodeFirst(EpisodeId("ep-1"))
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-1")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-1")))
             }
 
             it("should prepend an episode to a non-empty queue") {
                 addEpisodeFirst(EpisodeId("ep-1"))
                 addEpisodeFirst(EpisodeId("ep-2"))
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-2"), EpisodeId("ep-1")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-2"), EpisodeId("ep-1")))
             }
         }
 
         describe("AddLast") {
             it("should append an episode to an empty queue") {
                 addEpisodeLast(EpisodeId("ep-1"))
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-1")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-1")))
             }
 
             it("should append an episode to a non-empty queue") {
                 addEpisodeLast(EpisodeId("ep-1"))
                 addEpisodeLast(EpisodeId("ep-2"))
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-1"), EpisodeId("ep-2")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-1"), EpisodeId("ep-2")))
             }
         }
 
@@ -58,25 +58,25 @@ class QueueCoreTests : DescribeSpec({
                 addEpisodeFirst(EpisodeId("ep-1"))
                 addEpisodeFirst(EpisodeId("ep-2"))
                 addEpisodeAt(EpisodeId("ep-3"), 1)
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-2"), EpisodeId("ep-3"), EpisodeId("ep-1")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-2"), EpisodeId("ep-3"), EpisodeId("ep-1")))
             }
 
             it("should insert an episode in an empty queue") {
                 addEpisodeAt(EpisodeId("ep-1"), 0)
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-1")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-1")))
             }
 
 
             it("should prepend an episode for position 0") {
                 addEpisodeFirst(EpisodeId("ep-1"))
                 addEpisodeAt(EpisodeId("ep-2"), 0)
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-2"), EpisodeId("ep-1")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-2"), EpisodeId("ep-1")))
             }
 
             it("should append an episode for a position greater than the queue size") {
                 addEpisodeFirst(EpisodeId("ep-1"))
                 addEpisodeAt(EpisodeId("ep-2"), 999)
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-1"), EpisodeId("ep-2")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-1"), EpisodeId("ep-2")))
             }
 
             it("should move an episode to a different position") {
@@ -86,7 +86,7 @@ class QueueCoreTests : DescribeSpec({
 
                 addEpisodeAt(EpisodeId("ep-3"), 1)
 
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-1"), EpisodeId("ep-3"), EpisodeId("ep-2")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-1"), EpisodeId("ep-3"), EpisodeId("ep-2")))
             }
         }
 
@@ -94,19 +94,19 @@ class QueueCoreTests : DescribeSpec({
             it("should dequeue an episode when there are no episodes remaining") {
                 addEpisodeFirst(EpisodeId("ep-1"))
                 dequeueEpisode(EpisodeId("ep-1"))
-                getQueue() shouldBe Queue(episodeIds = setOf())
+                getQueue() shouldBe Queue(episodeIds = listOf())
             }
 
             it("should dequeue an episode when there are episodes remaining") {
                 addEpisodeFirst(EpisodeId("ep-1"))
                 addEpisodeFirst(EpisodeId("ep-2"))
                 dequeueEpisode(EpisodeId("ep-1"))
-                getQueue() shouldBe Queue(episodeIds = setOf(EpisodeId("ep-2")))
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-2")))
             }
 
             it("should not fail when dequeueing an episode that is not in the queue") {
                 addEpisodeFirst(EpisodeId("ep-1"))
-                dequeueEpisode(EpisodeId("ep-2")) shouldBe Queue(episodeIds = setOf(EpisodeId("ep-1")))
+                dequeueEpisode(EpisodeId("ep-2")) shouldBe Queue(episodeIds = listOf(EpisodeId("ep-1")))
             }
         }
     }

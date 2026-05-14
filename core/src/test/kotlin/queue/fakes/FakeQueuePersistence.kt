@@ -5,7 +5,7 @@ import queue.core.ports.QueuePersistence
 
 class FakeQueuePersistence : QueuePersistence {
 
-    private var storage: Queue = Queue(setOf())
+    private var storage: Queue = Queue(emptyList())
 
     override suspend fun get(): Queue = storage
 
