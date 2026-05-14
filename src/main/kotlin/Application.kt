@@ -1,3 +1,4 @@
+import adapters.api.installRoutes
 import application.installApplicationModule
 import configuration.installDatabase
 import io.ktor.server.application.*
@@ -21,4 +22,6 @@ fun Application.module() {
     installQueueModule()
 
     installApplicationModule()
+
+    installRoutes()
 }

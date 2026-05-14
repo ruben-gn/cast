@@ -1,10 +1,13 @@
-package playback.adapters.api
+package adapters.api
 
 import installCommon
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.server.plugins.di.dependencies
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
@@ -25,6 +28,7 @@ class PlaybackApiTest : DescribeSpec({
             application {
                 installCommon()
                 installPlaybackModule(playbackState = FakePlaybackPersistence())
+                routing { route("/api/playback") { playbackApi(dependencies) } }
             }
             block()
         }

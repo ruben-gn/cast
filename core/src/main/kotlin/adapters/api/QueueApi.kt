@@ -1,4 +1,4 @@
-package queue.adapters.api
+package adapters.api
 
 import cast.api.QueueDto
 import io.ktor.http.HttpStatusCode
@@ -28,7 +28,6 @@ fun Route.queueApi(dependencies: DependencyRegistry) {
 
     delete("/{episodeId}") {
         val episodeId = call.parameters.getOrFail("episodeId").let(::EpisodeId)
-
         call.respondQueue(dequeueEpisode(episodeId))
     }
 
@@ -46,10 +45,8 @@ fun Route.queueApi(dependencies: DependencyRegistry) {
         val episodeId = call.parameters.getOrFail("episodeId").let(::EpisodeId)
         val position = call.parameters.getOrFail("position").toIntOrNull()
             ?: return@post call.respond(HttpStatusCode.BadRequest, "position must be an integer")
-
         call.respondQueue(addEpisodeAt(episodeId, position))
     }
-
 }
 
 private suspend fun RoutingCall.respondQueue(queue: Queue) = respond(queueDto(queue))

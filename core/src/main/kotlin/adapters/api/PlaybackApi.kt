@@ -1,4 +1,4 @@
-package playback.adapters.api
+package adapters.api
 
 import cast.api.PlaybackStateResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -52,4 +52,3 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
         }
     }
 }
-

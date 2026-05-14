@@ -3,11 +3,9 @@ package podcast
 import configuration.ConnectionProvider
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.dependencies
-import io.ktor.server.routing.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import podcast.adapters.api.podcastApi
 import podcast.adapters.persistence.SQLitePodcastCatalog
 import podcast.adapters.rss.RssFeedInfoProvider
 import podcast.core.ports.FeedInfoProvider
@@ -36,10 +34,6 @@ fun Application.installPodcastModule(
         provide<UpdateFeeds> { UpdateFeeds(resolve(), resolve()) }
 
         provide<AddFeed> { AddFeed(resolve(), resolve(), resolve(), resolve()) }
-    }
-
-    routing {
-        route("/api/podcasts") { podcastApi(dependencies) }
     }
 
     launch {

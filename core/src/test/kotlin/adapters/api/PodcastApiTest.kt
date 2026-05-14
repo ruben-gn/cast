@@ -1,4 +1,4 @@
-package podcast
+package adapters.api
 
 import application.installApplicationModule
 import installCommon
@@ -13,12 +13,16 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.plugins.di.dependencies
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.*
 import cast.api.AddPodcastRequest
 import cast.api.PodcastSummaryDto
 import playback.installPlaybackModule
 import playback.fakes.FakePlaybackPersistence
 import podcast.fakes.FakePodcastCatalog
+import podcast.installPodcastModule
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -54,6 +58,7 @@ class PodcastApiTest : DescribeSpec({
                     installPodcastModule(podcastCatalog = FakePodcastCatalog())
                     installPlaybackModule(playbackState = FakePlaybackPersistence())
                     installApplicationModule()
+                    routing { route("/api/podcasts") { podcastApi(dependencies) } }
                 }
                 val client = createClient { install(ContentNegotiation) { json() } }
 

@@ -2,8 +2,6 @@ package playback
 
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
-import io.ktor.server.routing.*
-import playback.adapters.api.playbackApi
 import playback.adapters.persistence.SQLitePlaybackState
 import playback.core.ports.PlaybackPersistence
 import playback.core.usecase.GetPlaybackState
@@ -23,7 +21,4 @@ fun Application.installPlaybackModule(
         provide<MarkPlayed> { MarkPlayed(resolve()) }
     }
 
-    routing {
-        route("/api/playback") { playbackApi(dependencies) }
-    }
 }

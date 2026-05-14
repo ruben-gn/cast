@@ -1,7 +1,6 @@
-package podcast.adapters.api
+package adapters.api
 
 import application.model.EpisodeWithPlayback
-import application.model.PodcastWithPlayback
 import application.usecase.GetPodcastDetail
 import cast.api.AddPodcastRequest
 import cast.api.EpisodeDetailDto
