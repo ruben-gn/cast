@@ -23,6 +23,18 @@ data class EpisodeDto(
 )
 
 @Serializable
+data class EpisodeDetailDto(
+    val id: String,
+    val title: String,
+    val description: String,
+    val audioUrl: String,
+    val duration: String?,
+    val publishedAt: String?,
+    val played: Boolean,
+    val progressMs: Long,
+)
+
+@Serializable
 data class PodcastDetailDto(
     val id: String,
     val url: String,
@@ -30,7 +42,7 @@ data class PodcastDetailDto(
     val image: String,
     val created: String,
     val updated: String,
-    val episodes: List<EpisodeDto>,
+    val episodes: List<EpisodeDetailDto>,
 )
 
 @Serializable

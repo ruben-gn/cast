@@ -1,1 +1,1 @@
-export type { PodcastSummaryDto as Podcast, PodcastDetailDto as PodcastDetail, EpisodeDto as Episode } from './generated/api'
+export type { PodcastSummaryDto as Podcast, PodcastDetailDto as PodcastDetail, EpisodeDetailDto as Episode } from './generated/api'

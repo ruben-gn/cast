@@ -3,6 +3,16 @@
 export interface AddPodcastRequest {
   feed: string
 }
+export interface EpisodeDetailDto {
+  id: string
+  title: string
+  description: string
+  audioUrl: string
+  duration: string | null
+  publishedAt: string | null
+  played: boolean
+  progressMs: number
+}
 export interface EpisodeDto {
   id: string
   title: string
@@ -24,7 +34,7 @@ export interface PodcastDetailDto {
   image: string
   created: string
   updated: string
-  episodes: EpisodeDto[]
+  episodes: EpisodeDetailDto[]
 }
 export interface PodcastSummaryDto {
   id: string
@@ -33,4 +43,7 @@ export interface PodcastSummaryDto {
   image: string
   created: string
   updated: string
+}
+export interface QueueDto {
+  episodeIds: string[]
 }

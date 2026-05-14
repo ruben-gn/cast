@@ -9,4 +9,5 @@ interface PlaybackPersistence {
     suspend fun updateProgress(episodeId: EpisodeId, progressMs: Long, updatedAt: Instant)
     suspend fun markPlayed(episodeId: EpisodeId)
     suspend fun get(episodeId: EpisodeId): PlaybackState?
+    suspend fun getAll(ids: List<EpisodeId>): Map<EpisodeId, PlaybackState>
 }

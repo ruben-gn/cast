@@ -1,3 +1,4 @@
+import application.installApplicationModule
 import configuration.installDatabase
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
@@ -18,4 +19,6 @@ fun Application.module() {
     installPodcastModule()
     installPlaybackModule()
     installQueueModule()
+
+    installApplicationModule()
 }

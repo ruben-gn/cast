@@ -53,6 +53,23 @@ class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersiste
         }
     }
 
+    override suspend fun getAll(ids: List<EpisodeId>): Map<EpisodeId, PlaybackState> {
+        if (ids.isEmpty()) return emptyMap()
+        return db.withConnection { conn ->
+            val placeholders = ids.joinToString(",") { "?" }
+            conn.prepareStatement("SELECT * FROM playback_state WHERE episode_id IN ($placeholders)").use { stmt ->
+                ids.forEachIndexed { i, id -> stmt.setString(i + 1, id.value) }
+                val rs = stmt.executeQuery()
+                buildMap {
+                    while (rs.next()) {
+                        val state = rs.toPlaybackState()
+                        put(state.episodeId, state)
+                    }
+                }
+            }
+        }
+    }
+
     private fun ResultSet.toPlaybackState() = PlaybackState(
         episodeId = EpisodeId(getString("episode_id")),
         progressMs = getLong("progress_ms"),

@@ -56,6 +56,9 @@ const EpisodeRow: FC<{ episode: Episode }> = ({episode}) => (
             {episode.duration && (
                 <span class="episode-duration">{episode.duration}</span>
             )}
+            {episode.played && (
+                <span class="episode-played-badge">Played</span>
+            )}
         </div>
     </div>
 )

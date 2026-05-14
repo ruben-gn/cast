@@ -20,7 +20,8 @@ class FakePlaybackPersistence : PlaybackPersistence {
         }.copy(played = true)
     }
 
-    override suspend fun get(episodeId: EpisodeId): PlaybackState? {
-        return storage[episodeId]
-    }
+    override suspend fun get(episodeId: EpisodeId): PlaybackState? = storage[episodeId]
+
+    override suspend fun getAll(ids: List<EpisodeId>): Map<EpisodeId, PlaybackState> =
+        ids.mapNotNull { id -> storage[id]?.let { id to it } }.toMap()
 }

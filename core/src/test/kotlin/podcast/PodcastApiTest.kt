@@ -1,5 +1,6 @@
 package podcast
 
+import application.installApplicationModule
 import installCommon
 import installHttpClient
 import io.kotest.core.spec.style.DescribeSpec
@@ -15,6 +16,8 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
 import cast.api.AddPodcastRequest
 import cast.api.PodcastSummaryDto
+import playback.installPlaybackModule
+import playback.fakes.FakePlaybackPersistence
 import podcast.fakes.FakePodcastCatalog
 import java.time.Clock
 import java.time.Instant
@@ -49,6 +52,8 @@ class PodcastApiTest : DescribeSpec({
                     installHttpClient(testHttpClient)
                     installCommon(clock = fixedClock)
                     installPodcastModule(podcastCatalog = FakePodcastCatalog())
+                    installPlaybackModule(playbackState = FakePlaybackPersistence())
+                    installApplicationModule()
                 }
                 val client = createClient { install(ContentNegotiation) { json() } }
 

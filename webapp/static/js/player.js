@@ -52,10 +52,23 @@ function episodeBtn(id) {
     return id ? document.querySelector('.episode-play-btn[data-id="' + id + '"]') : null;
 }
 
+function markPlayed(id) {
+    if (!id) return;
+    var btn = episodeBtn(id);
+    if (!btn) return;
+    var extras = btn.closest('.episode-item').querySelector('.episode-extras');
+    if (!extras || extras.querySelector('.episode-played-badge')) return;
+    var badge = document.createElement('span');
+    badge.className = 'episode-played-badge';
+    badge.textContent = 'Played';
+    extras.appendChild(badge);
+}
+
 ws.onmessage = function (event) {
     var msg = JSON.parse(event.data);
-    if (msg.type === 'state' && msg.episodeId === currentEpisodeId) {
-        applyResume(msg.progressMs);
+    if (msg.type === 'state') {
+        if (msg.episodeId === currentEpisodeId) applyResume(msg.progressMs);
+        if (msg.played) markPlayed(msg.episodeId);
     }
 };
 
@@ -83,6 +96,7 @@ audio.addEventListener('ended', function () {
     if (currentEpisodeId && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'ended', episodeId: currentEpisodeId }));
     }
+    markPlayed(currentEpisodeId);
     currentEpisodeId = null;
 });
 
