@@ -61,7 +61,9 @@ app.post('/podcasts', async (c) => {
 })
 
 app.get('/queue', async (c) => {
-    const episodes: Episode[] = await fetch(`${KOTLIN_API}/api/queue`).then(r => r.json())
+    const res = await fetch(`${KOTLIN_API}/api/queue`)
+    if (!res.ok) return new Response('', {status: res.status})
+    const episodes: Episode[] = await res.json()
     const isHtmx = c.req.header('HX-Request') === 'true'
     const content = <QueuePage episodes={episodes}/>
 
@@ -97,7 +99,7 @@ app.get('/api/queue', async (c) => {
     const res = await fetch(`${KOTLIN_API}/api/queue`)
     return new Response(res.body, {
         status: res.status,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': res.headers.get('content-type') ?? 'application/json'},
     })
 })
 

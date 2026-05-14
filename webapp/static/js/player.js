@@ -94,10 +94,19 @@ audio.addEventListener('ended', function () {
 function applyResume(progressMs) {
     var seekTo = progressMs / 1000;
     if (seekTo <= 0) return;
-    audio.addEventListener('canplay', function onCanPlay() {
-        audio.removeEventListener('canplay', onCanPlay);
+    if (audio.readyState >= 3) {
         audio.currentTime = seekTo;
-    });
+    } else {
+        audio.addEventListener('canplay', function onCanPlay() {
+            audio.removeEventListener('canplay', onCanPlay);
+            audio.currentTime = seekTo;
+        });
+    }
+}
+
+function updateQueueBadge(count) {
+    var badge = document.getElementById('queue-badge');
+    if (badge) badge.textContent = count > 0 ? String(count) : '';
 }
 
 function playNextInQueue() {
@@ -107,6 +116,7 @@ function playNextInQueue() {
             if (!episodes || episodes.length === 0) return;
             var next = episodes[0];
             fetch('/queue/' + next.id, {method: 'DELETE'});
+            updateQueueBadge(episodes.length - 1);
             playEpisode(next.id, next.audioUrl, next.title);
         })
         .catch(function () {});

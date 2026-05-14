@@ -4,21 +4,21 @@ import type {Episode} from '../types'
 export const QueuePage: FC<{ episodes: Episode[] }> = ({episodes}) => (
     <div class="queue-page">
         <h1 class="queue-title">Up next</h1>
-        {episodes.length === 0 ? (
-            <p class="empty-message">Your queue is empty. Add episodes from a podcast.</p>
-        ) : (
-            <div id="queue-list">
-                <QueueList episodes={episodes}/>
-            </div>
-        )}
+        <div id="queue-list">
+            <QueueList episodes={episodes}/>
+        </div>
     </div>
 )
 
 export const QueueList: FC<{ episodes: Episode[] }> = ({episodes}) => (
     <>
-        {episodes.map((episode, i) => (
-            <QueueRow key={episode.id} episode={episode} position={i + 1}/>
-        ))}
+        {episodes.length === 0 ? (
+            <p class="empty-message">Your queue is empty. Add episodes from a podcast.</p>
+        ) : (
+            episodes.map((episode, i) => (
+                <QueueRow key={episode.id} episode={episode} position={i + 1}/>
+            ))
+        )}
         <span id="queue-badge" hx-swap-oob="true" class="queue-badge">{episodes.length || ''}</span>
     </>
 )

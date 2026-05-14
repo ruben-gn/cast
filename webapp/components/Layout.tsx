@@ -21,6 +21,7 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
             hx-target="#content-container"
             hx-swap="outerHTML"
             hx-push-url="true"
+            hx-indicator="#nav-spinner"
             style="cursor:pointer"
           >Cast</span>
           <div
