@@ -24,7 +24,7 @@ class AddFeed(
 
         catalog.findByUrl(url)?.let { podcast ->
             log.info { "Feed $url already exists [${podcast.name}, ${podcast.id}]." }
-            return updateFeed(podcast)
+            return updateFeed(podcast).getOrThrow().first
         }
 
         val feedInfo = feedInfoProvider.fetch(url)

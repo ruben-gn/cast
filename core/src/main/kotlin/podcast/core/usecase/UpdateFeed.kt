@@ -14,8 +14,12 @@ class UpdateFeed(
     private val clock: Clock
 ) {
 
-    suspend operator fun invoke(podcast: Podcast): Podcast {
-        val feedInfo = feedInfoProvider.fetch(podcast.url)
+    suspend operator fun invoke(podcast: Podcast): Result<Pair<Podcast, List<Episode>>> {
+        val feedInfo = try {
+            feedInfoProvider.fetch(podcast.url)
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
 
         val updatedPodcast = podcast.copy(
             name = feedInfo.title,
@@ -24,17 +28,16 @@ class UpdateFeed(
         )
 
         val existingEpisodeIds = podcast.fetchExistingEpisodes()
-        val episodes = feedInfo.episodes.filterNot { it.id in existingEpisodeIds }
+        val episodes = feedInfo.episodes.map { it.toEpisode(podcast.id) }
 
-        catalog.save(updatedPodcast, episodes.map { it.toEpisode(podcast.id) })
+        catalog.save(updatedPodcast, episodes.filterNot { episode -> episode.id in existingEpisodeIds })
 
-        return updatedPodcast
+        return Result.success(updatedPodcast to episodes)
     }
 
-    private suspend fun Podcast.fetchExistingEpisodes(): Set<String> =
+    private suspend fun Podcast.fetchExistingEpisodes(): Set<EpisodeId> =
         catalog
             .episodesFor(id)
             .map(Episode::id)
-            .map(EpisodeId::value)
             .toSet()
 }

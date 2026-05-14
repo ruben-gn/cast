@@ -1,6 +1,7 @@
 package podcast.core.usecase
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import podcast.core.ports.PodcastCatalog
@@ -13,14 +14,12 @@ class UpdateFeeds(
 ) {
 
     suspend operator fun invoke() = supervisorScope {
-        catalog.findAll().forEach { podcast ->
+        catalog.findAll().map { podcast ->
             launch {
-                try {
-                    updateFeed(podcast)
-                } catch (e: Exception) {
-                    log.error(e) { "Failed to update feed ${podcast.url}" }
-                }
+                updateFeed(podcast)
+                    .onSuccess { (updatedPodcast, episodes) -> log.info { "Updated feed ${updatedPodcast.url}. ${updatedPodcast.name}: ${episodes.size} episodes" } }
+                    .onFailure { error -> log.error(error) { "Failed to update feed ${podcast.url}" } }
             }
-        }
+        }.joinAll()
     }
 }

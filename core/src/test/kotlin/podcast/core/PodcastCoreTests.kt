@@ -10,12 +10,7 @@ import podcast.core.models.PodcastId
 import podcast.core.ports.EpisodeInfo
 import podcast.core.ports.FeedInfo
 import podcast.core.ports.FeedInfoProvider
-import podcast.core.usecase.AddFeed
-import podcast.core.usecase.GetPodcast
-import podcast.core.usecase.ListEpisodes
-import podcast.core.usecase.ListPodcasts
-import podcast.core.usecase.UpdateFeed
-import podcast.core.usecase.UpdateFeeds
+import podcast.core.usecase.*
 import podcast.fakes.FakePodcastCatalog
 import java.time.Instant
 import kotlin.time.Duration.Companion.hours
@@ -122,15 +117,14 @@ class PodcastCoreTests : DescribeSpec({
             stubFeedProvider = FeedInfoProvider { newFeedInfo }
             updateFeed = UpdateFeed(catalog, stubFeedProvider, fixedClock)
 
-            val updated = updateFeed(podcast)
+            val (updated, episodes) = updateFeed(podcast).getOrThrow()
 
             updated.name shouldBe "Updated Name"
             updated.image shouldBe "new.png"
             updated.updated shouldBe updateInstant
 
             val allEpisodes = listEpisodes(podcast.id)
-            allEpisodes shouldHaveSize 2
-            allEpisodes.map { it.id.value } shouldContainExactlyInAnyOrder listOf("ep1", "ep2")
+            allEpisodes shouldContainExactlyInAnyOrder episodes
         }
 
         it("should update all registered podcasts") {
@@ -152,6 +146,34 @@ class PodcastCoreTests : DescribeSpec({
             listPodcasts().forEach { podcast ->
                 podcast.name shouldBe "New Name ${podcast.url.value}"
             }
+        }
+
+        it("should continue updating other podcasts when one feed update fails") {
+            val failingUrl = FeedUrl("https://failing-show.com/rss")
+            val successfulUrl = FeedUrl("https://successful-show.com/rss")
+
+            stubFeedProvider = FeedInfoProvider { url -> FeedInfo("Old Name ${url.value}", url.value, "Desc", "img.png") }
+            addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
+
+            addFeed(failingUrl)
+            addFeed(successfulUrl)
+
+            stubFeedProvider = FeedInfoProvider { url ->
+                if (url == failingUrl) {
+                    error("Feed unavailable")
+                }
+
+                FeedInfo("New Name ${url.value}", url.value, "Desc", "img.png")
+            }
+            updateFeed = UpdateFeed(catalog, stubFeedProvider, fixedClock)
+            updateFeeds = UpdateFeeds(catalog, updateFeed)
+
+            updateFeeds()
+
+            val podcasts = listPodcasts()
+
+            podcasts.find { it.url == failingUrl }!!.name shouldBe "Old Name ${failingUrl.value}"
+            podcasts.find { it.url == successfulUrl }!!.name shouldBe "New Name ${successfulUrl.value}"
         }
     }
 })
