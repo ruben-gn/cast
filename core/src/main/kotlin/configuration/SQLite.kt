@@ -15,6 +15,8 @@ fun Application.installDatabase() {
         statement.executeUpdate(CREATE_QUEUE_TABLE)
     }
 
+    monitor.subscribe(ApplicationStopped) { connection.close() }
+
     val db = SingleConnectionProvider(connection)
 
     dependencies {
