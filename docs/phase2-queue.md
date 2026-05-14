@@ -18,16 +18,14 @@
 
 ### API layer
 
-- [ ] Add `GET /api/queue/detail` route in `QueueApi.kt`
-  - Resolves `GetQueueDetail` from DI
-  - Returns `List<EpisodeDetailDto>` (reuse the same DTO as the podcast detail endpoint)
-- [ ] Add `DELETE /api/queue/{episodeId}` route — remove a single entry and return updated queue detail
-- [ ] Write API tests for `GetQueueDetail` and the delete route
+- [ ] Replace `GET /api/queue` response with `List<EpisodeDetailDto>` (backed by `GetQueueDetail`); drop the ID-only response — no client ever needs IDs without the episode data
+- [ ] `POST /api/queue` and `DELETE /api/queue/{episodeId}` return the updated `List<EpisodeDetailDto>` so callers never need a follow-up fetch after a mutation
+- [ ] Write API tests for the updated GET, POST, and DELETE routes
 
 ## Frontend
 
 - [ ] **Add-to-queue button** — add an "Add to queue" button on the episode detail view; `hx-post="/api/queue"` with the episode ID; swap the queue count in the player bar on success
-- [ ] **Queue page** — new route `/queue` in `server.tsx`; `QueuePage` component fetches `GET /api/queue/detail` and renders an ordered list of episode rows (same row component as the podcast detail view, reused)
-- [ ] **Reorder / remove** — each queue row has a remove button (`hx-delete="/api/queue/{id}"`, `hx-target` the list); drag-to-reorder can be deferred
-- [ ] **Auto-play next** — when the `ended` WebSocket event fires, call `GET /api/queue/detail`, take the first entry if the current episode is at the head of the queue, remove it from the queue, and start playback; server decides the next track, client just follows
+- [ ] **Queue page** — new route `/queue` in `server.tsx`; `QueuePage` component fetches `GET /api/queue` and renders an ordered list of episode rows (same row component as the podcast detail view, reused)
+- [ ] **Reorder / remove** — each queue row has a remove button (`hx-delete="/api/queue/{id}"`, `hx-target` the list); mutation response is the updated list, so HTMX can swap it in without a second request; drag-to-reorder can be deferred
+- [ ] **Auto-play next** — when the `ended` WebSocket event fires, call `GET /api/queue`, take the first entry, remove it from the queue, and start playback; server decides the next track, client just follows
 - [ ] **Queue count in player bar** — a small badge showing how many episodes remain; updated via HTMX `hx-trigger="every 30s"` or pushed via WebSocket alongside playback state updates
