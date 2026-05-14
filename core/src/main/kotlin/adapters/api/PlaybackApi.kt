@@ -11,6 +11,7 @@ import kotlinx.serialization.json.*
 import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.MarkPlayed
 import playback.core.usecase.UpdateProgress
+import shared.model.EpisodeId
 
 private val log = KotlinLogging.logger { }
 private val json = Json
@@ -27,7 +28,7 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
                     val text = frame.readText()
                     log.info { "Received playback message: $text" }
                     val obj = json.parseToJsonElement(text).jsonObject
-                    val episodeId = obj["episodeId"]!!.jsonPrimitive.content
+                    val episodeId = EpisodeId(obj["episodeId"]!!.jsonPrimitive.content)
                     when (obj["type"]?.jsonPrimitive?.content) {
                         "update" -> {
                             val progressMs = obj["progressMs"]!!.jsonPrimitive.long

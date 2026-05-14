@@ -30,20 +30,20 @@ class PlaybackCoreTests : DescribeSpec({
         }
 
         it("should update and retrieve the playback state for an episode") {
-            val episodeId = "ep-123"
+            val episodeId = EpisodeId("ep-123")
             val progressMs = 5000L
 
             updateProgress(episodeId, progressMs)
 
             val retrieved = getPlaybackState(episodeId)
-            retrieved.episodeId shouldBe EpisodeId(episodeId)
+            retrieved.episodeId shouldBe episodeId
             retrieved.progressMs shouldBe progressMs
             retrieved.updatedAt shouldBe fixedInstant
             retrieved.played shouldBe false
         }
 
         it("should return no progress when retrieving state for an episode with no progress") {
-            val retrieved = getPlaybackState("non-existent")
+            val retrieved = getPlaybackState(EpisodeId("non-existent"))
             retrieved.episodeId shouldBe EpisodeId("non-existent")
             retrieved.progressMs shouldBe 0
             retrieved.updatedAt shouldBe fixedInstant
@@ -51,7 +51,7 @@ class PlaybackCoreTests : DescribeSpec({
         }
 
         it("should overwrite existing state and update the timestamp when ticking") {
-            val episodeId = "ep-123"
+            val episodeId = EpisodeId("ep-123")
 
             updateProgress(episodeId, 1000L)
 
@@ -65,7 +65,7 @@ class PlaybackCoreTests : DescribeSpec({
         }
 
         it("should mark an episode as played") {
-            val episodeId = "ep-123"
+            val episodeId = EpisodeId("ep-123")
 
             updateProgress(episodeId, 5000L)
             markPlayed(episodeId)
@@ -76,15 +76,16 @@ class PlaybackCoreTests : DescribeSpec({
         }
 
         it("should mark an episode as played even with no prior progress") {
-            markPlayed("ep-456")
+            val episodeId = EpisodeId("ep-456")
+            markPlayed(episodeId)
 
-            val state = getPlaybackState("ep-456")
+            val state = getPlaybackState(episodeId)
             state.played shouldBe true
             state.progressMs shouldBe 0
         }
 
         it("should not reset played when progress update arrives after markPlayed") {
-            val episodeId = "ep-123"
+            val episodeId = EpisodeId("ep-123")
             updateProgress(episodeId, 5000L)
             markPlayed(episodeId)
             updateProgress(episodeId, 9000L)

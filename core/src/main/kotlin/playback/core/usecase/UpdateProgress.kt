@@ -8,7 +8,7 @@ class UpdateProgress(
     private val clock: Clock,
     private val state: PlaybackPersistence,
 ) {
-    suspend operator fun invoke(episodeId: String, progressMs: Long) {
-        state.updateProgress(EpisodeId(episodeId), progressMs, clock.instant())
+    suspend operator fun invoke(episodeId: EpisodeId, progressMs: Long) {
+        state.updateProgress(episodeId, progressMs, clock.instant())
     }
 }
