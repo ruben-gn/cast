@@ -12,6 +12,7 @@ fun Application.installDatabase() {
         statement.executeUpdate(CREATE_PODCASTS_TABLE)
         statement.executeUpdate(CREATE_EPISODES_TABLE)
         statement.executeUpdate(CREATE_PLAYBACK_STATE_TABLE)
+        statement.executeUpdate(CREATE_QUEUE_TABLE)
     }
 
     val db = SingleConnectionProvider(connection)
@@ -52,4 +53,11 @@ val CREATE_PLAYBACK_STATE_TABLE = """
         updated_at TEXT NOT NULL,
         played INTEGER NOT NULL DEFAULT 0
     );
+""".trimIndent()
+
+val CREATE_QUEUE_TABLE = """
+    CREATE TABLE IF NOT EXISTS queue (
+        position INTEGER NOT NULL,
+        episode_id TEXT NOT NULL UNIQUE
+    )
 """.trimIndent()
