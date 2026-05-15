@@ -77,13 +77,14 @@ class PodcastApiTest : DescribeSpec({
     }
 
     describe("POST /{id}/played") {
-        it("returns 204 for a known podcast") {
+        it("marks all episodes as played and returns 204") {
             val feed = "https://example.com/feed.xml"
             val rss = """
                 <rss><channel>
                     <title>Test Show</title>
                     <image><url>https://example.com/img.png</url></image>
                     <item><title>Episode 1</title><enclosure url="https://cdn/ep1.mp3" length="0" type="audio/mpeg"/></item>
+                    <item><title>Episode 2</title><enclosure url="https://cdn/ep2.mp3" length="0" type="audio/mpeg"/></item>
                 </channel></rss>
             """.trimIndent()
             testApp(feed to rss) { client ->
@@ -93,6 +94,9 @@ class PodcastApiTest : DescribeSpec({
                 }.body<PodcastDetailDto>()
 
                 client.post("/api/podcasts/${podcast.id}/played").status shouldBe HttpStatusCode.NoContent
+
+                val detail = client.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
+                detail.episodes.all { it.played } shouldBe true
             }
         }
 

@@ -37,12 +37,14 @@ class SettingsApiTest : DescribeSpec({
             }
         }
 
-        it("PUT returns 204") {
+        it("PUT persists the change and GET reflects it") {
             testApp { client ->
                 client.put("/api/settings") {
                     contentType(ContentType.Application.Json)
                     setBody(SettingsDto(hidePlayed = true))
                 }.status shouldBe HttpStatusCode.NoContent
+
+                client.get("/api/settings").body<SettingsDto>().hidePlayed shouldBe true
             }
         }
     }

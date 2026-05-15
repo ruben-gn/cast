@@ -64,12 +64,13 @@ class PlaybackApiTest : DescribeSpec({
             }
         }
 
-        it("update after ended does not reset played") {
+        it("update after ended does not reset played but does update progress") {
             testApp {
                 send("""{"type":"ended","episodeId":"ep-1"}""")
-                send("""{"type":"update","episodeId":"ep-1","progressMs":1000}""")
+                send("""{"type":"update","episodeId":"ep-1","progressMs":9000}""")
                 send("""{"type":"get","episodeId":"ep-1"}""")
                 val json = Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
+                json["progressMs"]!!.jsonPrimitive.long shouldBe 9000L
                 json["played"]!!.jsonPrimitive.boolean shouldBe true
             }
         }

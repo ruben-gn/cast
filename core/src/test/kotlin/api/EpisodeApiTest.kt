@@ -24,6 +24,7 @@ import settings.fakes.FakeSettingsPersistence
 import settings.installSettingsModule
 import podcast.fakes.FakePodcastCatalog
 import podcast.installPodcastModule
+import shared.model.EpisodeId
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -39,13 +40,16 @@ class EpisodeApiTest : DescribeSpec({
         </channel></rss>
     """.trimIndent()
 
-    fun testApp(block: suspend ApplicationTestBuilder.(client: io.ktor.client.HttpClient) -> Unit) {
+    fun testApp(
+        playback: FakePlaybackPersistence = FakePlaybackPersistence(),
+        block: suspend ApplicationTestBuilder.(client: io.ktor.client.HttpClient) -> Unit,
+    ) {
         testApplication {
             application {
                 installHttpClient(HttpClient(MockEngine { respond(rss, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/xml")) }))
                 installCommon(clock = fixedClock)
                 installPodcastModule(podcastCatalog = FakePodcastCatalog())
-                installPlaybackModule(playbackState = FakePlaybackPersistence())
+                installPlaybackModule(playbackState = playback)
                 installSettingsModule(FakeSettingsPersistence())
                 installApplicationModule()
                 routing {
@@ -58,14 +62,18 @@ class EpisodeApiTest : DescribeSpec({
     }
 
     describe("POST /api/episodes/{id}/played") {
-        it("returns 204 for a known episode") {
-            testApp { client ->
+        it("marks the episode as played and returns 204") {
+            val playback = FakePlaybackPersistence()
+            testApp(playback = playback) { client ->
                 val podcast = client.post("/api/podcasts") {
                     contentType(ContentType.Application.Json)
                     setBody(AddPodcastRequest(feed))
                 }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
 
-                client.post("/api/episodes/${podcast.episodes.first().id.encodeURLPathPart()}/played").status shouldBe HttpStatusCode.NoContent
+                client.post("/api/episodes/${episodeId.encodeURLPathPart()}/played").status shouldBe HttpStatusCode.NoContent
+
+                playback.get(EpisodeId(episodeId))!!.played shouldBe true
             }
         }
 
