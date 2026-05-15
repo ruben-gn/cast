@@ -35,7 +35,7 @@ class EpisodeApiTest : DescribeSpec({
         <rss><channel>
             <title>Test Show</title>
             <image><url>https://example.com/img.png</url></image>
-            <item><title>Episode 1</title><guid>ep-1</guid><enclosure url="https://cdn/ep1.mp3" length="0" type="audio/mpeg"/></item>
+            <item><title>Episode 1</title><enclosure url="https://cdn/ep1.mp3" length="0" type="audio/mpeg"/></item>
         </channel></rss>
     """.trimIndent()
 
@@ -65,7 +65,7 @@ class EpisodeApiTest : DescribeSpec({
                     setBody(AddPodcastRequest(feed))
                 }.body<PodcastDetailDto>()
 
-                client.post("/api/episodes/${podcast.episodes.first().id}/played").status shouldBe HttpStatusCode.NoContent
+                client.post("/api/episodes/${podcast.episodes.first().id.encodeURLPathPart()}/played").status shouldBe HttpStatusCode.NoContent
             }
         }
 
