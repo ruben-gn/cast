@@ -19,6 +19,7 @@ import playback.fakes.FakePlaybackPersistence
 import playback.installPlaybackModule
 import podcast.fakes.FakePodcastCatalog
 import podcast.installPodcastModule
+import settings.installSettingsModule
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -53,6 +54,7 @@ class ImportOpmlApiTest : DescribeSpec({
                     installCommon(clock = fixedClock)
                     installPodcastModule(podcastCatalog = FakePodcastCatalog())
                     installPlaybackModule(playbackState = FakePlaybackPersistence())
+                    installSettingsModule()
                     installApplicationModule()
                     routing { route("/api/podcasts") { podcastApi(dependencies) } }
                 }
@@ -81,6 +83,7 @@ class ImportOpmlApiTest : DescribeSpec({
                     installCommon(clock = fixedClock)
                     installPodcastModule(podcastCatalog = FakePodcastCatalog())
                     installPlaybackModule(playbackState = FakePlaybackPersistence())
+                    installSettingsModule()
                     installApplicationModule()
                     routing { route("/api/podcasts") { podcastApi(dependencies) } }
                 }

@@ -19,6 +19,7 @@ import cast.api.AddPodcastRequest
 import cast.api.PodcastDetailDto
 import playback.fakes.FakePlaybackPersistence
 import playback.installPlaybackModule
+import settings.installSettingsModule
 import podcast.fakes.FakePodcastCatalog
 import podcast.installPodcastModule
 import java.time.Clock
@@ -44,6 +45,7 @@ class EpisodeApiTest : DescribeSpec({
                 installCommon(clock = fixedClock)
                 installPodcastModule(podcastCatalog = FakePodcastCatalog())
                 installPlaybackModule(playbackState = playback)
+                installSettingsModule()
                 installApplicationModule()
                 routing {
                     route("/api/podcasts") { podcastApi(dependencies) }
