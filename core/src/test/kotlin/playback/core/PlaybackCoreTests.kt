@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.MarkAllPlayed
 import playback.core.usecase.MarkPlayed
+import playback.core.usecase.StartPlayback
 import playback.core.usecase.UpdateProgress
 import playback.fakes.FakePlaybackPersistence
 import shared.model.EpisodeId
@@ -22,6 +23,7 @@ class PlaybackCoreTests : DescribeSpec({
         lateinit var getPlaybackState: GetPlaybackState
         lateinit var markPlayed: MarkPlayed
         lateinit var markAllPlayed: MarkAllPlayed
+        lateinit var startPlayback: StartPlayback
 
         beforeEach {
             clock = TestClock(fixedInstant)
@@ -30,6 +32,7 @@ class PlaybackCoreTests : DescribeSpec({
             getPlaybackState = GetPlaybackState(clock, persistence)
             markPlayed = MarkPlayed(persistence)
             markAllPlayed = MarkAllPlayed(persistence)
+            startPlayback = StartPlayback(clock, persistence)
         }
 
         it("should update and retrieve the playback state for an episode") {
@@ -94,6 +97,29 @@ class PlaybackCoreTests : DescribeSpec({
             markAllPlayed(ids)
 
             ids.forEach { getPlaybackState(it).played shouldBe true }
+        }
+
+        it("startPlayback resets played to false and sets position") {
+            val episodeId = EpisodeId("ep-1")
+            markPlayed(episodeId)
+
+            startPlayback(episodeId, startPositionMs = 30_000L)
+
+            val state = getPlaybackState(episodeId)
+            state.played shouldBe false
+            state.progressMs shouldBe 30_000L
+        }
+
+        it("startPlayback at position 0 resets a played episode") {
+            val episodeId = EpisodeId("ep-1")
+            updateProgress(episodeId, 45_000L)
+            markPlayed(episodeId)
+
+            startPlayback(episodeId, startPositionMs = 0L)
+
+            val state = getPlaybackState(episodeId)
+            state.played shouldBe false
+            state.progressMs shouldBe 0L
         }
 
         it("should not reset played when progress update arrives after markPlayed") {

@@ -28,6 +28,25 @@ class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersiste
         }
     }
 
+    override suspend fun resetProgress(episodeId: EpisodeId, progressMs: Long, updatedAt: Instant) {
+        db.withConnection { conn ->
+            val sql = """
+                INSERT INTO playback_state (episode_id, progress_ms, updated_at, played)
+                VALUES (?, ?, ?, 0)
+                ON CONFLICT(episode_id) DO UPDATE SET
+                    progress_ms = excluded.progress_ms,
+                    updated_at = excluded.updated_at,
+                    played = 0
+            """.trimIndent()
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, episodeId.value)
+                stmt.setLong(2, progressMs)
+                stmt.setString(3, updatedAt.toString())
+                stmt.executeUpdate()
+            }
+        }
+    }
+
     override suspend fun markPlayed(episodeId: EpisodeId) {
         db.withConnection { conn ->
             val sql = """

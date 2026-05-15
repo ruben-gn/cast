@@ -88,5 +88,34 @@ class PlaybackApiTest : DescribeSpec({
                 }
             }
         }
+
+        it("start resets played to false and sets position") {
+            testApp {
+                createClient { install(WebSockets.Plugin) }.webSocket("/api/playback") {
+                    send("""{"type":"ended","episodeId":"ep-1"}""")
+                    send("""{"type":"start","episodeId":"ep-1","startPositionMs":30000}""")
+                    send("""{"type":"get","episodeId":"ep-1"}""")
+                    val response = (incoming.receive() as Frame.Text).readText()
+                    val json = Json.parseToJsonElement(response).jsonObject
+                    json["played"]!!.jsonPrimitive.boolean shouldBe false
+                    json["progressMs"]!!.jsonPrimitive.long shouldBe 30000L
+                }
+            }
+        }
+
+        it("start at position 0 resets a played episode from the beginning") {
+            testApp {
+                createClient { install(WebSockets.Plugin) }.webSocket("/api/playback") {
+                    send("""{"type":"update","episodeId":"ep-1","progressMs":45000}""")
+                    send("""{"type":"ended","episodeId":"ep-1"}""")
+                    send("""{"type":"start","episodeId":"ep-1","startPositionMs":0}""")
+                    send("""{"type":"get","episodeId":"ep-1"}""")
+                    val response = (incoming.receive() as Frame.Text).readText()
+                    val json = Json.parseToJsonElement(response).jsonObject
+                    json["played"]!!.jsonPrimitive.boolean shouldBe false
+                    json["progressMs"]!!.jsonPrimitive.long shouldBe 0L
+                }
+            }
+        }
     }
 })

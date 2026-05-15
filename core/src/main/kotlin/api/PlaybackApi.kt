@@ -9,6 +9,7 @@ import io.ktor.websocket.*
 import kotlinx.serialization.json.*
 import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.MarkPlayed
+import playback.core.usecase.StartPlayback
 import playback.core.usecase.UpdateProgress
 import shared.model.EpisodeId
 
@@ -19,6 +20,7 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
     val updateProgress: UpdateProgress by dependencies
     val getPlaybackState: GetPlaybackState by dependencies
     val markPlayed: MarkPlayed by dependencies
+    val startPlayback: StartPlayback by dependencies
 
     webSocket {
         for (frame in incoming) {
@@ -29,6 +31,10 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
                     val obj = json.parseToJsonElement(text).jsonObject
                     val episodeId = EpisodeId(obj["episodeId"]!!.jsonPrimitive.content)
                     when (obj["type"]?.jsonPrimitive?.content) {
+                        "start" -> {
+                            val startPositionMs = obj["startPositionMs"]!!.jsonPrimitive.long
+                            startPlayback(episodeId = episodeId, startPositionMs = startPositionMs)
+                        }
                         "update" -> {
                             val progressMs = obj["progressMs"]!!.jsonPrimitive.long
                             updateProgress(episodeId = episodeId, progressMs = progressMs)

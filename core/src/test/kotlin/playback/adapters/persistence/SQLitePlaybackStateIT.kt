@@ -75,6 +75,30 @@ class SQLitePlaybackStateIT : DescribeSpec({
         }
     }
 
+    describe("resetProgress") {
+        it("sets played = false and updates progress on an existing played row") {
+            val episodeId = EpisodeId("ep-1")
+            persistence.updateProgress(episodeId, 5000, Instant.parse("2024-01-15T10:00:00Z"))
+            persistence.markPlayed(episodeId)
+
+            persistence.resetProgress(episodeId, 30_000, Instant.parse("2024-01-15T11:00:00Z"))
+
+            val state = persistence.get(episodeId)!!
+            state.played shouldBe false
+            state.progressMs shouldBe 30_000
+        }
+
+        it("creates a new row with played = false when no prior state exists") {
+            val episodeId = EpisodeId("ep-new")
+
+            persistence.resetProgress(episodeId, 0, Instant.parse("2024-01-15T10:00:00Z"))
+
+            val state = persistence.get(episodeId)!!
+            state.played shouldBe false
+            state.progressMs shouldBe 0
+        }
+    }
+
     describe("markAllPlayed") {
         it("marks all given episodes as played") {
             val ids = listOf(EpisodeId("ep-1"), EpisodeId("ep-2"), EpisodeId("ep-3"))

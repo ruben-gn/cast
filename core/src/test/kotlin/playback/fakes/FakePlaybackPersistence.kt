@@ -14,6 +14,10 @@ class FakePlaybackPersistence : PlaybackPersistence {
         }.copy(progressMs = progressMs, updatedAt = updatedAt)
     }
 
+    override suspend fun resetProgress(episodeId: EpisodeId, progressMs: Long, updatedAt: Instant) {
+        storage[episodeId] = PlaybackState(episodeId, progressMs, updatedAt, played = false)
+    }
+
     override suspend fun markPlayed(episodeId: EpisodeId) {
         storage[episodeId] = storage.getOrElse(episodeId) {
             PlaybackState(episodeId, 0, java.time.Instant.now(), played = false)
