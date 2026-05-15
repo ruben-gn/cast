@@ -10,5 +10,6 @@ fun Application.installRoutes() {
         route("/api/playback") { playbackApi(dependencies) }
         route("/api/queue") { queueApi(dependencies) }
         route("/api/settings") { settingsApi(dependencies) }
+        route("/api/episodes") { episodeApi(dependencies) }
     }
 }
