@@ -13,6 +13,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.utils.io.*
+import playback.core.usecase.MarkAllPlayed
 import podcast.core.PodcastException
 import podcast.core.models.FeedUrl
 import podcast.core.models.Podcast
@@ -30,6 +31,7 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
     val listPodcasts: ListPodcasts by dependencies
     val listEpisodes: ListEpisodes by dependencies
     val getPodcastDetail: GetPodcastDetail by dependencies
+    val markAllPlayed: MarkAllPlayed by dependencies
 
     get {
         call.respond(listPodcasts().map(::podcastSummaryDto))
@@ -62,6 +64,13 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         val id = PodcastId(call.parameters["id"]!!)
         val detail = getPodcastDetail(id) ?: return@get call.respond(HttpStatusCode.NotFound)
         call.respond(podcastDetailDto(detail.podcast, detail.episodes))
+    }
+
+    post("{id}/played") {
+        val id = PodcastId(call.parameters["id"]!!)
+        val detail = getPodcastDetail(id) ?: return@post call.respond(HttpStatusCode.NotFound)
+        markAllPlayed(detail.episodes.map { it.episode.id })
+        call.respond(HttpStatusCode.NoContent)
     }
 }
 

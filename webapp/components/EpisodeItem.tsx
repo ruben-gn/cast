@@ -6,7 +6,7 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
     const showProgress = episode.progressMs > 0 && !!episode.durationMs && episode.durationMs > 0
 
     return (
-        <div class="episode-item">
+        <div class={`episode-item${episode.played ? ' is-played' : ''}`}>
             <div class="episode-actions">
                 <button
                     class="episode-queue-btn"
@@ -85,9 +85,6 @@ const EpisodeRow: FC<{ episode: Episode }> = ({episode}) => {
             <div class="episode-extras">
                 {pubDate && (
                     <span class="episode-pubdate">{pubDate}</span>
-                )}
-                {episode.played && (
-                    <span class="episode-played-badge">Played</span>
                 )}
             </div>
         </div>

@@ -20,6 +20,10 @@ class FakePlaybackPersistence : PlaybackPersistence {
         }.copy(played = true)
     }
 
+    override suspend fun markAllPlayed(episodeIds: List<EpisodeId>) {
+        episodeIds.forEach { markPlayed(it) }
+    }
+
     override suspend fun get(episodeId: EpisodeId): PlaybackState? = storage[episodeId]
 
     override suspend fun getAll(ids: List<EpisodeId>): Map<EpisodeId, PlaybackState> =

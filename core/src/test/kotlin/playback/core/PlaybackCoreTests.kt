@@ -4,6 +4,7 @@ import fakes.TestClock
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import playback.core.usecase.GetPlaybackState
+import playback.core.usecase.MarkAllPlayed
 import playback.core.usecase.MarkPlayed
 import playback.core.usecase.UpdateProgress
 import playback.fakes.FakePlaybackPersistence
@@ -20,6 +21,7 @@ class PlaybackCoreTests : DescribeSpec({
         lateinit var updateProgress: UpdateProgress
         lateinit var getPlaybackState: GetPlaybackState
         lateinit var markPlayed: MarkPlayed
+        lateinit var markAllPlayed: MarkAllPlayed
 
         beforeEach {
             clock = TestClock(fixedInstant)
@@ -27,6 +29,7 @@ class PlaybackCoreTests : DescribeSpec({
             updateProgress = UpdateProgress(clock, persistence)
             getPlaybackState = GetPlaybackState(clock, persistence)
             markPlayed = MarkPlayed(persistence)
+            markAllPlayed = MarkAllPlayed(persistence)
         }
 
         it("should update and retrieve the playback state for an episode") {
@@ -82,6 +85,15 @@ class PlaybackCoreTests : DescribeSpec({
             val state = getPlaybackState(episodeId)
             state.played shouldBe true
             state.progressMs shouldBe 0
+        }
+
+        it("should mark all episodes as played") {
+            val ids = listOf(EpisodeId("ep-1"), EpisodeId("ep-2"), EpisodeId("ep-3"))
+            ids.forEach { updateProgress(it, 1000L) }
+
+            markAllPlayed(ids)
+
+            ids.forEach { getPlaybackState(it).played shouldBe true }
         }
 
         it("should not reset played when progress update arrives after markPlayed") {

@@ -74,4 +74,27 @@ class SQLitePlaybackStateIT : DescribeSpec({
             persistence.get(episodeId)!!.played shouldBe true
         }
     }
+
+    describe("markAllPlayed") {
+        it("marks all given episodes as played") {
+            val ids = listOf(EpisodeId("ep-1"), EpisodeId("ep-2"), EpisodeId("ep-3"))
+            ids.forEach { persistence.updateProgress(it, 5000, Instant.parse("2024-01-15T10:00:00Z")) }
+
+            persistence.markAllPlayed(ids)
+
+            ids.forEach { persistence.get(it)!!.played shouldBe true }
+        }
+
+        it("creates rows for episodes with no prior progress") {
+            val ids = listOf(EpisodeId("ep-new-1"), EpisodeId("ep-new-2"))
+
+            persistence.markAllPlayed(ids)
+
+            ids.forEach { persistence.get(it)!!.played shouldBe true }
+        }
+
+        it("is a no-op for an empty list") {
+            persistence.markAllPlayed(emptyList())
+        }
+    }
 })

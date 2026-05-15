@@ -16,9 +16,18 @@ export const PodcastDetail: FC<{ podcast: Podcast; episodes: Episode[] }> = ({po
 
         <div class="podcast-header">
             <img src={podcast.image} alt={podcast.name} class="podcast-cover"/>
-            <div>
+            <div class="podcast-header-info">
                 <h1 class="podcast-title">{podcast.name}</h1>
                 <p class="podcast-subtitle">{episodes.length} episodes</p>
+                <button
+                    class="podcast-action-btn"
+                    hx-post={`/api/podcasts/${podcast.id}/played`}
+                    hx-swap="none"
+                    hx-on:htmx:after-request="markAllEpisodesPlayed()"
+                    title="Mark all as played"
+                >
+                    Mark all as played
+                </button>
             </div>
         </div>
 

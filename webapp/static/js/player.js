@@ -62,12 +62,13 @@ function markPlayed(id) {
     if (!id) return;
     var btn = episodeBtn(id);
     if (!btn) return;
-    var extras = btn.closest('.episode-item').querySelector('.episode-extras');
-    if (!extras || extras.querySelector('.episode-played-badge')) return;
-    var badge = document.createElement('span');
-    badge.className = 'episode-played-badge';
-    badge.textContent = 'Played';
-    extras.appendChild(badge);
+    btn.closest('.episode-item').classList.add('is-played');
+}
+
+function markAllEpisodesPlayed() {
+    document.querySelectorAll('.episode-item').forEach(function (el) {
+        el.classList.add('is-played');
+    });
 }
 
 audio.addEventListener('timeupdate', function () {

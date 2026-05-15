@@ -441,6 +441,31 @@ input:focus {
     font-weight: 500;
 }
 
+.podcast-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.podcast-action-btn {
+    align-self: flex-start;
+    margin-top: 10px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.podcast-action-btn:hover {
+    color: var(--text);
+    border-color: var(--text-muted);
+}
+
 .empty-message {
     color: var(--text-muted);
     font-size: 14px;
@@ -585,15 +610,8 @@ details[open] .episode-description-summary::before {
     white-space: nowrap;
 }
 
-.episode-played-badge {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--accent);
-    background: var(--accent-light);
-    border: 1px solid rgba(27, 153, 139, 0.25);
-    padding: 2px 8px;
-    border-radius: 20px;
-    white-space: nowrap;
+.episode-item.is-played {
+    opacity: 0.45;
 }
 
 /* Episode action buttons (queue + play) */
