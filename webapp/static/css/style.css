@@ -35,14 +35,17 @@
     background: var(--accent);
     z-index: 300;
     transform-origin: left;
-    animation: nav-progress 1.2s ease-in-out infinite;
+    transform: scaleX(0);
     display: block !important;
 }
 
+.htmx-request.nav-spinner {
+    animation: nav-progress 1.2s ease-in-out infinite;
+}
+
 @keyframes nav-progress {
-    0%   { transform: scaleX(0); opacity: 1; }
-    80%  { transform: scaleX(0.9); opacity: 1; }
-    100% { transform: scaleX(1); opacity: 0; }
+    0%   { transform: scaleX(0); }
+    100% { transform: scaleX(1); }
 }
 
 /* Global */
@@ -444,15 +447,18 @@ input:focus {
 }
 
 /* Episode progress bar */
-.episode-progress {
-    display: block;
-    width: 100%;
+.episode-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     height: 3px;
-    margin-top: 8px;
-    border: none;
-    border-radius: 2px;
-    accent-color: var(--accent);
-    background: var(--border);
+    background: rgba(27,153,139,0.18);
+}
+
+.episode-progress-fill {
+    height: 100%;
+    background: rgba(27,153,139,0.65);
 }
 
 /* Publish date */
@@ -511,10 +517,11 @@ details[open] .episode-description-summary::before {
 .episode-item {
     background: var(--surface);
     border-radius: var(--radius-md);
-    padding: 18px 80px 18px 20px;
+    padding: 18px 90px 18px 20px;
     margin-bottom: 10px;
     box-shadow: var(--shadow-sm);
     position: relative;
+    overflow: hidden;
     transition: box-shadow 0.15s;
 }
 
@@ -543,10 +550,17 @@ details[open] .episode-description-summary::before {
 
 .episode-row {
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.episode-title-line {
+    display: flex;
+    align-items: baseline;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-    gap: 8px;
+    gap: 10px;
+    width: 100%;
 }
 
 .episode-title {
@@ -559,9 +573,7 @@ details[open] .episode-description-summary::before {
 .episode-extras {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-    margin-left: 8px;
+    gap: 8px;
 }
 
 .episode-duration {
@@ -586,13 +598,13 @@ details[open] .episode-description-summary::before {
     white-space: nowrap;
 }
 
-/* Episode action buttons (play + queue) */
+/* Episode action buttons (queue + play) */
 .episode-actions {
     position: absolute;
     top: 14px;
     right: 14px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     gap: 6px;
 }

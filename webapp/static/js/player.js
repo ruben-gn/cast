@@ -8,8 +8,17 @@ window.addEventListener('popstate', function (e) {
             var el = document.getElementById('content-container');
             el.outerHTML = html;
             htmx.process(document.getElementById('content-container'));
+            syncPlayButtonState();
         });
 }, true);
+
+function syncPlayButtonState() {
+    if (!currentEpisodeId) return;
+    var btn = episodeBtn(currentEpisodeId);
+    if (btn) btn.innerHTML = audio.paused ? ICON_PLAY : ICON_PAUSE;
+}
+
+document.addEventListener('htmx:afterSettle', syncPlayButtonState);
 
 function handleSubResult(event) {
     if (event.detail.successful) {
@@ -67,7 +76,24 @@ audio.addEventListener('timeupdate', function () {
         ws.send(JSON.stringify({type: 'update', episodeId: currentEpisodeId, progressMs: Math.floor(cur * 1000)}));
         lastReportedTime = cur;
     }
+    updateEpisodeProgress(cur, this.duration);
 });
+
+function updateEpisodeProgress(cur, duration) {
+    if (!currentEpisodeId || !duration) return;
+    var btn = episodeBtn(currentEpisodeId);
+    if (!btn) return;
+    var item = btn.closest('.episode-item');
+    if (!item) return;
+    var bar = item.querySelector('.episode-progress-bar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.className = 'episode-progress-bar';
+        bar.innerHTML = '<div class="episode-progress-fill"></div>';
+        item.appendChild(bar);
+    }
+    bar.querySelector('.episode-progress-fill').style.width = Math.round(cur / duration * 100) + '%';
+}
 
 audio.addEventListener('play', function () {
     var btn = episodeBtn(currentEpisodeId);
