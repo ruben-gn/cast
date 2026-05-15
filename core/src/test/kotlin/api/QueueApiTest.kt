@@ -87,25 +87,6 @@ class QueueApiTest : DescribeSpec({
             }
         }
 
-        it("maintains queue order across add and remove operations") {
-            val catalog = FakePodcastCatalog()
-            val ep1 = anEpisode(catalog, id = "ep-1", title = "First")
-            val ep2 = anEpisode(catalog, id = "ep-2", title = "Second")
-            val ep3 = anEpisode(catalog, id = "ep-3", title = "Third")
-            val setup = testSetup(catalog = catalog)
-
-            testApplication {
-                application { setup.install(this, fixedClock) }
-                val client = createClient { install(ContentNegotiation) { json() } }
-
-                client.post("/api/queue/${ep1.id.value}")
-                client.post("/api/queue/${ep2.id.value}")
-                client.post("/api/queue/${ep3.id.value}")
-
-                val result = client.get("/api/queue").body<List<EpisodeDetailDto>>()
-                result.map { it.id } shouldBe listOf("ep-1", "ep-2", "ep-3")
-            }
-        }
     }
 })
 

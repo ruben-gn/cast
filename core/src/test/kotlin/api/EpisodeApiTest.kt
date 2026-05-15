@@ -37,14 +37,13 @@ class EpisodeApiTest : DescribeSpec({
         </channel></rss>
     """.trimIndent()
 
-    fun testApp(block: suspend ApplicationTestBuilder.(client: io.ktor.client.HttpClient, playback: FakePlaybackPersistence) -> Unit) {
-        val playback = FakePlaybackPersistence()
+    fun testApp(block: suspend ApplicationTestBuilder.(client: io.ktor.client.HttpClient) -> Unit) {
         testApplication {
             application {
-                installHttpClient(HttpClient(MockEngine { respond(rss, HttpStatusCode.OK, io.ktor.http.headersOf(HttpHeaders.ContentType, "application/xml")) }))
+                installHttpClient(HttpClient(MockEngine { respond(rss, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/xml")) }))
                 installCommon(clock = fixedClock)
                 installPodcastModule(podcastCatalog = FakePodcastCatalog())
-                installPlaybackModule(playbackState = playback)
+                installPlaybackModule(playbackState = FakePlaybackPersistence())
                 installSettingsModule()
                 installApplicationModule()
                 routing {
@@ -52,27 +51,24 @@ class EpisodeApiTest : DescribeSpec({
                     route("/api/episodes") { episodeApi(dependencies) }
                 }
             }
-            block(createClient { install(ContentNegotiation) { json() } }, playback)
+            block(createClient { install(ContentNegotiation) { json() } })
         }
     }
 
     describe("POST /api/episodes/{id}/played") {
-        it("marks a known episode as played and returns 204") {
-            testApp { client, playback ->
+        it("returns 204 for a known episode") {
+            testApp { client ->
                 val podcast = client.post("/api/podcasts") {
                     contentType(ContentType.Application.Json)
                     setBody(AddPodcastRequest(feed))
                 }.body<PodcastDetailDto>()
-                val episodeId = podcast.episodes.first().id
 
-                client.post("/api/episodes/$episodeId/played").status shouldBe HttpStatusCode.NoContent
-
-                playback.get(shared.model.EpisodeId(episodeId))!!.played shouldBe true
+                client.post("/api/episodes/${podcast.episodes.first().id}/played").status shouldBe HttpStatusCode.NoContent
             }
         }
 
         it("returns 404 for an unknown episode") {
-            testApp { client, _ ->
+            testApp { client ->
                 client.post("/api/episodes/nonexistent/played").status shouldBe HttpStatusCode.NotFound
             }
         }

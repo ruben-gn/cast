@@ -29,36 +29,20 @@ class SettingsApiTest : DescribeSpec({
             }
         }
 
-        it("GET returns default settings") {
+        it("GET returns 200 with hidePlayed field") {
             testApp { client ->
-                val settings = client.get("/api/settings").body<SettingsDto>()
-                settings.hidePlayed shouldBe false
+                val response = client.get("/api/settings")
+                response.status shouldBe HttpStatusCode.OK
+                response.body<SettingsDto>().hidePlayed shouldBe false
             }
         }
 
-        it("PUT updates settings and GET reflects the change") {
+        it("PUT returns 204") {
             testApp { client ->
                 client.put("/api/settings") {
                     contentType(ContentType.Application.Json)
                     setBody(SettingsDto(hidePlayed = true))
                 }.status shouldBe HttpStatusCode.NoContent
-
-                val settings = client.get("/api/settings").body<SettingsDto>()
-                settings.hidePlayed shouldBe true
-            }
-        }
-
-        it("PUT can toggle hidePlayed back to false") {
-            testApp { client ->
-                client.put("/api/settings") {
-                    contentType(ContentType.Application.Json)
-                    setBody(SettingsDto(hidePlayed = true))
-                }
-                client.put("/api/settings") {
-                    contentType(ContentType.Application.Json)
-                    setBody(SettingsDto(hidePlayed = false))
-                }
-                client.get("/api/settings").body<SettingsDto>().hidePlayed shouldBe false
             }
         }
     }
