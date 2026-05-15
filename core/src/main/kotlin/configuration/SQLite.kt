@@ -13,6 +13,7 @@ fun Application.installDatabase() {
         statement.executeUpdate(CREATE_EPISODES_TABLE)
         statement.executeUpdate(CREATE_PLAYBACK_STATE_TABLE)
         statement.executeUpdate(CREATE_QUEUE_TABLE)
+        statement.executeUpdate(CREATE_SETTINGS_TABLE)
     }
 
     monitor.subscribe(ApplicationStopped) { connection.close() }
@@ -61,5 +62,12 @@ val CREATE_QUEUE_TABLE = """
     CREATE TABLE IF NOT EXISTS queue (
         position INTEGER NOT NULL,
         episode_id TEXT NOT NULL UNIQUE
+    )
+""".trimIndent()
+
+val CREATE_SETTINGS_TABLE = """
+    CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
     )
 """.trimIndent()
