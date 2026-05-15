@@ -1,7 +1,10 @@
 <configuration>
+<!--    <property scope="system" name="logback.colorEnabled" value="true"/>-->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss} [%-8.8t] %highlight(%-5level) %cyan(%-15.15logger) - %msg%n</pattern>
+            <pattern>
+                %d{MM-dd HH:mm:ss} %magenta([%8.8X{correlationId}]) [%-8.8t] %highlight(%-5level) %cyan(%-20.20logger{20}) - %msg%n
+            </pattern>
         </encoder>
     </appender>
 

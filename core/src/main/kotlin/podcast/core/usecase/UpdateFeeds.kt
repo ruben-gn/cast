@@ -17,7 +17,7 @@ class UpdateFeeds(
         catalog.findAll().map { podcast ->
             launch {
                 updateFeed(podcast)
-                    .onSuccess { (updatedPodcast, episodes) -> log.info { "Updated feed ${updatedPodcast.url}. ${updatedPodcast.name}: ${episodes.size} episodes" } }
+                    .onSuccess { (updatedPodcast, episodes) -> log.info { "Updated feed for ${updatedPodcast.name}: ${episodes.size} episodes" } }
                     .onFailure { error -> log.error(error) { "Failed to update feed ${podcast.url}" } }
             }
         }.joinAll()
