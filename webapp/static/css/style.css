@@ -558,9 +558,7 @@ details[open] .episode-description-summary::before {
 .episode-title-line {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
     gap: 10px;
-    width: 100%;
 }
 
 .episode-title {

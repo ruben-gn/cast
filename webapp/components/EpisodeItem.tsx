@@ -9,18 +9,6 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
         <div class="episode-item">
             <div class="episode-actions">
                 <button
-                    class="episode-play-btn"
-                    data-id={episode.id}
-                    data-audio-url={episode.audioUrl}
-                    data-title={episode.title}
-                    onclick="playEpisode(this.dataset.id, this.dataset.audioUrl, this.dataset.title)"
-                    title={`Play ${episode.title}`}
-                >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </button>
-                <button
                     class="episode-queue-btn"
                     hx-post={`/queue/${episode.id}`}
                     hx-swap="none"
@@ -35,6 +23,18 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
                         <line x1="3" y1="18" x2="3.01" y2="18"/>
                     </svg>
                 </button>
+                <button
+                    class="episode-play-btn"
+                    data-id={episode.id}
+                    data-audio-url={episode.audioUrl}
+                    data-title={episode.title}
+                    onclick="playEpisode(this.dataset.id, this.dataset.audioUrl, this.dataset.title)"
+                    title={`Play ${episode.title}`}
+                >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
             </div>
 
             <div class="episode-header episode-header--static">
@@ -42,11 +42,9 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
             </div>
 
             {showProgress && (
-                <progress
-                    class="episode-progress"
-                    value={episode.progressMs}
-                    max={episode.durationMs!}
-                />
+                <div class="episode-progress-bar">
+                    <div class="episode-progress-fill" style={`width:${Math.round(episode.progressMs / episode.durationMs! * 100)}%`}></div>
+                </div>
             )}
 
             {hasDescription && (
@@ -67,23 +65,26 @@ function relativeTime(iso: string | null): string | null {
     if (days === 1) return 'Yesterday'
     if (days < 7) return `${days} days ago`
     const weeks = Math.floor(days / 7)
-    if (weeks < 5) return `${weeks}w ago`
+    if (weeks < 5) return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`
     const months = Math.floor(days / 30)
-    if (months < 12) return `${months}mo ago`
-    return `${Math.floor(days / 365)}y ago`
+    if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'} ago`
+    const years = Math.floor(days / 365)
+    return `${years} ${years === 1 ? 'year' : 'years'} ago`
 }
 
 const EpisodeRow: FC<{ episode: Episode }> = ({episode}) => {
     const pubDate = relativeTime(episode.publishedAt)
     return (
         <div class="episode-row">
-            <span class="episode-title">{episode.title}</span>
+            <div class="episode-title-line">
+                <span class="episode-title">{episode.title}</span>
+                {episode.duration && (
+                    <span class="episode-duration">{episode.duration}</span>
+                )}
+            </div>
             <div class="episode-extras">
                 {pubDate && (
                     <span class="episode-pubdate">{pubDate}</span>
-                )}
-                {episode.duration && (
-                    <span class="episode-duration">{episode.duration}</span>
                 )}
                 {episode.played && (
                     <span class="episode-played-badge">Played</span>
