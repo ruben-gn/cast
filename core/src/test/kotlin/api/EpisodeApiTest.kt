@@ -7,6 +7,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
+import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -19,6 +20,7 @@ import cast.api.AddPodcastRequest
 import cast.api.PodcastDetailDto
 import playback.fakes.FakePlaybackPersistence
 import playback.installPlaybackModule
+import settings.fakes.FakeSettingsPersistence
 import settings.installSettingsModule
 import podcast.fakes.FakePodcastCatalog
 import podcast.installPodcastModule
@@ -33,7 +35,7 @@ class EpisodeApiTest : DescribeSpec({
         <rss><channel>
             <title>Test Show</title>
             <image><url>https://example.com/img.png</url></image>
-            <item><title>Episode 1</title><enclosure url="https://cdn/ep1.mp3" length="0" type="audio/mpeg"/></item>
+            <item><title>Episode 1</title><guid>ep-1</guid><enclosure url="https://cdn/ep1.mp3" length="0" type="audio/mpeg"/></item>
         </channel></rss>
     """.trimIndent()
 
@@ -44,7 +46,7 @@ class EpisodeApiTest : DescribeSpec({
                 installCommon(clock = fixedClock)
                 installPodcastModule(podcastCatalog = FakePodcastCatalog())
                 installPlaybackModule(playbackState = FakePlaybackPersistence())
-                installSettingsModule()
+                installSettingsModule(FakeSettingsPersistence())
                 installApplicationModule()
                 routing {
                     route("/api/podcasts") { podcastApi(dependencies) }

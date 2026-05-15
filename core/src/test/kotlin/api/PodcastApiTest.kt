@@ -22,6 +22,7 @@ import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
 import playback.installPlaybackModule
 import playback.fakes.FakePlaybackPersistence
+import settings.fakes.FakeSettingsPersistence
 import settings.installSettingsModule
 import podcast.fakes.FakePodcastCatalog
 import podcast.installPodcastModule
@@ -39,7 +40,7 @@ class PodcastApiTest : DescribeSpec({
                 installCommon(clock = fixedClock)
                 installPodcastModule(podcastCatalog = FakePodcastCatalog())
                 installPlaybackModule(playbackState = FakePlaybackPersistence())
-                installSettingsModule()
+                installSettingsModule(FakeSettingsPersistence())
                 installApplicationModule()
                 routing { route("/api/podcasts") { podcastApi(dependencies) } }
             }

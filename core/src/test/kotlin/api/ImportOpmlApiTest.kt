@@ -19,6 +19,7 @@ import playback.fakes.FakePlaybackPersistence
 import playback.installPlaybackModule
 import podcast.fakes.FakePodcastCatalog
 import podcast.installPodcastModule
+import settings.fakes.FakeSettingsPersistence
 import settings.installSettingsModule
 import java.time.Clock
 import java.time.Instant
@@ -54,7 +55,7 @@ class ImportOpmlApiTest : DescribeSpec({
                     installCommon(clock = fixedClock)
                     installPodcastModule(podcastCatalog = FakePodcastCatalog())
                     installPlaybackModule(playbackState = FakePlaybackPersistence())
-                    installSettingsModule()
+                    installSettingsModule(FakeSettingsPersistence())
                     installApplicationModule()
                     routing { route("/api/podcasts") { podcastApi(dependencies) } }
                 }
@@ -83,7 +84,7 @@ class ImportOpmlApiTest : DescribeSpec({
                     installCommon(clock = fixedClock)
                     installPodcastModule(podcastCatalog = FakePodcastCatalog())
                     installPlaybackModule(playbackState = FakePlaybackPersistence())
-                    installSettingsModule()
+                    installSettingsModule(FakeSettingsPersistence())
                     installApplicationModule()
                     routing { route("/api/podcasts") { podcastApi(dependencies) } }
                 }

@@ -25,6 +25,7 @@ import podcast.fakes.FakePodcastCatalog
 import podcast.installPodcastModule
 import queue.fakes.FakeQueuePersistence
 import queue.installQueueModule
+import settings.fakes.FakeSettingsPersistence
 import settings.installSettingsModule
 import shared.model.EpisodeId
 import java.time.Clock
@@ -129,7 +130,7 @@ private class TestSetup(
         installPodcastModule(podcastCatalog = catalog)
         installPlaybackModule(playbackState = FakePlaybackPersistence())
         installQueueModule(queuePersistence = queuePersistence)
-        installSettingsModule()
+        installSettingsModule(FakeSettingsPersistence())
         installApplicationModule()
         routing { route("/api/queue") { queueApi(dependencies) } }
     }
