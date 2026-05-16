@@ -77,7 +77,7 @@ class PodcastCoreTests : DescribeSpec({
         }
 
         it("should find an episode by id") {
-            val episodeInfo = EpisodeInfo("ep-42", "The Answer", "Desc", "https://cdn/ep42.mp3", null, null)
+            val episodeInfo = EpisodeInfo("ep-42", "The Answer", "Desc", "https://cdn/ep42.mp3", null, fixedInstant)
             stubFeedProvider = FeedInfoProvider { url -> FeedInfo("Show", url.value, "Desc", "img.png", listOf(episodeInfo)) }
             addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
             val podcast = addFeed(FeedUrl("https://example.com/rss"))
