@@ -8,6 +8,7 @@ import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.GetPlaybackStates
 import playback.core.usecase.MarkAllPlayed
 import playback.core.usecase.MarkPlayed
+import playback.core.usecase.MarkUnplayed
 import playback.core.usecase.StartPlayback
 import playback.core.usecase.UpdateProgress
 
@@ -21,6 +22,7 @@ fun Application.installPlaybackModule(
         provide<GetPlaybackStates> { GetPlaybackStates(resolve()) }
         provide<UpdateProgress> { UpdateProgress(resolve(), resolve()) }
         provide<MarkPlayed> { MarkPlayed(resolve()) }
+        provide<MarkUnplayed> { MarkUnplayed(resolve()) }
         provide<MarkAllPlayed> { MarkAllPlayed(resolve()) }
         provide<StartPlayback> { StartPlayback(resolve(), resolve()) }
     }

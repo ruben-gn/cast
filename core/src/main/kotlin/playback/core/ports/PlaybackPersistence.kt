@@ -10,6 +10,7 @@ interface PlaybackPersistence {
     // Resets played to false and sets progress — used when user replays a played episode.
     suspend fun resetProgress(episodeId: EpisodeId, progressMs: Long, updatedAt: Instant)
     suspend fun markPlayed(episodeId: EpisodeId)
+    suspend fun markUnplayed(episodeId: EpisodeId)
     suspend fun markAllPlayed(episodeIds: List<EpisodeId>)
     suspend fun get(episodeId: EpisodeId): PlaybackState?
     suspend fun getAll(ids: List<EpisodeId>): Map<EpisodeId, PlaybackState>

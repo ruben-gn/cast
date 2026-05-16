@@ -24,6 +24,12 @@ class FakePlaybackPersistence : PlaybackPersistence {
         }.copy(played = true)
     }
 
+    override suspend fun markUnplayed(episodeId: EpisodeId) {
+        storage[episodeId] = storage.getOrElse(episodeId) {
+            PlaybackState(episodeId, 0, java.time.Instant.now(), played = false)
+        }.copy(played = false)
+    }
+
     override suspend fun markAllPlayed(episodeIds: List<EpisodeId>) {
         episodeIds.forEach { markPlayed(it) }
     }

@@ -62,6 +62,20 @@ class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersiste
         }
     }
 
+    override suspend fun markUnplayed(episodeId: EpisodeId) {
+        db.withConnection { conn ->
+            val sql = """
+                INSERT INTO playback_state (episode_id, progress_ms, updated_at, played)
+                VALUES (?, 0, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), 0)
+                ON CONFLICT(episode_id) DO UPDATE SET played = 0, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+            """.trimIndent()
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, episodeId.value)
+                stmt.executeUpdate()
+            }
+        }
+    }
+
     override suspend fun markAllPlayed(episodeIds: List<EpisodeId>) {
         if (episodeIds.isEmpty()) return
         db.withConnection { conn ->
