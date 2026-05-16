@@ -6,10 +6,12 @@ import io.ktor.server.routing.*
 
 fun Application.installRoutes() {
     routing {
-        route("/api/podcasts") { podcastApi(dependencies) }
-        route("/api/playback") { playbackApi(dependencies) }
-        route("/api/queue") { queueApi(dependencies) }
-        route("/api/settings") { settingsApi(dependencies) }
-        route("/api/episodes") { episodeApi(dependencies) }
+        route("/api") {
+            route("/podcasts") { podcastApi(dependencies) }
+            route("/playback") { playbackApi(dependencies) }
+            route("/queue") { queueApi(dependencies) }
+            route("/settings") { settingsApi(dependencies) }
+            route("/episodes") { episodeApi(dependencies) }
+        }
     }
 }

@@ -151,6 +151,33 @@ class AppTest : DescribeSpec({
                 json.delete("/api/episodes/nonexistent/played").status shouldBe HttpStatusCode.NotFound
             }
         }
+
+        it("GET /recent returns unplayed episodes from the past two weeks") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                val recent = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
+                recent.map { it.title } shouldBe podcast.episodes.map { it.title }
+            }
+        }
+
+        it("GET /recent excludes played episodes") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played")
+
+                val recent = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
+                recent.none { it.id == episodeId } shouldBe true
+            }
+        }
     }
 
     describe("Settings") {

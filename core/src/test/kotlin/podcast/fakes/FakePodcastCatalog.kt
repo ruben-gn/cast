@@ -1,11 +1,12 @@
 package podcast.fakes
 
 import podcast.core.models.Episode
-import shared.model.EpisodeId
 import podcast.core.models.FeedUrl
 import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
 import podcast.core.ports.PodcastCatalog
+import shared.model.EpisodeId
+import java.time.Instant
 
 class FakePodcastCatalog : PodcastCatalog {
     private val podcasts = mutableMapOf<PodcastId, Podcast>()
@@ -26,4 +27,7 @@ class FakePodcastCatalog : PodcastCatalog {
         episodes.values.filter { it.podcastId == podcastId }
 
     override suspend fun findEpisodeById(id: EpisodeId) = episodes[id]
+
+    override suspend fun findEpisodesPublishedAfter(twoWeeksAgo: Instant): List<Episode> =
+        episodes.values.filter { it -> it.publishedAt?.isAfter(twoWeeksAgo) ?: false }.toList()
 }

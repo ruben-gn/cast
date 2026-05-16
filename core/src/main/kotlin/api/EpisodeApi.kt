@@ -1,5 +1,7 @@
 package api
 
+import application.model.EpisodeWithPlayback
+import application.usecase.FindRecentUnplayedEpisodes
 import io.ktor.http.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
@@ -11,8 +13,13 @@ import shared.model.EpisodeId
 
 fun Route.episodeApi(dependencies: DependencyRegistry) {
     val findEpisode: FindEpisode by dependencies
+    val findRecentUnplayedEpisodes: FindRecentUnplayedEpisodes by dependencies
     val markPlayed: MarkPlayed by dependencies
     val markUnplayed: MarkUnplayed by dependencies
+
+    get("recent") {
+        call.respond(findRecentUnplayedEpisodes().map { episodeDetailDto(EpisodeWithPlayback(it, 0, false)) })
+    }
 
     post("{episodeId}/played") {
         val episodeId = EpisodeId(call.parameters["episodeId"]!!)

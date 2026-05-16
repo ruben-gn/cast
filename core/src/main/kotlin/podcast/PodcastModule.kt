@@ -25,7 +25,7 @@ fun Application.installPodcastModule(
 ) {
     dependencies {
         provide<PodcastCatalog> { podcastCatalog ?: SQLitePodcastCatalog(resolve<ConnectionProvider>()) }
-        provide<FeedInfoProvider> { RssFeedInfoProvider(resolve()) }
+        provide<FeedInfoProvider> { RssFeedInfoProvider(resolve(), resolve()) }
 
         provide<ListPodcasts> { ListPodcasts(resolve()) }
         provide<GetPodcast> { GetPodcast(resolve()) }

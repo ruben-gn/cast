@@ -68,6 +68,16 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
             if (rs.next()) rs.toEpisode() else null
         }
     }
+
+    override suspend fun findEpisodesPublishedAfter(publishedAfter: Instant): List<Episode> =
+        db.withConnection { conn ->
+            conn.prepareStatement("SELECT * FROM episodes WHERE published_at > ?").use { stmt ->
+                stmt.setString(1, publishedAfter.toString())
+                stmt.executeQuery().use { rs ->
+                    generateSequence { if (rs.next()) rs.toEpisode() else null }.toList()
+                }
+            }
+        }
 }
 
 private fun Connection.insertPodcast(podcast: Podcast) {

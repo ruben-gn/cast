@@ -26,7 +26,7 @@ data class EpisodeInfo(
     val description: String,
     val audioUrl: String,
     val duration: Duration?,
-    val publishedAt: Instant?
+    val publishedAt: Instant
 )
 
 fun FeedInfo.toPodcast(id: PodcastId, created: Instant, updated: Instant) = Podcast(

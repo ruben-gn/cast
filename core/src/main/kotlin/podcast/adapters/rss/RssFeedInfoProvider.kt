@@ -14,6 +14,8 @@ import podcast.core.models.FeedUrl
 import podcast.core.ports.EpisodeInfo
 import podcast.core.ports.FeedInfo
 import podcast.core.ports.FeedInfoProvider
+import java.time.Clock
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
@@ -26,18 +28,19 @@ private val pubDateFormatter = DateTimeFormatter.ofPattern("dd MMM uuuu HH:mm:ss
 private val weekdayPrefix = Regex("^[A-Za-z]{3},\\s*")
 
 class RssFeedInfoProvider(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val clock: Clock
 ) : FeedInfoProvider {
     override suspend fun fetch(url: FeedUrl): FeedInfo = try {
         val xml = httpClient.get(url.value).bodyAsText()
         val feed = parseXml(xml)
-        toFeedInfo(feed, url)
+        toFeedInfo(clock, feed, url)
     } catch (e: Exception) {
         throw PodcastException.FeedFetchFailed(url, e)
     }
 }
 
-private fun toFeedInfo(channel: RssChannel, url: FeedUrl) =
+private fun toFeedInfo(clock: Clock, channel: RssChannel, url: FeedUrl) =
     FeedInfo(
         title = channel.title,
         description = channel.description,
@@ -53,7 +56,7 @@ private fun toFeedInfo(channel: RssChannel, url: FeedUrl) =
                 duration = parseDuration(item.duration),
                 publishedAt = item.pubDate.takeIf { it.isNotBlank() }?.trim()?.let {
                     runCatching { ZonedDateTime.parse(weekdayPrefix.replace(it, ""), pubDateFormatter).toInstant() }.getOrNull()
-                }
+                } ?: clock.instant()
             )
         }
     )

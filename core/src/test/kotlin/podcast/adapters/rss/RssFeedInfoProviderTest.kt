@@ -1,5 +1,6 @@
 package podcast.adapters.rss
 
+import fakes.TestClock
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -12,6 +13,7 @@ import kotlin.time.Duration.Companion.minutes
 import podcast.core.models.FeedUrl
 
 class RssFeedInfoProviderTest : DescribeSpec({
+    val fixedInstant = Instant.parse("2026-04-24T12:00:00Z")
 
     fun providerWithResponse(url: String, xml: String): RssFeedInfoProvider {
         val engine = MockEngine { request ->
@@ -25,7 +27,7 @@ class RssFeedInfoProviderTest : DescribeSpec({
                 respondError(HttpStatusCode.NotFound)
             }
         }
-        return RssFeedInfoProvider(HttpClient(engine))
+        return RssFeedInfoProvider(HttpClient(engine), TestClock(fixedInstant))
     }
 
     describe("RssFeedInfoProvider") {
@@ -133,7 +135,7 @@ class RssFeedInfoProviderTest : DescribeSpec({
                 episode.audioUrl shouldBe ""
             }
 
-            it("should set publishedAt to null when pubDate is missing or malformed") {
+            it("should set publishedAt to now when pubDate is missing or malformed") {
                 val url = "https://example.com/bad-dates.xml"
                 val xml = """
                     <rss>
@@ -151,8 +153,8 @@ class RssFeedInfoProviderTest : DescribeSpec({
                 """.trimIndent()
 
                 val episodes = providerWithResponse(url, xml).fetch(FeedUrl(url)).episodes
-                episodes[0].publishedAt shouldBe null
-                episodes[1].publishedAt shouldBe null
+                episodes[0].publishedAt shouldBe fixedInstant
+                episodes[1].publishedAt shouldBe fixedInstant
             }
         }
     }
