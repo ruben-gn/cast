@@ -28,6 +28,6 @@ class FakePodcastCatalog : PodcastCatalog {
 
     override suspend fun findEpisodeById(id: EpisodeId) = episodes[id]
 
-    override suspend fun findEpisodesPublishedAfter(twoWeeksAgo: Instant): List<Episode> =
-        episodes.values.filter { it -> it.publishedAt?.isAfter(twoWeeksAgo) ?: false }.toList()
+    override suspend fun findEpisodesPublishedAfter(publishedAfter: Instant): List<Episode> =
+        episodes.values.filter { it -> it.publishedAt?.isAfter(publishedAfter) ?: false }.toList()
 }

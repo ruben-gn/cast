@@ -14,5 +14,5 @@ interface PodcastCatalog {
     suspend fun findByUrl(url: FeedUrl): Podcast?
     suspend fun episodesFor(podcastId: PodcastId): List<Episode>
     suspend fun findEpisodeById(id: EpisodeId): Episode?
-    suspend fun findEpisodesPublishedAfter(twoWeeksAgo: Instant): List<Episode>
+    suspend fun findEpisodesPublishedAfter(publishedAfter: Instant): List<Episode>
 }
