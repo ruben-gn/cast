@@ -4,13 +4,13 @@ import application.model.EpisodeWithPlayback
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import playback.core.usecase.GetPlaybackStates
-import podcast.core.ports.PodcastCatalog
+import podcast.core.usecase.FindEpisode
 import queue.core.usecase.GetQueue
 import settings.core.usecase.GetSettings
 
 class GetQueueDetail(
     private val getQueue: GetQueue,
-    private val catalog: PodcastCatalog,
+    private val findEpisode: FindEpisode,
     private val getPlaybackStates: GetPlaybackStates,
     private val getSettings: GetSettings,
 ) {
@@ -18,7 +18,7 @@ class GetQueueDetail(
         val hidePlayed = getSettings().hidePlayed
         val queue = getQueue()
         val episodes = queue.episodeIds
-            .map { id -> async { catalog.findEpisodeById(id) } }
+            .map { id -> async { findEpisode(id) } }
             .mapNotNull { it.await() }
         val states = getPlaybackStates(episodes.map { it.id })
         episodes.mapNotNull { episode ->

@@ -10,6 +10,7 @@ import podcast.core.models.Episode
 import podcast.core.models.FeedUrl
 import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
+import podcast.core.usecase.FindEpisode
 import podcast.fakes.FakePodcastCatalog
 import queue.core.model.Queue
 import queue.core.usecase.GetQueue
@@ -32,7 +33,7 @@ class GetQueueDetailTests : DescribeSpec({
 
     fun useCase() = GetQueueDetail(
         getQueue = GetQueue(queue),
-        catalog = catalog,
+        findEpisode = FindEpisode(catalog),
         getPlaybackStates = GetPlaybackStates(playback),
         getSettings = GetSettings(settingsPersistence),
     )

@@ -6,11 +6,13 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import playback.core.usecase.GetPlaybackStates
 import playback.fakes.FakePlaybackPersistence
 import podcast.core.models.Episode
 import podcast.core.models.FeedUrl
 import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
+import podcast.core.usecase.FindRecentEpisodes
 import podcast.fakes.FakePodcastCatalog
 import shared.model.EpisodeId
 import java.time.Instant
@@ -25,7 +27,7 @@ class FindRecentUnplayedEpisodesTests : DescribeSpec({
     lateinit var catalog: FakePodcastCatalog
     lateinit var playback: FakePlaybackPersistence
 
-    fun useCase() = FindRecentUnplayedEpisodes(clock, catalog, playback)
+    fun useCase() = FindRecentUnplayedEpisodes(clock, FindRecentEpisodes(catalog), GetPlaybackStates(playback))
 
     fun episode(id: String, publishedAt: Instant) = Episode(
         id = EpisodeId(id),
