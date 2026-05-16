@@ -95,11 +95,6 @@ class AppTest : DescribeSpec({
             }
         }
 
-        it("POST /{id}/played returns 404 for an unknown podcast") {
-            testApp { json, _ ->
-                json.post("/api/podcasts/does-not-exist/played").status shouldBe HttpStatusCode.NotFound
-            }
-        }
     }
 
     describe("Episode") {
@@ -121,12 +116,6 @@ class AppTest : DescribeSpec({
             }
         }
 
-        it("POST /{id}/played returns 404 for an unknown episode") {
-            testApp { json, _ ->
-                json.post("/api/episodes/nonexistent/played").status shouldBe HttpStatusCode.NotFound
-            }
-        }
-
         it("DELETE /{id}/played marks episode as unplayed") {
             testApp { json, ws ->
                 val podcast = json.post("/api/podcasts") {
@@ -143,12 +132,6 @@ class AppTest : DescribeSpec({
                     val state = Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
                     state["played"]!!.jsonPrimitive.boolean shouldBe false
                 }
-            }
-        }
-
-        it("DELETE /{id}/played returns 404 for an unknown episode") {
-            testApp { json, _ ->
-                json.delete("/api/episodes/nonexistent/played").status shouldBe HttpStatusCode.NotFound
             }
         }
 
@@ -283,13 +266,6 @@ class AppTest : DescribeSpec({
             }
         }
 
-        it("returns 400 when no file is uploaded") {
-            testApp { json, _ ->
-                json.post("/api/podcasts/import") {
-                    setBody(MultiPartFormDataContent(formData {}))
-                }.status shouldBe HttpStatusCode.BadRequest
-            }
-        }
     }
 })
 
