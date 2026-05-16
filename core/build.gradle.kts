@@ -28,6 +28,7 @@ testing {
                 implementation(project())
                 implementation(libs.kotest.runner)
                 implementation(libs.kotest.assertions)
+                implementation(libs.konsist)
                 implementation(libs.ktor.server.test.host)
                 implementation(libs.ktor.client.mock)
                 implementation(libs.ktor.client.websockets)

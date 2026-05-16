@@ -4,6 +4,7 @@ ktor = "3.4.3"
 logback = "1.4.14"
 kotlin-logging = "8.0.01"
 kotest = "6.1.11"
+konsist = "0.17.3"
 sqlite-jdbc = "3.53.0.0"
 kotlinx-serialization = "1.8.1"
 
@@ -35,6 +36,7 @@ ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", ver
 
 kotest-runner = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
 kotest-assertions = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+konsist = { group = "com.lemonappdev", name = "konsist", version.ref = "konsist" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
