@@ -35,6 +35,17 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
                         <path d="M8 5v14l11-7z"/>
                     </svg>
                 </button>
+                <button
+                    class={`episode-played-btn${episode.played ? ' is-played' : ''}`}
+                    data-id={episode.id}
+                    data-played={episode.played ? 'true' : 'false'}
+                    onclick="togglePlayed(this)"
+                    title={episode.played ? 'Mark as unplayed' : 'Mark as played'}
+                >
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </button>
             </div>
 
             <div class="episode-header episode-header--static">

@@ -130,6 +130,24 @@ app.get('/api/queue', async (c) => {
     })
 })
 
+app.post('/api/podcasts/:id/played', async (c) => {
+    const id = c.req.param('id')
+    const res = await fetch(`${KOTLIN_API}/api/podcasts/${id}/played`, {method: 'POST'})
+    return new Response(null, {status: res.status})
+})
+
+app.post('/api/episodes/:id/played', async (c) => {
+    const id = c.req.param('id')
+    const res = await fetch(`${KOTLIN_API}/api/episodes/${id}/played`, {method: 'POST'})
+    return new Response(null, {status: res.status})
+})
+
+app.delete('/api/episodes/:id/played', async (c) => {
+    const id = c.req.param('id')
+    const res = await fetch(`${KOTLIN_API}/api/episodes/${id}/played`, {method: 'DELETE'})
+    return new Response(null, {status: res.status})
+})
+
 app.get('/podcasts/:id', async (c) => {
     const id = c.req.param('id')
     const res = await fetch(`${KOTLIN_API}/api/podcasts/${id}`)

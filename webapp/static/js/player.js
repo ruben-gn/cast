@@ -68,14 +68,41 @@ function markPlayed(id) {
     if (!id) return;
     var btn = episodeBtn(id);
     if (!btn) return;
-    btn.closest('.episode-item').classList.add('is-played');
+    var item = btn.closest('.episode-item');
+    item.classList.add('is-played');
+    var toggleBtn = item.querySelector('.episode-played-btn');
+    if (toggleBtn) {
+        toggleBtn.classList.add('is-played');
+        toggleBtn.dataset.played = 'true';
+        toggleBtn.title = 'Mark as unplayed';
+    }
 }
 
 function unmarkPlayed(id) {
     if (!id) return;
     var btn = episodeBtn(id);
     if (!btn) return;
-    btn.closest('.episode-item').classList.remove('is-played');
+    var item = btn.closest('.episode-item');
+    item.classList.remove('is-played');
+    var toggleBtn = item.querySelector('.episode-played-btn');
+    if (toggleBtn) {
+        toggleBtn.classList.remove('is-played');
+        toggleBtn.dataset.played = 'false';
+        toggleBtn.title = 'Mark as played';
+    }
+}
+
+function togglePlayed(btn) {
+    var id = btn.dataset.id;
+    var played = btn.dataset.played === 'true';
+    var method = played ? 'DELETE' : 'POST';
+    fetch('/api/episodes/' + id + '/played', {method: method})
+        .then(function(r) {
+            if (r.ok) {
+                if (played) unmarkPlayed(id); else markPlayed(id);
+            }
+        })
+        .catch(function() {});
 }
 
 function markAllEpisodesPlayed() {

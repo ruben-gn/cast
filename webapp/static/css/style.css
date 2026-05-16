@@ -542,7 +542,7 @@ details[open] .episode-description-summary::before {
 .episode-item {
     background: var(--surface);
     border-radius: var(--radius-md);
-    padding: 18px 90px 18px 20px;
+    padding: 18px 126px 18px 20px;
     margin-bottom: 10px;
     box-shadow: var(--shadow-sm);
     position: relative;
@@ -670,6 +670,33 @@ details[open] .episode-description-summary::before {
 }
 
 .episode-queue-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.episode-played-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.episode-played-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.episode-played-btn.is-played {
     background: var(--accent-light);
     color: var(--accent);
     border-color: var(--accent);
@@ -850,7 +877,7 @@ details[open] .episode-description-summary::before {
 
 @media (max-width: 600px) {
     .page-content {
-        padding: 16px 16px;
+        padding: 16px;
         padding-bottom: 20px;
     }
 
@@ -858,20 +885,39 @@ details[open] .episode-description-summary::before {
         padding-bottom: 120px;
     }
 
+    /* Header */
+    .app-header {
+        padding: 0 16px;
+    }
+
+    /* Podcast grid: force 2 columns */
+    .podcast-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    /* Podcast detail header: stack and center */
     .podcast-header {
         flex-direction: column;
         align-items: center;
         gap: 16px;
         margin-bottom: 24px;
+        padding: 18px 16px;
     }
 
     .podcast-cover {
-        width: 120px;
-        height: 120px;
+        width: 110px;
+        height: 110px;
+    }
+
+    .podcast-header-info {
+        align-items: center;
+        width: 100%;
+        text-align: center;
     }
 
     .podcast-title {
-        font-size: 20px;
+        font-size: 18px;
         text-align: center;
     }
 
@@ -879,6 +925,48 @@ details[open] .episode-description-summary::before {
         text-align: center;
     }
 
+    .podcast-action-btn {
+        align-self: auto;
+    }
+
+    /* Episode items */
+    .episode-item {
+        padding: 14px 110px 14px 14px;
+    }
+
+    .episode-actions {
+        right: 10px;
+        top: 10px;
+        gap: 4px;
+    }
+
+    .episode-play-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .episode-queue-btn,
+    .episode-played-btn {
+        width: 24px;
+        height: 24px;
+    }
+
+    .episode-title {
+        font-size: 13px;
+    }
+
+    .episode-title-line {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* Queue rows */
+    .queue-row {
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    /* Player bar */
     #player-bar {
         flex-direction: column;
         align-items: stretch;
@@ -900,13 +988,9 @@ details[open] .episode-description-summary::before {
         width: 100%;
     }
 
+    /* Episode row */
     .episode-row {
         flex-wrap: wrap;
         gap: 4px;
-    }
-
-    .episode-title {
-        min-width: 0;
-        flex: 1 1 60%;
     }
 }

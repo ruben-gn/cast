@@ -23,7 +23,7 @@ export const PodcastDetail: FC<{ podcast: Podcast; episodes: Episode[] }> = ({po
                     class="podcast-action-btn"
                     hx-post={`/api/podcasts/${podcast.id}/played`}
                     hx-swap="none"
-                    hx-on:htmx:after-request="markAllEpisodesPlayed()"
+                    {...{"hx-on:htmx:after-request": "if(event.detail.successful) markAllEpisodesPlayed()"}}
                     title="Mark all as played"
                 >
                     Mark all as played
