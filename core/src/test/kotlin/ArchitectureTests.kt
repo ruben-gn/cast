@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 
 private val domainPackages = listOf("podcast", "playback", "queue", "settings")
 private val allowedUseCaseImportPrefixes = listOf("java.", "kotlin.", "kotlinx.", "shared.", "io.github.oshai.")
+private val frameworkPackages = listOf("io.ktor.", "org.xerial.")
 
 class ArchitectureTests {
 
@@ -59,6 +60,44 @@ class ArchitectureTests {
                 klass.containingFile.imports.any { import ->
                     import.name.contains(".core.ports.") &&
                         parentNames.any { import.name.endsWith(".$it") }
+                }
+            }
+    }
+
+    // Rule A: core does not depend on adapters
+    @Test
+    fun `core does not depend on adapters`() {
+        Konsist.scopeFromProject()
+            .files
+            .withPackage("..core..")
+            .assertFalse { file ->
+                file.imports.any { it.name.contains(".adapters.") }
+            }
+    }
+
+    // Rule B: core does not depend on framework
+    @Test
+    fun `core does not depend on framework`() {
+        Konsist.scopeFromProject()
+            .files
+            .withPackage("..core..")
+            .assertFalse { file ->
+                file.imports.any { import ->
+                    frameworkPackages.any { import.name.startsWith(it) }
+                }
+            }
+    }
+
+    // Rule C: adapters do not depend on other adapters
+    @Test
+    fun `adapters do not depend on other adapters`() {
+        Konsist.scopeFromProduction()
+            .files
+            .withPackage("..adapters..")
+            .assertFalse { file ->
+                val domain = file.packagee!!.name.split(".").first()
+                file.imports.any { import ->
+                    import.name.contains(".adapters.") && !import.name.startsWith("$domain.")
                 }
             }
     }
