@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.MarkAllPlayed
 import playback.core.usecase.MarkPlayed
+import playback.core.usecase.MarkUnplayed
 import playback.core.usecase.StartPlayback
 import playback.core.usecase.UpdateProgress
 import playback.fakes.FakePlaybackPersistence
@@ -22,6 +23,7 @@ class PlaybackCoreTests : DescribeSpec({
         lateinit var updateProgress: UpdateProgress
         lateinit var getPlaybackState: GetPlaybackState
         lateinit var markPlayed: MarkPlayed
+        lateinit var markUnplayed: MarkUnplayed
         lateinit var markAllPlayed: MarkAllPlayed
         lateinit var startPlayback: StartPlayback
 
@@ -31,6 +33,7 @@ class PlaybackCoreTests : DescribeSpec({
             updateProgress = UpdateProgress(clock, persistence)
             getPlaybackState = GetPlaybackState(clock, persistence)
             markPlayed = MarkPlayed(persistence)
+            markUnplayed = MarkUnplayed(persistence)
             markAllPlayed = MarkAllPlayed(persistence)
             startPlayback = StartPlayback(clock, persistence)
         }
@@ -79,6 +82,25 @@ class PlaybackCoreTests : DescribeSpec({
             val state = getPlaybackState(episodeId)
             state.played shouldBe true
             state.progressMs shouldBe 5000L
+        }
+
+        it("should mark a played episode as unplayed") {
+            val episodeId = EpisodeId("ep-123")
+            updateProgress(episodeId, 5000L)
+            markPlayed(episodeId)
+
+            markUnplayed(episodeId)
+
+            getPlaybackState(episodeId).played shouldBe false
+        }
+
+        it("should mark an episode as unplayed even with no prior progress") {
+            val episodeId = EpisodeId("ep-456")
+            markUnplayed(episodeId)
+
+            val state = getPlaybackState(episodeId)
+            state.played shouldBe false
+            state.progressMs shouldBe 0
         }
 
         it("should mark an episode as played even with no prior progress") {

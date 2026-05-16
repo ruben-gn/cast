@@ -126,6 +126,31 @@ class AppTest : DescribeSpec({
                 json.post("/api/episodes/nonexistent/played").status shouldBe HttpStatusCode.NotFound
             }
         }
+
+        it("DELETE /{id}/played marks episode as unplayed") {
+            testApp { json, ws ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played")
+                json.delete("/api/episodes/${episodeId.encodeURLPathPart()}/played").status shouldBe HttpStatusCode.NoContent
+
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"get","episodeId":"$episodeId"}""")
+                    val state = Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
+                    state["played"]!!.jsonPrimitive.boolean shouldBe false
+                }
+            }
+        }
+
+        it("DELETE /{id}/played returns 404 for an unknown episode") {
+            testApp { json, _ ->
+                json.delete("/api/episodes/nonexistent/played").status shouldBe HttpStatusCode.NotFound
+            }
+        }
     }
 
     describe("Settings") {

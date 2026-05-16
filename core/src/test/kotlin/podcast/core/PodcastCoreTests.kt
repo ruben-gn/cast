@@ -11,6 +11,7 @@ import podcast.core.ports.EpisodeInfo
 import podcast.core.ports.FeedInfo
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.usecase.*
+import shared.model.EpisodeId
 import podcast.fakes.FakePodcastCatalog
 import java.time.Instant
 import kotlin.time.Duration.Companion.hours
@@ -30,6 +31,7 @@ class PodcastCoreTests : DescribeSpec({
         lateinit var addFeed: AddFeed
         lateinit var listPodcasts: ListPodcasts
         lateinit var getPodcast: GetPodcast
+        lateinit var findEpisode: FindEpisode
         lateinit var listEpisodes: ListEpisodes
 
         beforeEach {
@@ -41,6 +43,7 @@ class PodcastCoreTests : DescribeSpec({
             addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
             listPodcasts = ListPodcasts(catalog)
             getPodcast = GetPodcast(catalog)
+            findEpisode = FindEpisode(catalog)
             listEpisodes = ListEpisodes(catalog)
         }
 
@@ -71,6 +74,22 @@ class PodcastCoreTests : DescribeSpec({
 
         it("should return null when retrieving a non-existent podcast") {
             getPodcast(PodcastId("non-existent-id")) shouldBe null
+        }
+
+        it("should find an episode by id") {
+            val episodeInfo = EpisodeInfo("ep-42", "The Answer", "Desc", "https://cdn/ep42.mp3", null, null)
+            stubFeedProvider = FeedInfoProvider { url -> FeedInfo("Show", url.value, "Desc", "img.png", listOf(episodeInfo)) }
+            addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
+            val podcast = addFeed(FeedUrl("https://example.com/rss"))
+            val episodeId = listEpisodes(podcast.id).first().id
+
+            val found = findEpisode(episodeId)
+
+            found?.title shouldBe "The Answer"
+        }
+
+        it("should return null when finding an episode that does not exist") {
+            findEpisode(EpisodeId("non-existent-episode")) shouldBe null
         }
 
         it("should map all episodes from the feed") {

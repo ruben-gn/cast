@@ -11,6 +11,7 @@ import podcast.adapters.rss.RssFeedInfoProvider
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.ports.PodcastCatalog
 import podcast.core.usecase.AddFeed
+import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.GetPodcast
 import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListEpisodes
@@ -28,6 +29,7 @@ fun Application.installPodcastModule(
 
         provide<ListPodcasts> { ListPodcasts(resolve()) }
         provide<GetPodcast> { GetPodcast(resolve()) }
+        provide<FindEpisode> { FindEpisode(resolve()) }
 
         provide<ListEpisodes> { ListEpisodes(resolve()) }
 
