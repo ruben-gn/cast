@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import cast.android.ui.UiState
 import cast.android.ui.components.AddPodcastSheet
+import cast.android.ui.components.CatalogScreenSkeleton
 import cast.android.ui.nav.PodcastDetail
 import cast.android.ui.viewmodel.CatalogViewModel
 import cast.api.PodcastSummaryDto
@@ -50,9 +50,7 @@ fun CatalogScreen(navController: NavHostController) {
         },
     ) { innerPadding ->
         when (val state = uiState) {
-            is UiState.Loading -> Box(Modifier.fillMaxSize()) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            }
+            is UiState.Loading -> CatalogScreenSkeleton()
             is UiState.Error -> Box(Modifier.fillMaxSize()) {
                 Text(
                     text = state.message,

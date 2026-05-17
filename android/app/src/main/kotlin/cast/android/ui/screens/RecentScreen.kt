@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import cast.android.ui.UiState
 import cast.android.ui.components.EpisodeItem
+import cast.android.ui.components.RecentScreenSkeleton
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.ui.viewmodel.RecentViewModel
 
@@ -37,9 +37,7 @@ fun RecentScreen(navController: NavHostController) {
         modifier = Modifier.fillMaxSize(),
     ) {
         when (val state = uiState) {
-            is UiState.Loading -> Box(Modifier.fillMaxSize()) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            }
+            is UiState.Loading -> RecentScreenSkeleton()
             is UiState.Error -> Box(Modifier.fillMaxSize()) {
                 Text(
                     text = state.message,
