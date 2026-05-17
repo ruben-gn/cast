@@ -7,22 +7,27 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import cast.android.domain.model.Settings
 import cast.android.domain.repository.SettingsRepository
+import cast.android.network.BaseUrlInterceptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>,
+    private val baseUrlInterceptor: BaseUrlInterceptor,
 ) : SettingsRepository {
 
-    override val settings: Flow<Settings> = dataStore.data.map { prefs ->
-        Settings(
-            serverUrl = prefs[SERVER_URL] ?: Settings.DEFAULT_SERVER_URL,
-            hidePlayed = prefs[HIDE_PLAYED] ?: false,
-        )
-    }
+    override val settings: Flow<Settings> = dataStore.data
+        .map { prefs ->
+            Settings(
+                serverUrl = prefs[SERVER_URL] ?: Settings.DEFAULT_SERVER_URL,
+                hidePlayed = prefs[HIDE_PLAYED] ?: false,
+            )
+        }
+        .onEach { baseUrlInterceptor.baseUrl = it.serverUrl }
 
     override suspend fun updateSettings(settings: Settings) {
         dataStore.edit { prefs ->
