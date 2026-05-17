@@ -15,37 +15,39 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
     <body id="main-body">
       <header class="app-header">
         <div class="app-header-left">
-          <span
-            class="app-logo"
-            hx-get="/podcasts"
-            hx-target="#content-container"
-            hx-swap="outerHTML"
-            hx-push-url="true"
-            hx-indicator="#nav-spinner"
-            style="cursor:pointer"
-          >Cast</span>
-          <div
-            class="header-queue-btn"
-            hx-get="/queue"
-            hx-target="#content-container"
-            hx-swap="outerHTML"
-            hx-push-url="true"
-            hx-indicator="#nav-spinner"
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-              <line x1="8" y1="6" x2="21" y2="6"/>
-              <line x1="8" y1="12" x2="21" y2="12"/>
-              <line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/>
-              <line x1="3" y1="12" x2="3.01" y2="12"/>
-              <line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-            Queue
-            <span id="queue-badge" class="queue-badge"></span>
-          </div>
+          <span class="app-logo">Cast</span>
+          <nav class="app-nav">
+            <div
+              class="nav-link"
+              data-path="/"
+              hx-get="/"
+              hx-target="#content-container"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+              hx-indicator="#nav-spinner"
+            >Recent</div>
+            <div
+              class="nav-link"
+              data-path="/podcasts"
+              hx-get="/podcasts"
+              hx-target="#content-container"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+              hx-indicator="#nav-spinner"
+            >Catalog</div>
+            <div
+              class="nav-link"
+              data-path="/queue"
+              hx-get="/queue"
+              hx-target="#content-container"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+              hx-indicator="#nav-spinner"
+            >Queue<span id="queue-badge" class="queue-badge"></span></div>
+          </nav>
         </div>
         <button class="header-add-btn" onclick="document.getElementById('add-feed-modal').showModal()">
-          ＋ Add podcast
+          ＋<span class="header-add-label"> Add podcast</span>
         </button>
       </header>
       <AddFeedModal />
@@ -63,6 +65,18 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
         <audio id="player-audio" controls></audio>
       </div>
       <script src="/static/js/player.js"></script>
+      <script dangerouslySetInnerHTML={{__html: `
+        function updateNavActive() {
+          var path = window.location.pathname;
+          document.querySelectorAll('.nav-link[data-path]').forEach(function(el) {
+            var p = el.dataset.path;
+            var active = p === '/' ? path === '/' : path === p || path.startsWith(p + '/');
+            el.classList.toggle('is-active', active);
+          });
+        }
+        document.addEventListener('DOMContentLoaded', updateNavActive);
+        document.addEventListener('htmx:pushUrl', function() { setTimeout(updateNavActive, 0); });
+      `}}/>
     </body>
   </html>
 )

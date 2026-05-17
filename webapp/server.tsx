@@ -4,6 +4,7 @@ import {Layout} from './components/Layout'
 import {PodcastList} from './components/PodcastList'
 import {PodcastDetail} from './components/PodcastDetail'
 import {QueuePage, QueueList} from './components/QueuePage'
+import {RecentPage} from './components/RecentPage'
 import type {Podcast, PodcastDetail as PodcastDetailType, Episode} from './types'
 
 const KOTLIN_API = process.env.KOTLIN_API ?? 'http://localhost:8100'
@@ -13,7 +14,24 @@ const app = new Hono()
 
 app.use('/static/*', serveStatic({root: './'}))
 
-app.get('/', (c) => c.redirect('/podcasts'))
+app.get('/', async (c) => {
+    const res = await fetch(`${KOTLIN_API}/api/episodes/recent`)
+    if (!res.ok) return new Response('', {status: res.status})
+    const episodes: Episode[] = await res.json()
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    const content = <RecentPage episodes={episodes}/>
+
+    if (isHtmx) {
+        return c.html(
+            <div id="content-container">
+                <div class="page-content">{content}</div>
+            </div>
+        )
+    }
+    return c.html(
+        <Layout title="Recent — Cast">{content}</Layout>
+    )
+})
 
 app.get('/podcasts', async (c) => {
     const podcasts: Podcast[] = await fetch(`${KOTLIN_API}/api/podcasts`).then(r => r.json())
