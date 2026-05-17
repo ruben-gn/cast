@@ -4,7 +4,6 @@ import {EpisodeItem} from './EpisodeItem'
 
 export const RecentPage: FC<{episodes: Episode[]}> = ({episodes}) => (
     <div class="recent-page">
-        <h1 class="page-title">Recent</h1>
         {episodes.length === 0 ? (
             <div class="empty-state">
                 <div class="empty-state-icon">🎧</div>
