@@ -6,7 +6,6 @@ import io.ktor.http.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.MarkPlayed
 import playback.core.usecase.MarkUnplayed
 import podcast.core.usecase.FindEpisode
@@ -16,7 +15,6 @@ import shared.model.EpisodeId
 fun Route.episodeApi(dependencies: DependencyRegistry) {
     val findEpisode: FindEpisode by dependencies
     val findRecentUnplayedEpisodes: FindRecentUnplayedEpisodes by dependencies
-    val getPlaybackState: GetPlaybackState by dependencies
     val listPodcasts: ListPodcasts by dependencies
     val markPlayed: MarkPlayed by dependencies
     val markUnplayed: MarkUnplayed by dependencies
@@ -33,20 +31,6 @@ fun Route.episodeApi(dependencies: DependencyRegistry) {
                 podcastImage = podcast?.image,
             )
         })
-    }
-
-    get("{episodeId}") {
-        val episodeId = EpisodeId(call.parameters["episodeId"]!!)
-        val episode = findEpisode(episodeId) ?: return@get call.respond(HttpStatusCode.NotFound)
-        val playback = getPlaybackState(episodeId)
-        val podcasts = listPodcasts().associateBy { it.id }
-        val podcast = podcasts[episode.podcastId]
-        call.respond(episodeDetailDto(
-            EpisodeWithPlayback(episode, playback.progressMs, playback.played),
-            podcastId = episode.podcastId.value,
-            podcastName = podcast?.name,
-            podcastImage = podcast?.image,
-        ))
     }
 
     post("{episodeId}/played") {

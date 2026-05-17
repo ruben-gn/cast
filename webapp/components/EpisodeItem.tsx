@@ -96,15 +96,7 @@ const EpisodeRow: FC<{ episode: Episode }> = ({episode}) => {
     const pubDate = relativeTime(episode.publishedAt)
     return (
         <div class="episode-row">
-            <span
-                class="episode-title"
-                title={episode.title}
-                hx-get={`/episodes/${episode.id}`}
-                hx-target="#content-container"
-                hx-swap="outerHTML"
-                hx-push-url="true"
-                style="cursor:pointer"
-            >{episode.title}</span>
+            <span class="episode-title" title={episode.title}>{episode.title}</span>
             {(pubDate || episode.duration) && (
                 <div class="episode-meta">
                     {pubDate && <span>{pubDate}</span>}
