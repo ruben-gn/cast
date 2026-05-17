@@ -1,11 +1,11 @@
 [versions]
 kotlin = "2.3.21"
 ktor = "3.4.3"
-logback = "1.4.14"
-kotlin-logging = "8.0.01"
+logback = "1.5.32"
+kotlin-logging = "8.0.02"
 kotest = "6.1.11"
 konsist = "0.17.3"
-sqlite-jdbc = "3.53.0.0"
+sqlite-jdbc = "3.53.1.0"
 kotlinx-serialization = "1.8.1"
 
 [libraries]
