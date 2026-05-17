@@ -20,6 +20,13 @@ function syncPlayButtonState() {
 
 document.addEventListener('htmx:afterSettle', syncPlayButtonState);
 
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/queue')
+        .then(function(r) { return r.json(); })
+        .then(function(episodes) { updateQueueBadge(episodes.length); })
+        .catch(function() {});
+});
+
 function handleSubResult(event) {
     if (event.detail.successful) {
         document.getElementById('add-feed-modal').close();
@@ -70,7 +77,10 @@ function markPlayed(id) {
     if (!btn) return;
     var item = btn.closest('.episode-item');
     if (item.closest('.recent-page')) {
-        item.remove();
+        item.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(16px)';
+        setTimeout(function() { item.remove(); }, 260);
         return;
     }
     item.classList.add('is-played');

@@ -33,7 +33,7 @@ const PodcastCard: FC<{ podcast: Podcast }> = ({podcast}) => (
         hx-indicator="#nav-spinner"
     >
         <div class="podcast-card">
-            <img src={podcast.image} alt={podcast.name} class="podcast-card-img"/>
+            <img src={podcast.image} alt={podcast.name} class="podcast-card-img" loading="lazy"/>
             <div class="podcast-card-info">
                 <p class="podcast-card-name">{podcast.name}</p>
             </div>

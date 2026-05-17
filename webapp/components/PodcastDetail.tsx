@@ -4,18 +4,10 @@ import {EpisodeItem} from './EpisodeItem'
 
 export const PodcastDetail: FC<{ podcast: Podcast; episodes: Episode[] }> = ({podcast, episodes}) => (
     <div class="podcast-detail">
-        <a
-            class="back-link"
-            hx-get="/podcasts"
-            hx-target="#content-container"
-            hx-swap="outerHTML"
-            hx-push-url="true"
-        >
-            ← All podcasts
-        </a>
+        <a class="back-link" onclick="history.back()" style="cursor:pointer">← Back</a>
 
         <div class="podcast-header">
-            <img src={podcast.image} alt={podcast.name} class="podcast-cover"/>
+            <img src={podcast.image} alt={podcast.name} class="podcast-cover" loading="lazy"/>
             <div class="podcast-header-info">
                 <h1 class="podcast-title">{podcast.name}</h1>
                 <p class="podcast-subtitle">{episodes.length} episodes</p>

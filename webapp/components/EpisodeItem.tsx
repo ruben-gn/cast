@@ -10,7 +10,7 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
             {episode.podcastName && (
                 <span class="episode-podcast">
                     {episode.podcastImage && (
-                        <img class="episode-podcast-img" src={episode.podcastImage} alt="" width="16" height="16"/>
+                        <img class="episode-podcast-img" src={episode.podcastImage} alt="" width="16" height="16" loading="lazy"/>
                     )}
                     {episode.podcastName}
                 </span>
@@ -70,7 +70,7 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
             {hasDescription && (
                 <details class="episode-description-details">
                     <summary class="episode-description-summary">Show more</summary>
-                    <div class="episode-description-body" dangerouslySetInnerHTML={{__html: episode.description}}/>
+                    <div class="episode-description-body" dangerouslySetInnerHTML={{__html: episode.description.replace(/<a\s/gi, '<a target="_blank" rel="noopener noreferrer" ')}}/>
                 </details>
             )}
         </div>
