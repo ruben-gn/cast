@@ -4,7 +4,33 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Broadcast wave: small arc, radius 12 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M42,65 A12,12 0 0 1 66,65" />
+
+    <!-- Broadcast wave: medium arc, radius 22 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M32,65 A22,22 0 0 1 76,65" />
+
+    <!-- Broadcast wave: large arc, radius 32 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M22,65 A32,32 0 0 1 86,65" />
+
+    <!-- Center dot -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M40,28 L80,54 L40,80 Z" />
+        android:pathData="M54,61 A4,4 0 1 0 54,69 A4,4 0 1 0 54,61 Z" />
 </vector>
