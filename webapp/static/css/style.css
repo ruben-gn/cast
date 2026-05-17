@@ -622,6 +622,11 @@ details[open] .episode-description-summary::before {
     overflow: hidden;
 }
 
+.recent-page .episode-item:has(details[open]) .episode-title {
+    display: block;
+    overflow: visible;
+}
+
 .episode-meta {
     display: flex;
     align-items: center;
