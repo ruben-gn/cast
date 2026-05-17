@@ -65,8 +65,8 @@ class AppTest : DescribeSpec({
         )
     }
 
-    describe("Podcast") {
-        it("add, list, and get detail with episodes") {
+    describe("the podcast catalog") {
+        it("includes a podcast after subscribing via RSS URL") {
             testApp { json, _ ->
                 val podcast = json.post("/api/podcasts") {
                     contentType(ContentType.Application.Json)
@@ -75,169 +75,12 @@ class AppTest : DescribeSpec({
 
                 podcast.name shouldBe "Test Show"
                 podcast.episodes.map { it.title } shouldBe listOf("Episode 1", "Episode 2")
-
-                val list = json.get("/api/podcasts").body<List<PodcastSummaryDto>>()
-                list.map { it.url } shouldBe listOf(feedUrl)
+                json.get("/api/podcasts").body<List<PodcastSummaryDto>>()
+                    .map { it.url } shouldBe listOf(feedUrl)
             }
         }
 
-        it("POST /{id}/played marks all episodes as played") {
-            testApp { json, _ ->
-                val podcast = json.post("/api/podcasts") {
-                    contentType(ContentType.Application.Json)
-                    setBody(AddPodcastRequest(feedUrl))
-                }.body<PodcastDetailDto>()
-
-                json.post("/api/podcasts/${podcast.id}/played").status shouldBe HttpStatusCode.NoContent
-
-                val detail = json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
-                detail.episodes.all { it.played } shouldBe true
-            }
-        }
-
-    }
-
-    describe("Episode") {
-        it("POST /{id}/played marks episode as played and persists it") {
-            testApp { json, ws ->
-                val podcast = json.post("/api/podcasts") {
-                    contentType(ContentType.Application.Json)
-                    setBody(AddPodcastRequest(feedUrl))
-                }.body<PodcastDetailDto>()
-                val episodeId = podcast.episodes.first().id
-
-                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played").status shouldBe HttpStatusCode.NoContent
-
-                ws.webSocket("/api/playback") {
-                    send("""{"type":"get","episodeId":"$episodeId"}""")
-                    val state = Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
-                    state["played"]!!.jsonPrimitive.boolean shouldBe true
-                }
-            }
-        }
-
-        it("DELETE /{id}/played marks episode as unplayed") {
-            testApp { json, ws ->
-                val podcast = json.post("/api/podcasts") {
-                    contentType(ContentType.Application.Json)
-                    setBody(AddPodcastRequest(feedUrl))
-                }.body<PodcastDetailDto>()
-                val episodeId = podcast.episodes.first().id
-
-                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played")
-                json.delete("/api/episodes/${episodeId.encodeURLPathPart()}/played").status shouldBe HttpStatusCode.NoContent
-
-                ws.webSocket("/api/playback") {
-                    send("""{"type":"get","episodeId":"$episodeId"}""")
-                    val state = Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
-                    state["played"]!!.jsonPrimitive.boolean shouldBe false
-                }
-            }
-        }
-
-        it("GET /recent returns unplayed episodes from the past two weeks") {
-            testApp { json, _ ->
-                val podcast = json.post("/api/podcasts") {
-                    contentType(ContentType.Application.Json)
-                    setBody(AddPodcastRequest(feedUrl))
-                }.body<PodcastDetailDto>()
-
-                val recent = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
-                recent.map { it.title } shouldBe podcast.episodes.map { it.title }
-            }
-        }
-
-        it("GET /recent excludes played episodes") {
-            testApp { json, _ ->
-                val podcast = json.post("/api/podcasts") {
-                    contentType(ContentType.Application.Json)
-                    setBody(AddPodcastRequest(feedUrl))
-                }.body<PodcastDetailDto>()
-                val episodeId = podcast.episodes.first().id
-
-                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played")
-
-                val recent = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
-                recent.none { it.id == episodeId } shouldBe true
-            }
-        }
-    }
-
-    describe("Settings") {
-        it("PUT persists and GET reflects the change") {
-            testApp { json, _ ->
-                json.put("/api/settings") {
-                    contentType(ContentType.Application.Json)
-                    setBody(SettingsDto(hidePlayed = true))
-                }.status shouldBe HttpStatusCode.NoContent
-
-                json.get("/api/settings").body<SettingsDto>().hidePlayed shouldBe true
-            }
-        }
-
-        it("hidePlayed=true filters played episodes from podcast detail") {
-            testApp { json, _ ->
-                val podcast = json.post("/api/podcasts") {
-                    contentType(ContentType.Application.Json)
-                    setBody(AddPodcastRequest(feedUrl))
-                }.body<PodcastDetailDto>()
-
-                json.post("/api/podcasts/${podcast.id}/played")
-                json.put("/api/settings") {
-                    contentType(ContentType.Application.Json)
-                    setBody(SettingsDto(hidePlayed = true))
-                }
-
-                json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>().episodes.shouldBeEmpty()
-            }
-        }
-    }
-
-    describe("Queue") {
-        it("add and remove episodes") {
-            testApp { json, _ ->
-                val podcast = json.post("/api/podcasts") {
-                    contentType(ContentType.Application.Json)
-                    setBody(AddPodcastRequest(feedUrl))
-                }.body<PodcastDetailDto>()
-                val ep1 = podcast.episodes[0].id
-                val ep2 = podcast.episodes[1].id
-
-                json.post("/api/queue/${ep1.encodeURLPathPart()}")
-                json.post("/api/queue/${ep2.encodeURLPathPart()}")
-
-                json.get("/api/queue").body<List<EpisodeDetailDto>>().map { it.id } shouldBe listOf(ep1, ep2)
-
-                json.delete("/api/queue/${ep1.encodeURLPathPart()}")
-
-                json.get("/api/queue").body<List<EpisodeDetailDto>>().map { it.id } shouldBe listOf(ep2)
-            }
-        }
-    }
-
-    describe("Playback WebSocket") {
-        it("update, ended marks played, start resets") {
-            testApp { _, ws ->
-                ws.webSocket("/api/playback") {
-                    send("""{"type":"update","episodeId":"ep-1","progressMs":30000}""")
-                    send("""{"type":"ended","episodeId":"ep-1"}""")
-                    send("""{"type":"get","episodeId":"ep-1"}""")
-                    val afterEnded = Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
-                    afterEnded["played"]!!.jsonPrimitive.boolean shouldBe true
-                    afterEnded["progressMs"]!!.jsonPrimitive.long shouldBe 30000L
-
-                    send("""{"type":"start","episodeId":"ep-1","startPositionMs":0}""")
-                    send("""{"type":"get","episodeId":"ep-1"}""")
-                    val afterStart = Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
-                    afterStart["played"]!!.jsonPrimitive.boolean shouldBe false
-                    afterStart["progressMs"]!!.jsonPrimitive.long shouldBe 0L
-                }
-            }
-        }
-    }
-
-    describe("OPML import") {
-        it("imports all podcasts from a valid OPML file") {
+        it("includes all feeds after an OPML import") {
             val feed1 = "https://example.com/feed1.xml"
             val feed2 = "https://example.com/feed2.xml"
             val opml = """
@@ -259,15 +102,187 @@ class AppTest : DescribeSpec({
                             append(HttpHeaders.ContentDisposition, """form-data; name="opml"; filename="subscriptions.opml"""")
                         })
                     }))
-                }.status shouldBe HttpStatusCode.OK
+                }
+                json.get("/api/podcasts").body<List<PodcastSummaryDto>>()
+                    .map { it.url }.toSet() shouldBe setOf(feed1, feed2)
+            }
+        }
+    }
 
-                val podcasts = json.get("/api/podcasts").body<List<PodcastSummaryDto>>()
-                podcasts.map { it.url }.toSet() shouldBe setOf(feed1, feed2)
+    describe("the recent feed") {
+        it("shows unplayed episodes from subscribed podcasts") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
+                    .map { it.title } shouldBe podcast.episodes.map { it.title }
             }
         }
 
+        it("excludes episodes that have been played") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played")
+
+                json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
+                    .none { it.id == episodeId } shouldBe true
+            }
+        }
+    }
+
+    describe("an episode's played state") {
+        it("can be marked as played") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played")
+
+                json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
+                    .episodes.first { it.id == episodeId }.played shouldBe true
+            }
+        }
+
+        it("can be cleared after being played") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played")
+                json.delete("/api/episodes/${episodeId.encodeURLPathPart()}/played")
+
+                json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
+                    .episodes.first { it.id == episodeId }.played shouldBe false
+            }
+        }
+
+        it("can be set for all episodes in a podcast at once") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.post("/api/podcasts/${podcast.id}/played")
+
+                json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
+                    .episodes.all { it.played } shouldBe true
+            }
+        }
+    }
+
+    describe("playback") {
+        it("persists progress across sessions") {
+            testApp { _, ws ->
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"update","episodeId":"ep-1","progressMs":45000}""")
+                }
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"get","episodeId":"ep-1"}""")
+                    receiveState()["progressMs"]!!.jsonPrimitive.long shouldBe 45000L
+                }
+            }
+        }
+
+        it("marks the episode as played when it ends") {
+            testApp { _, ws ->
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"ended","episodeId":"ep-1"}""")
+                    send("""{"type":"get","episodeId":"ep-1"}""")
+                    receiveState()["played"]!!.jsonPrimitive.boolean shouldBe true
+                }
+            }
+        }
+
+        it("resets progress and played state when starting over") {
+            testApp { _, ws ->
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"update","episodeId":"ep-1","progressMs":30000}""")
+                    send("""{"type":"ended","episodeId":"ep-1"}""")
+                    send("""{"type":"start","episodeId":"ep-1","startPositionMs":0}""")
+                    send("""{"type":"get","episodeId":"ep-1"}""")
+                    val state = receiveState()
+                    state["played"]!!.jsonPrimitive.boolean shouldBe false
+                    state["progressMs"]!!.jsonPrimitive.long shouldBe 0L
+                }
+            }
+        }
+    }
+
+    describe("the queue") {
+        it("preserves insertion order") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val ep1 = podcast.episodes[0].id
+                val ep2 = podcast.episodes[1].id
+
+                json.post("/api/queue/${ep1.encodeURLPathPart()}")
+                json.post("/api/queue/${ep2.encodeURLPathPart()}")
+
+                json.get("/api/queue").body<List<EpisodeDetailDto>>()
+                    .map { it.id } shouldBe listOf(ep1, ep2)
+            }
+        }
+
+        it("allows removing individual episodes") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val ep1 = podcast.episodes[0].id
+                val ep2 = podcast.episodes[1].id
+
+                json.post("/api/queue/${ep1.encodeURLPathPart()}")
+                json.post("/api/queue/${ep2.encodeURLPathPart()}")
+                json.delete("/api/queue/${ep1.encodeURLPathPart()}")
+
+                json.get("/api/queue").body<List<EpisodeDetailDto>>()
+                    .map { it.id } shouldBe listOf(ep2)
+            }
+        }
+    }
+
+    describe("the hide-played setting") {
+        it("filters played episodes from the podcast episode list") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.post("/api/podcasts/${podcast.id}/played")
+                json.put("/api/settings") {
+                    contentType(ContentType.Application.Json)
+                    setBody(SettingsDto(hidePlayed = true))
+                }
+
+                json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
+                    .episodes.shouldBeEmpty()
+            }
+        }
     }
 })
+
+private suspend fun DefaultClientWebSocketSession.receiveState(): JsonObject =
+    Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
 
 private fun Application.installInMemoryDatabase() {
     val connection = DriverManager.getConnection("jdbc:sqlite::memory:")
