@@ -15,3 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "cast"
 include(":app")
+include(":shared-models")
+project(":shared-models").projectDir = file("../shared-models")

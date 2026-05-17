@@ -75,6 +75,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
 
+    // Shared API models
+    implementation(project(":shared-models"))
+
     // Kotlin Serialization
     implementation(libs.kotlinx.serialization.json)
 
