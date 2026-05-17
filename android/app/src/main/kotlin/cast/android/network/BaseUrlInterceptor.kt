@@ -13,7 +13,13 @@ class BaseUrlInterceptor @Inject constructor() : Interceptor {
     @Volatile var baseUrl: String = Settings.DEFAULT_SERVER_URL
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val base = baseUrl.toHttpUrl()
+        val normalized = if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+            baseUrl
+        } else {
+            "http://$baseUrl"
+        }
+        val base = runCatching { normalized.toHttpUrl() }
+            .getOrElse { Settings.DEFAULT_SERVER_URL.toHttpUrl() }
         val url = chain.request().url.newBuilder()
             .scheme(base.scheme)
             .host(base.host)

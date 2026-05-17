@@ -20,7 +20,9 @@ class SettingsViewModel @Inject constructor(
 
     fun updateSettings(settings: Settings) {
         viewModelScope.launch {
-            settingsRepository.updateSettings(settings)
+            val url = settings.serverUrl.trim()
+            val normalizedUrl = if (url.startsWith("http://") || url.startsWith("https://")) url else "http://$url"
+            settingsRepository.updateSettings(settings.copy(serverUrl = normalizedUrl))
         }
     }
 }
