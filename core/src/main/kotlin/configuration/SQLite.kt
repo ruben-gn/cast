@@ -39,6 +39,7 @@ val CREATE_PODCASTS_TABLE = """
 val CREATE_EPISODES_TABLE = """
     CREATE TABLE IF NOT EXISTS episodes (
         id TEXT PRIMARY KEY,
+        guid TEXT NOT NULL UNIQUE,
         podcast_id TEXT NOT NULL,
         title TEXT NOT NULL,
         description TEXT NOT NULL,

@@ -49,7 +49,7 @@ private fun toFeedInfo(clock: Clock, channel: RssChannel, url: FeedUrl) =
         episodes = channel.items.map { item ->
             val audioUrl = item.enclosure?.url ?: ""
             EpisodeInfo(
-                id = item.guid ?: audioUrl,
+                guid = item.guid ?: audioUrl,
                 title = item.title,
                 description = item.description,
                 audioUrl = audioUrl,

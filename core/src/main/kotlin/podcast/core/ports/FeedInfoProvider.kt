@@ -6,6 +6,7 @@ import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
 import shared.model.EpisodeId
 import java.time.Instant
+import java.util.UUID
 import kotlin.time.Duration
 
 fun interface FeedInfoProvider {
@@ -21,7 +22,7 @@ data class FeedInfo(
 )
 
 data class EpisodeInfo(
-    val id: String,
+    val guid: String,
     val title: String,
     val description: String,
     val audioUrl: String,
@@ -39,7 +40,8 @@ fun FeedInfo.toPodcast(id: PodcastId, created: Instant, updated: Instant) = Podc
 )
 
 fun EpisodeInfo.toEpisode(podcastId: PodcastId) = Episode(
-    id = EpisodeId(id),
+    id = EpisodeId(UUID.randomUUID().toString()),
+    feedGuid = guid,
     podcastId = podcastId,
     title = title,
     description = description,

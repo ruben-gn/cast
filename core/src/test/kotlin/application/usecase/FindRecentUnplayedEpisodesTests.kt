@@ -31,6 +31,7 @@ class FindRecentUnplayedEpisodesTests : DescribeSpec({
 
     fun episode(id: String, publishedAt: Instant) = Episode(
         id = EpisodeId(id),
+        feedGuid = id,
         podcastId = PodcastId("pod-1"),
         title = "Episode $id",
         description = "",

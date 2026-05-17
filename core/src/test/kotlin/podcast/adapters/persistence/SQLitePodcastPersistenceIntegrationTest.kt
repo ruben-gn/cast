@@ -101,6 +101,7 @@ private fun createPodcast(id: String) = Podcast(
 
 private fun createEpisode(id: String, podcastId: String) = Episode(
     id = EpisodeId(id),
+    feedGuid = id,
     podcastId = PodcastId(podcastId),
     title = "Episode $id",
     description = "Desc",

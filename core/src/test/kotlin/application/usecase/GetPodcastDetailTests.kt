@@ -37,6 +37,7 @@ class GetPodcastDetailTests : DescribeSpec({
 
     fun episode(id: EpisodeId) = Episode(
         id = id,
+        feedGuid = id.value,
         podcastId = podcastId,
         title = "Episode ${id.value}",
         description = "",

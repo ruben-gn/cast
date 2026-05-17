@@ -6,6 +6,7 @@ import kotlin.time.Duration
 
 data class Episode(
     val id: EpisodeId,
+    val feedGuid: String,
     val podcastId: PodcastId,
     val title: String,
     val description: String,

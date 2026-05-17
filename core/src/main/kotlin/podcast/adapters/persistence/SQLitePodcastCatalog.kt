@@ -96,15 +96,16 @@ private fun Connection.insertEpisodes(episodes: List<Episode>) {
     prepareStatement(INSERT_EPISODE).use { stmt ->
         episodes.forEach { episode ->
             stmt.setString(1, episode.id.value)
-            stmt.setString(2, episode.podcastId.value)
-            stmt.setString(3, episode.title)
-            stmt.setString(4, episode.description)
-            stmt.setString(5, episode.audioUrl)
+            stmt.setString(2, episode.feedGuid)
+            stmt.setString(3, episode.podcastId.value)
+            stmt.setString(4, episode.title)
+            stmt.setString(5, episode.description)
+            stmt.setString(6, episode.audioUrl)
             if (episode.duration != null)
-                stmt.setLong(6, episode.duration.inWholeSeconds)
+                stmt.setLong(7, episode.duration.inWholeSeconds)
             else
-                stmt.setNull(6, Types.INTEGER)
-            stmt.setString(7, episode.publishedAt?.toString())
+                stmt.setNull(7, Types.INTEGER)
+            stmt.setString(8, episode.publishedAt?.toString())
             stmt.addBatch()
         }
         stmt.executeBatch()
@@ -124,6 +125,7 @@ private fun ResultSet.toEpisode(): Episode {
     val durationSeconds = getLong("duration")
     return Episode(
         id = EpisodeId(getString("id")),
+        feedGuid = getString("guid"),
         podcastId = PodcastId(getString("podcast_id")),
         title = getString("title"),
         description = getString("description"),
@@ -146,10 +148,9 @@ private val INSERT_PODCAST = """
 
 private val INSERT_EPISODE = """
     INSERT INTO episodes
-    (id, podcast_id, title, description, audio_url, duration, published_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-        podcast_id = excluded.podcast_id,
+    (id, guid, podcast_id, title, description, audio_url, duration, published_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(guid) DO UPDATE SET
         title = excluded.title,
         description = excluded.description,
         audio_url = excluded.audio_url,

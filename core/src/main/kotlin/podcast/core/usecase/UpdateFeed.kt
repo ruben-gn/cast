@@ -5,7 +5,6 @@ import podcast.core.models.Podcast
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.ports.PodcastCatalog
 import podcast.core.ports.toEpisode
-import shared.model.EpisodeId
 import java.time.Clock
 
 class UpdateFeed(
@@ -27,17 +26,14 @@ class UpdateFeed(
             updated = clock.instant(),
         )
 
-        val existingEpisodeIds = podcast.fetchExistingEpisodes()
-        val episodes = feedInfo.episodes.map { it.toEpisode(podcast.id) }
+        val existingEpisodes = catalog.episodesFor(podcast.id)
+        val existingGuids = existingEpisodes.map { it.feedGuid }.toSet()
+        val newEpisodes = feedInfo.episodes
+            .filterNot { it.guid in existingGuids }
+            .map { it.toEpisode(podcast.id) }
 
-        catalog.save(updatedPodcast, episodes.filterNot { episode -> episode.id in existingEpisodeIds })
+        catalog.save(updatedPodcast, newEpisodes)
 
-        return Result.success(updatedPodcast to episodes)
+        return Result.success(updatedPodcast to (existingEpisodes + newEpisodes))
     }
-
-    private suspend fun Podcast.fetchExistingEpisodes(): Set<EpisodeId> =
-        catalog
-            .episodesFor(id)
-            .map(Episode::id)
-            .toSet()
 }
