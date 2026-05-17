@@ -22,7 +22,7 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
                 <div class="episode-actions">
                     <button
                         class="episode-queue-btn"
-                        hx-post={`/queue/${episode.id}`}
+                        hx-post={`/queue/${encodeURIComponent(episode.id)}`}
                         hx-swap="none"
                         title="Add to queue"
                     >

@@ -47,7 +47,7 @@ const QueueRow: FC<{ episode: Episode; position: number }> = ({episode, position
             </button>
             <button
                 class="queue-remove-btn"
-                hx-delete={`/queue/${episode.id}`}
+                hx-delete={`/queue/${encodeURIComponent(episode.id)}`}
                 hx-target="#queue-list"
                 hx-swap="innerHTML"
                 aria-label="Remove from queue"

@@ -110,7 +110,7 @@ function togglePlayed(btn) {
     var id = btn.dataset.id;
     var played = btn.dataset.played === 'true';
     var method = played ? 'DELETE' : 'POST';
-    fetch('/api/episodes/' + id + '/played', {method: method})
+    fetch('/api/episodes/' + encodeURIComponent(id) + '/played', {method: method})
         .then(function(r) {
             if (r.ok) {
                 if (played) unmarkPlayed(id); else markPlayed(id);
@@ -196,7 +196,7 @@ function playNextInQueue() {
         .then(function (episodes) {
             if (!episodes || episodes.length === 0) return;
             var next = episodes[0];
-            fetch('/queue/' + next.id, {method: 'DELETE'});
+            fetch('/queue/' + encodeURIComponent(next.id), {method: 'DELETE'});
             updateQueueBadge(episodes.length - 1);
             playEpisode(next.id, next.audioUrl, next.title);
         })
