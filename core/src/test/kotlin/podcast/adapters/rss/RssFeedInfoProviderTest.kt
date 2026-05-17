@@ -135,6 +135,45 @@ class RssFeedInfoProviderTest : DescribeSpec({
                 episode.audioUrl shouldBe ""
             }
 
+            it("should parse pubDate with numeric positive offset") {
+                val url = "https://example.com/tz-plus.xml"
+                val xml = """
+                    <rss>
+                        <channel><title>Show</title>
+                            <item><title>E</title><pubDate>Thu, 26 Jun 2025 07:00:00 +0200</pubDate></item>
+                        </channel>
+                    </rss>
+                """.trimIndent()
+                providerWithResponse(url, xml).fetch(FeedUrl(url)).episodes[0].publishedAt shouldBe
+                    Instant.parse("2025-06-26T05:00:00Z")
+            }
+
+            it("should parse pubDate with numeric negative offset") {
+                val url = "https://example.com/tz-minus.xml"
+                val xml = """
+                    <rss>
+                        <channel><title>Show</title>
+                            <item><title>E</title><pubDate>Sat, 16 May 2026 18:35:16 -0700</pubDate></item>
+                        </channel>
+                    </rss>
+                """.trimIndent()
+                providerWithResponse(url, xml).fetch(FeedUrl(url)).episodes[0].publishedAt shouldBe
+                    Instant.parse("2026-05-17T01:35:16Z")
+            }
+
+            it("should parse pubDate with GMT timezone") {
+                val url = "https://example.com/tz-gmt.xml"
+                val xml = """
+                    <rss>
+                        <channel><title>Show</title>
+                            <item><title>E</title><pubDate>Tue, 19 Nov 2024 06:00:48 GMT</pubDate></item>
+                        </channel>
+                    </rss>
+                """.trimIndent()
+                providerWithResponse(url, xml).fetch(FeedUrl(url)).episodes[0].publishedAt shouldBe
+                    Instant.parse("2024-11-19T06:00:48Z")
+            }
+
             it("should set publishedAt to now when pubDate is missing or malformed") {
                 val url = "https://example.com/bad-dates.xml"
                 val xml = """

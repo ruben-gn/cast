@@ -23,7 +23,7 @@ import java.util.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-private val pubDateFormatter = DateTimeFormatter.ofPattern("dd MMM uuuu HH:mm:ss Z", Locale.ENGLISH)
+private val pubDateFallbackFormatter = DateTimeFormatter.ofPattern("dd MMM uuuu HH:mm:ss Z", Locale.ENGLISH)
     .withResolverStyle(ResolverStyle.LENIENT)
 private val weekdayPrefix = Regex("^[A-Za-z]{3},\\s*")
 
@@ -54,8 +54,9 @@ private fun toFeedInfo(clock: Clock, channel: RssChannel, url: FeedUrl) =
                 description = item.description,
                 audioUrl = audioUrl,
                 duration = parseDuration(item.duration),
-                publishedAt = item.pubDate.takeIf { it.isNotBlank() }?.trim()?.let {
-                    runCatching { ZonedDateTime.parse(weekdayPrefix.replace(it, ""), pubDateFormatter).toInstant() }.getOrNull()
+                publishedAt = item.pubDate.takeIf { it.isNotBlank() }?.trim()?.let { raw ->
+                    runCatching { ZonedDateTime.parse(raw, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant() }.getOrNull()
+                        ?: runCatching { ZonedDateTime.parse(weekdayPrefix.replace(raw, ""), pubDateFallbackFormatter).toInstant() }.getOrNull()
                 } ?: clock.instant()
             )
         }

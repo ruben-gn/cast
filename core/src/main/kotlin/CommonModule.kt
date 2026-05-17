@@ -15,7 +15,10 @@ import java.util.UUID
 
 fun Application.installHttpClient(httpClient: HttpClient? = null) {
     val client = httpClient
-        ?: HttpClient { install(UserAgent) { agent = "Cast/1.0" } }
+        ?: HttpClient {
+            install(UserAgent) { agent = "Cast/1.0" }
+            install(HttpRedirect)
+        }
             .also { client -> monitor.subscribe(ApplicationStopped) { client.close() } }
 
     dependencies {
