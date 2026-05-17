@@ -29,7 +29,7 @@ const QueueRow: FC<{ episode: Episode; position: number }> = ({episode, position
         <div class="queue-row-info">
             <span class="queue-row-title">{episode.title}</span>
             <div class="queue-row-extras">
-                {episode.duration && <span class="episode-duration">{episode.duration}</span>}
+                {episode.duration && <span class="episode-meta">{episode.duration}</span>}
             </div>
         </div>
         <div class="queue-row-actions">

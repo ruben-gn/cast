@@ -69,6 +69,10 @@ function markPlayed(id) {
     var btn = episodeBtn(id);
     if (!btn) return;
     var item = btn.closest('.episode-item');
+    if (item.closest('.recent-page')) {
+        item.remove();
+        return;
+    }
     item.classList.add('is-played');
     var toggleBtn = item.querySelector('.episode-played-btn');
     if (toggleBtn) {
