@@ -47,7 +47,7 @@ class PodcastCoreTests : DescribeSpec({
             listEpisodes = ListEpisodes(catalog)
         }
 
-        it("should register a new podcast and make it available for listing and retrieval") {
+        it("registers a new podcast and makes it available for listing and retrieval") {
             val url = FeedUrl("https://example.com/rss")
 
             val created = addFeed(url)
@@ -62,7 +62,7 @@ class PodcastCoreTests : DescribeSpec({
             retrieved shouldBe created
         }
 
-        it("should not create duplicate entries for the same feed URL") {
+        it("does not create duplicate entries for the same feed URL") {
             val url = FeedUrl("https://duplicate.com/rss")
 
             val first = addFeed(url)
@@ -72,11 +72,11 @@ class PodcastCoreTests : DescribeSpec({
             listPodcasts() shouldHaveSize 1
         }
 
-        it("should return null when retrieving a non-existent podcast") {
+        it("returns null when retrieving a non-existent podcast") {
             getPodcast(PodcastId("non-existent-id")) shouldBe null
         }
 
-        it("should find an episode by id") {
+        it("finds an episode by id") {
             val episodeInfo = EpisodeInfo("ep-42", "The Answer", "Desc", "https://cdn/ep42.mp3", null, fixedInstant)
             stubFeedProvider = FeedInfoProvider { url -> FeedInfo("Show", url.value, "Desc", "img.png", listOf(episodeInfo)) }
             addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
@@ -88,11 +88,11 @@ class PodcastCoreTests : DescribeSpec({
             found?.title shouldBe "The Answer"
         }
 
-        it("should return null when finding an episode that does not exist") {
+        it("returns null when finding an episode that does not exist") {
             findEpisode(EpisodeId("non-existent-episode")) shouldBe null
         }
 
-        it("should map all episodes from the feed") {
+        it("maps all episodes from the feed") {
             val episodeInfos = listOf(
                 EpisodeInfo("episode-1-id", "Ep 1", "Desc 1", "https://cdn/ep1.mp3", 1.hours, Instant.parse("2026-01-01T00:00:00Z")),
                 EpisodeInfo("episode-2-id", "Ep 2", "Desc 2", "https://cdn/ep2.mp3", 30.minutes, Instant.parse("2026-01-02T00:00:00Z"))
@@ -119,7 +119,7 @@ class PodcastCoreTests : DescribeSpec({
             episodes.map { it.id }.toSet() shouldHaveSize 2
         }
 
-        it("should update podcast info and add new episodes when updating feed") {
+        it("updates podcast info and adds new episodes when updating the feed") {
             val url = FeedUrl("https://example.com/rss")
             val episode1 = EpisodeInfo("ep1", "Ep 1", "Desc 1", "url1", 30.minutes, fixedInstant.minusSeconds(3600))
 
@@ -146,7 +146,7 @@ class PodcastCoreTests : DescribeSpec({
             allEpisodes shouldContainExactlyInAnyOrder episodes
         }
 
-        it("should update all registered podcasts") {
+        it("updates all registered podcasts") {
             val url1 = FeedUrl("https://show1.com/rss")
             val url2 = FeedUrl("https://show2.com/rss")
 
@@ -167,7 +167,7 @@ class PodcastCoreTests : DescribeSpec({
             }
         }
 
-        it("should continue updating other podcasts when one feed update fails") {
+        it("continues updating other podcasts when one feed update fails") {
             val failingUrl = FeedUrl("https://failing-show.com/rss")
             val successfulUrl = FeedUrl("https://successful-show.com/rss")
 

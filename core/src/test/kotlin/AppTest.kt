@@ -136,9 +136,44 @@ class AppTest : DescribeSpec({
                     .none { it.id == episodeId } shouldBe true
             }
         }
+
+        it("excludes episodes published more than two weeks ago") {
+            val recentFeedUrl = "https://example.com/cutoff-feed.xml"
+            val cutoffRss = """
+                <rss><channel>
+                    <title>Cutoff Show</title>
+                    <image><url>https://example.com/img.png</url></image>
+                    <item><title>Recent Episode</title><guid>cutoff-recent</guid><pubDate>05 Apr 2026 12:00:00 +0000</pubDate><enclosure url="https://cdn/recent.mp3" length="0" type="audio/mpeg"/></item>
+                    <item><title>Old Episode</title><guid>cutoff-old</guid><pubDate>01 Mar 2026 12:00:00 +0000</pubDate><enclosure url="https://cdn/old.mp3" length="0" type="audio/mpeg"/></item>
+                </channel></rss>
+            """.trimIndent()
+            testApp(rssFeeds = mapOf(recentFeedUrl to cutoffRss)) { json, _ ->
+                json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(recentFeedUrl))
+                }
+
+                val titles = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>().map { it.title }
+                titles shouldBe listOf("Recent Episode")
+            }
+        }
     }
 
     describe("an episode's played state") {
+        it("can be set for all episodes in a podcast at once") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.post("/api/podcasts/${podcast.id}/played")
+
+                json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
+                    .episodes.all { it.played } shouldBe true
+            }
+        }
+
         it("can be marked as played") {
             testApp { json, _ ->
                 val podcast = json.post("/api/podcasts") {
@@ -169,20 +204,6 @@ class AppTest : DescribeSpec({
                     .episodes.first { it.id == episodeId }.played shouldBe false
             }
         }
-
-        it("can be set for all episodes in a podcast at once") {
-            testApp { json, _ ->
-                val podcast = json.post("/api/podcasts") {
-                    contentType(ContentType.Application.Json)
-                    setBody(AddPodcastRequest(feedUrl))
-                }.body<PodcastDetailDto>()
-
-                json.post("/api/podcasts/${podcast.id}/played")
-
-                json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
-                    .episodes.all { it.played } shouldBe true
-            }
-        }
     }
 
     describe("playback") {
@@ -190,6 +211,8 @@ class AppTest : DescribeSpec({
             testApp { _, ws ->
                 ws.webSocket("/api/playback") {
                     send("""{"type":"update","episodeId":"ep-1","progressMs":45000}""")
+                    send("""{"type":"get","episodeId":"ep-1"}""")
+                    receiveState()["progressMs"]!!.jsonPrimitive.long shouldBe 45000L
                 }
                 ws.webSocket("/api/playback") {
                     send("""{"type":"get","episodeId":"ep-1"}""")

@@ -38,7 +38,7 @@ class PlaybackCoreTests : DescribeSpec({
             startPlayback = StartPlayback(clock, persistence)
         }
 
-        it("should update and retrieve the playback state for an episode") {
+        it("updates and retrieves the playback state for an episode") {
             val episodeId = EpisodeId("ep-123")
             val progressMs = 5000L
 
@@ -51,7 +51,7 @@ class PlaybackCoreTests : DescribeSpec({
             retrieved.played shouldBe false
         }
 
-        it("should return no progress when retrieving state for an episode with no progress") {
+        it("returns no progress for an episode with no prior state") {
             val retrieved = getPlaybackState(EpisodeId("non-existent"))
             retrieved.episodeId shouldBe EpisodeId("non-existent")
             retrieved.progressMs shouldBe 0
@@ -59,7 +59,7 @@ class PlaybackCoreTests : DescribeSpec({
             retrieved.played shouldBe false
         }
 
-        it("should overwrite existing state and update the timestamp when ticking") {
+        it("overwrites existing state and updates the timestamp on subsequent progress") {
             val episodeId = EpisodeId("ep-123")
 
             updateProgress(episodeId, 1000L)
@@ -73,7 +73,7 @@ class PlaybackCoreTests : DescribeSpec({
             finalState.updatedAt shouldBe Instant.parse("2026-04-24T13:00:00Z")
         }
 
-        it("should mark an episode as played") {
+        it("marks an episode as played") {
             val episodeId = EpisodeId("ep-123")
 
             updateProgress(episodeId, 5000L)
@@ -84,7 +84,7 @@ class PlaybackCoreTests : DescribeSpec({
             state.progressMs shouldBe 5000L
         }
 
-        it("should mark a played episode as unplayed") {
+        it("marks a played episode as unplayed") {
             val episodeId = EpisodeId("ep-123")
             updateProgress(episodeId, 5000L)
             markPlayed(episodeId)
@@ -94,7 +94,7 @@ class PlaybackCoreTests : DescribeSpec({
             getPlaybackState(episodeId).played shouldBe false
         }
 
-        it("should mark an episode as unplayed even with no prior progress") {
+        it("marks an episode as unplayed even with no prior progress") {
             val episodeId = EpisodeId("ep-456")
             markUnplayed(episodeId)
 
@@ -103,7 +103,7 @@ class PlaybackCoreTests : DescribeSpec({
             state.progressMs shouldBe 0
         }
 
-        it("should mark an episode as played even with no prior progress") {
+        it("marks an episode as played even with no prior progress") {
             val episodeId = EpisodeId("ep-456")
             markPlayed(episodeId)
 
@@ -112,7 +112,7 @@ class PlaybackCoreTests : DescribeSpec({
             state.progressMs shouldBe 0
         }
 
-        it("should mark all episodes as played") {
+        it("marks all episodes as played") {
             val ids = listOf(EpisodeId("ep-1"), EpisodeId("ep-2"), EpisodeId("ep-3"))
             ids.forEach { updateProgress(it, 1000L) }
 
@@ -144,7 +144,7 @@ class PlaybackCoreTests : DescribeSpec({
             state.progressMs shouldBe 0L
         }
 
-        it("should not reset played when progress update arrives after markPlayed") {
+        it("does not reset played when progress update arrives after markPlayed") {
             val episodeId = EpisodeId("ep-123")
             updateProgress(episodeId, 5000L)
             markPlayed(episodeId)
