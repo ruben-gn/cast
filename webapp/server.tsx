@@ -5,6 +5,7 @@ import {PodcastList} from './components/PodcastList'
 import {PodcastDetail} from './components/PodcastDetail'
 import {QueuePage, QueueList} from './components/QueuePage'
 import {RecentPage} from './components/RecentPage'
+import {EpisodeDetail} from './components/EpisodeDetail'
 import type {Podcast, PodcastDetail as PodcastDetailType, Episode} from './types'
 
 const KOTLIN_API = process.env.KOTLIN_API ?? 'http://localhost:8100'
@@ -164,6 +165,27 @@ app.delete('/api/episodes/:id/played', async (c) => {
     const id = c.req.param('id')
     const res = await fetch(`${KOTLIN_API}/api/episodes/${id}/played`, {method: 'DELETE'})
     return new Response(null, {status: res.status})
+})
+
+app.get('/episodes/:id', async (c) => {
+    const id = c.req.param('id')
+    const res = await fetch(`${KOTLIN_API}/api/episodes/${id}`)
+    if (!res.ok) return c.notFound()
+
+    const episode: Episode = await res.json()
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    const content = <EpisodeDetail episode={episode}/>
+
+    if (isHtmx) {
+        return c.html(
+            <div id="content-container">
+                <div class="page-content">{content}</div>
+            </div>
+        )
+    }
+    return c.html(
+        <Layout title={`${episode.title} — Cast`}>{content}</Layout>
+    )
 })
 
 app.get('/podcasts/:id', async (c) => {
