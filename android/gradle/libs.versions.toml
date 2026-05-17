@@ -1,20 +1,20 @@
 [versions]
-agp = "8.8.0"
-kotlin = "2.1.10"
-ksp = "2.1.10-1.0.31"
-composeBom = "2025.04.00"
-media3 = "1.5.1"
-hilt = "2.54"
-hiltNavigationCompose = "1.2.0"
+agp = "9.2.0"
+kotlin = "2.3.21"
+ksp = "2.3.8"
+composeBom = "2026.05.00"
+media3 = "1.10.1"
+hilt = "2.59.2"
+hiltAndroidx = "1.3.0"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
-coil = "3.2.0"
-navigation = "2.8.9"
+coil = "3.4.0"
+navigation = "2.9.8"
 datastore = "1.1.4"
-workmanager = "2.10.1"
-coroutines = "1.9.0"
+workmanager = "2.11.2"
+coroutines = "1.10.1"
 serialization = "1.8.0"
-lifecycle = "2.8.7"
+lifecycle = "2.10.0"
 reorderable = "2.4.3"
 coreKtx = "1.16.0"
 activityCompose = "1.10.1"
@@ -48,7 +48,7 @@ media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "medi
 # Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltAndroidx" }
 
 # Retrofit + OkHttp
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
@@ -66,7 +66,7 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # WorkManager
-workmanager = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workmanager" }
+workmanager = { group = "androidx.work", name = "work-runtime", version.ref = "workmanager" }
 
 # Coil
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
