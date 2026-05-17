@@ -87,8 +87,9 @@ dependencies {
     // DataStore
     implementation(libs.datastore.preferences)
 
-    // WorkManager
+    // WorkManager + Hilt integration
     implementation(libs.workmanager)
+    implementation(libs.hilt.work)
 
     // Coil
     implementation(libs.coil.compose)
