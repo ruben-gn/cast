@@ -23,6 +23,9 @@ data class EpisodeDetailDto(
     val publishedAt: String?,
     val played: Boolean,
     val progressMs: Long,
+    val podcastId: String? = null,
+    val podcastName: String? = null,
+    val podcastImage: String? = null,
 )
 
 @Serializable

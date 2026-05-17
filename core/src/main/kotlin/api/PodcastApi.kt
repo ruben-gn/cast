@@ -88,18 +88,25 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlaybac
         episodes = episodes.map(::episodeDetailDto)
     )
 
-internal fun episodeDetailDto(ep: EpisodeWithPlayback) =
-    EpisodeDetailDto(
-        id = ep.episode.id.value,
-        title = ep.episode.title,
-        description = ep.episode.description,
-        audioUrl = ep.episode.audioUrl,
-        duration = ep.episode.duration?.formatted(),
-        durationMs = ep.episode.duration?.inWholeMilliseconds,
-        publishedAt = ep.episode.publishedAt?.toString(),
-        played = ep.played,
-        progressMs = ep.progressMs,
-    )
+internal fun episodeDetailDto(
+    ep: EpisodeWithPlayback,
+    podcastId: String? = null,
+    podcastName: String? = null,
+    podcastImage: String? = null,
+) = EpisodeDetailDto(
+    id = ep.episode.id.value,
+    title = ep.episode.title,
+    description = ep.episode.description,
+    audioUrl = ep.episode.audioUrl,
+    duration = ep.episode.duration?.formatted(),
+    durationMs = ep.episode.duration?.inWholeMilliseconds,
+    publishedAt = ep.episode.publishedAt?.toString(),
+    played = ep.played,
+    progressMs = ep.progressMs,
+    podcastId = podcastId,
+    podcastName = podcastName,
+    podcastImage = podcastImage,
+)
 
 internal fun Duration.formatted(): String =
     toComponents { _, hours, minutes, seconds, _ ->

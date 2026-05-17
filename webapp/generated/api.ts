@@ -13,6 +13,9 @@ export interface EpisodeDetailDto {
   publishedAt: string | null
   played: boolean
   progressMs: number
+  podcastId: string | null
+  podcastName: string | null
+  podcastImage: string | null
 }
 export interface PlaybackStateResponse {
   type: string
@@ -36,4 +39,7 @@ export interface PodcastSummaryDto {
   image: string
   created: string
   updated: string
+}
+export interface SettingsDto {
+  hidePlayed: boolean
 }
