@@ -68,7 +68,7 @@ Suggested order: **V1 → V2 → V3 → V4 → V5**. V1 first because reorder is
 
 ---
 
-## V4 — Settings UI on webapp
+## V4 — Settings UI on webapp ✓
 
 **Goal:** Webapp exposes the `hidePlayed` toggle.
 
@@ -86,7 +86,7 @@ Suggested order: **V1 → V2 → V3 → V4 → V5**. V1 first because reorder is
 
 ---
 
-## V5 — Player polish
+## V5 — Player polish ✓
 
 **Goal:** In-app controls + stability cleanup.
 
