@@ -1,5 +1,6 @@
 package cast.android.ui.components
 
+import android.widget.TextView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,11 +27,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cast.android.ui.viewmodel.LocalPlayerViewModel
+import cast.android.util.relativeTime
 import cast.api.EpisodeDetailDto
 import coil3.compose.AsyncImage
 
@@ -49,8 +55,11 @@ fun EpisodeItem(
 
     val isCurrent = currentMediaItem?.mediaId == episode.id
     val progress = if (isCurrent && duration > 0) position.toFloat() / duration.toFloat() else 0f
+    val staticProgress = if (!isCurrent && episode.progressMs > 0 && (episode.durationMs ?: 0L) > 0L)
+        episode.progressMs.toFloat() / episode.durationMs!!.toFloat() else null
 
     var played by remember(episode.id, episode.played) { mutableStateOf(episode.played) }
+    var expanded by remember(episode.id) { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -77,7 +86,7 @@ fun EpisodeItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val sub = listOfNotNull(episode.podcastName, episode.duration)
+                val sub = listOfNotNull(episode.podcastName, relativeTime(episode.publishedAt), episode.duration)
                     .joinToString(" · ")
                 if (sub.isNotEmpty()) {
                     Text(
@@ -119,11 +128,36 @@ fun EpisodeItem(
                 )
             }
         }
-        if (isCurrent) {
-            LinearProgressIndicator(
+        when {
+            isCurrent -> LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth(),
             )
+            staticProgress != null -> LinearProgressIndicator(
+                progress = { staticProgress },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (episode.description.isNotBlank()) {
+            val textColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
+            TextButton(
+                onClick = { expanded = !expanded },
+                modifier = Modifier.padding(horizontal = 8.dp),
+            ) {
+                Text(if (expanded) "Show less" else "Show more")
+            }
+            if (expanded) {
+                AndroidView(
+                    factory = { ctx -> TextView(ctx) },
+                    update = { tv ->
+                        tv.setTextColor(textColor)
+                        tv.text = HtmlCompat.fromHtml(episode.description, HtmlCompat.FROM_HTML_MODE_COMPACT)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
         }
     }
 }
