@@ -91,23 +91,18 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun playEpisode(episode: EpisodeDetailDto) {
-        val mediaItem = MediaItem.Builder()
-            .setMediaId(episode.id)
-            .setUri(episode.audioUrl)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(episode.title)
-                    .setArtist(episode.podcastName)
-                    .setArtworkUri(episode.podcastImage?.toUri())
-                    .build()
-            )
-            .build()
         val ctrl = controller
         if (ctrl != null) {
+            if (ctrl.currentMediaItem?.mediaId == episode.id) {
+                if (ctrl.isPlaying) ctrl.pause() else ctrl.play()
+                return
+            }
+            val mediaItem = buildMediaItem(episode)
             ctrl.setMediaItem(mediaItem)
             ctrl.prepare()
             ctrl.play()
         } else {
+            val mediaItem = buildMediaItem(episode)
             viewModelScope.launch {
                 delay(1_500)
                 controller?.let {
@@ -118,6 +113,18 @@ class PlayerViewModel @Inject constructor(
             }
         }
     }
+
+    private fun buildMediaItem(episode: EpisodeDetailDto) = MediaItem.Builder()
+        .setMediaId(episode.id)
+        .setUri(episode.audioUrl)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(episode.title)
+                .setArtist(episode.podcastName)
+                .setArtworkUri(episode.podcastImage?.toUri())
+                .build()
+        )
+        .build()
 
     fun playPause() {
         val ctrl = controller ?: return

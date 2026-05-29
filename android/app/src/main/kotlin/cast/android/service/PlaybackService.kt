@@ -2,13 +2,16 @@ package cast.android.service
 
 import android.app.PendingIntent
 import android.content.Intent
+import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import cast.android.domain.repository.QueueRepository
 import cast.android.network.PlaybackWebSocketClient
 import cast.android.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,6 +29,7 @@ import javax.inject.Inject
 class PlaybackService : MediaSessionService() {
 
     @Inject lateinit var playbackWebSocketClient: PlaybackWebSocketClient
+    @Inject lateinit var queueRepository: QueueRepository
 
     private var mediaSession: MediaSession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -58,6 +62,16 @@ class PlaybackService : MediaSessionService() {
             .build()
 
         playbackWebSocketClient.connect()
+
+        serviceScope.launch {
+            playbackWebSocketClient.states.collect { state ->
+                if (state.episodeId != currentEpisodeId || episodeStarted) return@collect
+                val seekMs = if (state.played) 0L else state.progressMs
+                mediaSession?.player?.seekTo(seekMs)
+                sendWs("""{"type":"start","episodeId":"${state.episodeId}","startPositionMs":$seekMs}""")
+                episodeStarted = true
+            }
+        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
@@ -79,26 +93,44 @@ class PlaybackService : MediaSessionService() {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             currentEpisodeId = mediaItem?.mediaId
             episodeStarted = false
+            val episodeId = currentEpisodeId ?: return
+            sendWs("""{"type":"get","episodeId":"$episodeId"}""")
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             val episodeId = currentEpisodeId ?: return
-            if (isPlaying) {
-                if (!episodeStarted) {
-                    val startMs = mediaSession?.player?.currentPosition ?: 0
-                    sendWs("""{"type":"start","episodeId":"$episodeId","startPositionMs":$startMs}""")
-                    episodeStarted = true
-                }
-                startProgressSync(episodeId)
-            } else {
-                stopProgressSync()
-            }
+            if (isPlaying) startProgressSync(episodeId) else stopProgressSync()
         }
 
         override fun onPlaybackStateChanged(state: Int) {
             if (state == Player.STATE_ENDED) {
                 currentEpisodeId?.let { sendWs("""{"type":"ended","episodeId":"$it"}""") }
                 stopProgressSync()
+                playNextInQueue()
+            }
+        }
+    }
+
+    private fun playNextInQueue() {
+        serviceScope.launch {
+            val queue = try { queueRepository.getQueue() } catch (_: Exception) { return@launch }
+            val next = queue.firstOrNull() ?: return@launch
+            try { queueRepository.removeFromQueue(next.id) } catch (_: Exception) {}
+            val mediaItem = MediaItem.Builder()
+                .setMediaId(next.id)
+                .setUri(next.audioUrl)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(next.title)
+                        .setArtist(next.podcastName)
+                        .setArtworkUri(next.podcastImage?.toUri())
+                        .build()
+                )
+                .build()
+            mediaSession?.player?.let { player ->
+                player.setMediaItem(mediaItem)
+                player.prepare()
+                player.play()
             }
         }
     }
