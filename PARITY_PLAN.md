@@ -55,7 +55,7 @@ Suggested order: **V1 → V2 → V3 → V4 → V5**. V1 first because reorder is
 
 ---
 
-## V3 — OPML import
+## V3 — OPML import ✓
 
 **Goal:** Both clients can import an OPML file. (Backend endpoint already exists.)
 
