@@ -10,6 +10,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import cast.android.service.PlaybackService
 import cast.api.EpisodeDetailDto
@@ -103,14 +104,13 @@ class PlayerViewModel @Inject constructor(
             ctrl.play()
         } else {
             val mediaItem = buildMediaItem(episode)
-            viewModelScope.launch {
-                delay(1_500)
+            controllerFuture?.addListener({
                 controller?.let {
                     it.setMediaItem(mediaItem)
                     it.prepare()
                     it.play()
                 }
-            }
+            }, ContextCompat.getMainExecutor(context))
         }
     }
 

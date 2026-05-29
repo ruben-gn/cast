@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -87,11 +89,17 @@ fun PlayerBar() {
                     }
                 }
                 if (currentMediaItem != null) {
+                    IconButton(onClick = { vm.seekBack() }) {
+                        Icon(Icons.Default.FastRewind, contentDescription = "Seek back")
+                    }
                     IconButton(onClick = { vm.playPause() }) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (isPlaying) "Pause" else "Play",
                         )
+                    }
+                    IconButton(onClick = { vm.seekForward() }) {
+                        Icon(Icons.Default.FastForward, contentDescription = "Seek forward")
                     }
                 }
             }
