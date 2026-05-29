@@ -6,7 +6,7 @@ Suggested order: **V1 → V2 → V3 → V4 → V5**. V1 first because reorder is
 
 ---
 
-## V1 — Queue (most broken, ship first)
+## V1 — Queue (most broken, ship first) ✓
 
 **Goal:** Add-to-queue works from any episode row; reorder persists.
 
@@ -36,7 +36,7 @@ Suggested order: **V1 → V2 → V3 → V4 → V5**. V1 first because reorder is
 
 ---
 
-## V2 — Episode row content
+## V2 — Episode row content ✓
 
 **Goal:** Android `EpisodeItem` shows the same info as the webapp row.
 
