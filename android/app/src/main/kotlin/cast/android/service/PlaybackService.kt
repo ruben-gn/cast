@@ -14,6 +14,7 @@ import androidx.media3.session.MediaSessionService
 import cast.android.domain.repository.QueueRepository
 import cast.android.network.PlaybackWebSocketClient
 import cast.android.ui.MainActivity
+import cast.android.widget.NowPlayingWidget
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,8 +77,19 @@ class PlaybackService : MediaSessionService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val player = mediaSession?.player
+        when (intent?.action) {
+            ACTION_PLAY_PAUSE -> player?.let { if (it.isPlaying) it.pause() else it.play() }
+            ACTION_SEEK_BACK -> player?.seekBack()
+            ACTION_SEEK_FORWARD -> player?.seekForward()
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
     override fun onDestroy() {
         stopProgressSync()
+        serviceScope.launch { NowPlayingWidget.update(this@PlaybackService, "", "", false, false) }
         serviceScope.cancel()
         playbackWebSocketClient.disconnect()
         mediaSession?.run {
@@ -88,16 +100,31 @@ class PlaybackService : MediaSessionService() {
         super.onDestroy()
     }
 
+    private fun pushWidgetState(isPlaying: Boolean) {
+        val item = mediaSession?.player?.currentMediaItem
+        serviceScope.launch {
+            NowPlayingWidget.update(
+                context = this@PlaybackService,
+                title = item?.mediaMetadata?.title?.toString() ?: "",
+                podcast = item?.mediaMetadata?.artist?.toString() ?: "",
+                isPlaying = isPlaying,
+                hasEpisode = item != null,
+            )
+        }
+    }
+
     private inner class PlayerListener : Player.Listener {
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             currentEpisodeId = mediaItem?.mediaId
             episodeStarted = false
+            pushWidgetState(mediaSession?.player?.isPlaying ?: false)
             val episodeId = currentEpisodeId ?: return
             sendWs("""{"type":"get","episodeId":"$episodeId"}""")
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
+            pushWidgetState(isPlaying)
             val episodeId = currentEpisodeId ?: return
             if (isPlaying) startProgressSync(episodeId) else stopProgressSync()
         }
@@ -152,4 +179,10 @@ class PlaybackService : MediaSessionService() {
     }
 
     private fun sendWs(message: String) = playbackWebSocketClient.send(message)
+
+    companion object {
+        const val ACTION_PLAY_PAUSE = "cast.android.widget.PLAY_PAUSE"
+        const val ACTION_SEEK_BACK = "cast.android.widget.SEEK_BACK"
+        const val ACTION_SEEK_FORWARD = "cast.android.widget.SEEK_FORWARD"
+    }
 }

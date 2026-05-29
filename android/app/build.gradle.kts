@@ -98,6 +98,9 @@ dependencies {
     // Reorderable
     implementation(libs.reorderable)
 
+    // Glance (homescreen widget)
+    implementation(libs.glance.appwidget)
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
