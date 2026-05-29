@@ -6,12 +6,15 @@ import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
 import cast.api.ReorderQueueRequest
 import cast.api.SettingsDto
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface CastApiService {
@@ -48,6 +51,10 @@ interface CastApiService {
 
     @PUT("api/queue")
     suspend fun reorderQueue(@Body request: ReorderQueueRequest): List<EpisodeDetailDto>
+
+    @Multipart
+    @POST("api/podcasts/import")
+    suspend fun importOpml(@Part file: MultipartBody.Part): Response<Unit>
 
     @GET("api/settings")
     suspend fun getSettings(): SettingsDto

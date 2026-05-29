@@ -79,6 +79,7 @@ fun CatalogScreen(navController: NavHostController) {
         AddPodcastSheet(
             onDismiss = { vm.dismissAddSheet() },
             onSubmit = { vm.addPodcast(it) },
+            onImportOpml = { vm.importOpml(it) },
             isLoading = vm.isAdding,
             error = vm.addError,
         )

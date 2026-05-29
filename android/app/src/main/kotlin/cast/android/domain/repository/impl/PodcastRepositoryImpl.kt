@@ -5,6 +5,7 @@ import cast.android.network.CastApiService
 import cast.api.AddPodcastRequest
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
+import okhttp3.MultipartBody
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,5 +23,9 @@ class PodcastRepositoryImpl @Inject constructor(
 
     override suspend fun markAllPlayed(podcastId: String) {
         api.markAllPodcastPlayed(podcastId)
+    }
+
+    override suspend fun importOpml(file: MultipartBody.Part) {
+        api.importOpml(file)
     }
 }
