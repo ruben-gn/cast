@@ -4,6 +4,7 @@ import cast.api.AddPodcastRequest
 import cast.api.EpisodeDetailDto
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
+import cast.api.ReorderQueueRequest
 import cast.api.SettingsDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -44,6 +45,9 @@ interface CastApiService {
 
     @DELETE("api/queue/{episodeId}")
     suspend fun removeFromQueue(@Path("episodeId") episodeId: String): List<EpisodeDetailDto>
+
+    @PUT("api/queue")
+    suspend fun reorderQueue(@Body request: ReorderQueueRequest): List<EpisodeDetailDto>
 
     @GET("api/settings")
     suspend fun getSettings(): SettingsDto

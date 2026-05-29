@@ -52,6 +52,8 @@ fun RecentScreen(navController: NavHostController) {
                     EpisodeItem(
                         episode = episode,
                         onPlay = { playerVm.playEpisode(episode) },
+                        onTogglePlayed = { newPlayed -> vm.togglePlayed(episode.id, newPlayed) },
+                        onAddToQueue = { vm.addToQueue(episode.id) },
                     )
                     HorizontalDivider()
                 }

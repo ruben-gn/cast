@@ -8,18 +8,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.api.EpisodeDetailDto
 import coil3.compose.AsyncImage
 
@@ -27,46 +37,93 @@ import coil3.compose.AsyncImage
 fun EpisodeItem(
     episode: EpisodeDetailDto,
     onPlay: () -> Unit,
+    onTogglePlayed: ((Boolean) -> Unit)? = null,
+    onAddToQueue: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        episode.podcastImage?.let { url ->
-            AsyncImage(
-                model = url,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = episode.title,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val sub = listOfNotNull(episode.podcastName, episode.duration)
-                .joinToString(" · ")
-            if (sub.isNotEmpty()) {
+    val playerVm = LocalPlayerViewModel.current
+    val currentMediaItem by playerVm.currentMediaItem.collectAsStateWithLifecycle()
+    val isPlaying by playerVm.isPlaying.collectAsStateWithLifecycle()
+    val position by playerVm.position.collectAsStateWithLifecycle()
+    val duration by playerVm.duration.collectAsStateWithLifecycle()
+
+    val isCurrent = currentMediaItem?.mediaId == episode.id
+    val progress = if (isCurrent && duration > 0) position.toFloat() / duration.toFloat() else 0f
+
+    var played by remember(episode.id, episode.played) { mutableStateOf(episode.played) }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            episode.podcastImage?.let { url ->
+                AsyncImage(
+                    model = url,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = sub,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    text = episode.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
+                )
+                val sub = listOfNotNull(episode.podcastName, episode.duration)
+                    .joinToString(" · ")
+                if (sub.isNotEmpty()) {
+                    Text(
+                        text = sub,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            if (onTogglePlayed != null) {
+                IconButton(onClick = {
+                    val newPlayed = !played
+                    played = newPlayed
+                    onTogglePlayed(newPlayed)
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = if (played) "Mark as unplayed" else "Mark as played",
+                        tint = if (played) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    )
+                }
+            }
+            if (onAddToQueue != null) {
+                IconButton(onClick = onAddToQueue) {
+                    Icon(
+                        imageVector = Icons.Default.PlaylistAdd,
+                        contentDescription = "Add to queue",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            IconButton(onClick = onPlay) {
+                Icon(
+                    imageVector = if (isCurrent && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
                 )
             }
         }
-        IconButton(onClick = onPlay) {
-            Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+        if (isCurrent) {
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

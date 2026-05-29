@@ -3,6 +3,7 @@ package cast.android.domain.repository.impl
 import cast.android.domain.repository.QueueRepository
 import cast.android.network.CastApiService
 import cast.api.EpisodeDetailDto
+import cast.api.ReorderQueueRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,4 +19,7 @@ class QueueRepositoryImpl @Inject constructor(
 
     override suspend fun removeFromQueue(episodeId: String): List<EpisodeDetailDto> =
         api.removeFromQueue(episodeId)
+
+    override suspend fun reorderQueue(episodeIds: List<String>): List<EpisodeDetailDto> =
+        api.reorderQueue(ReorderQueueRequest(episodeIds))
 }

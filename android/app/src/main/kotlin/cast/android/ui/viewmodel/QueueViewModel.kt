@@ -6,6 +6,8 @@ import cast.android.domain.repository.QueueRepository
 import cast.android.ui.UiState
 import cast.api.EpisodeDetailDto
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,8 @@ class QueueViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<UiState<List<EpisodeDetailDto>>>(UiState.Loading)
     val uiState: StateFlow<UiState<List<EpisodeDetailDto>>> = _uiState.asStateFlow()
+
+    private var pendingReorderJob: Job? = null
 
     init { load() }
 
@@ -50,5 +54,16 @@ class QueueViewModel @Inject constructor(
         val mutable = current.toMutableList()
         mutable.add(toIndex, mutable.removeAt(fromIndex))
         _uiState.value = UiState.Success(mutable)
+
+        val newOrder = mutable.map { it.id }
+        pendingReorderJob?.cancel()
+        pendingReorderJob = viewModelScope.launch {
+            delay(300)
+            try {
+                queueRepository.reorderQueue(newOrder)
+            } catch (_: Exception) {
+                load()
+            }
+        }
     }
 }
