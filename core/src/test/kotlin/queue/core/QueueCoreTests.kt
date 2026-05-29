@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import queue.core.model.Queue
 import queue.core.ports.QueuePersistence
 import queue.core.usecase.*
+
 import queue.fakes.FakeQueuePersistence
 import shared.model.EpisodeId
 
@@ -17,6 +18,7 @@ class QueueCoreTests : DescribeSpec({
         lateinit var addEpisodeLast: AddEpisodeLast
         lateinit var addEpisodeAt: AddEpisodeAt
         lateinit var dequeueEpisode: DequeueEpisode
+        lateinit var reorderQueue: ReorderQueue
 
         beforeEach {
             queuePersistence = FakeQueuePersistence()
@@ -25,6 +27,7 @@ class QueueCoreTests : DescribeSpec({
             addEpisodeLast = AddEpisodeLast(queuePersistence)
             addEpisodeAt = AddEpisodeAt(queuePersistence)
             dequeueEpisode = DequeueEpisode(queuePersistence)
+            reorderQueue = ReorderQueue(queuePersistence)
         }
 
         describe("AddFirst") {
@@ -87,6 +90,37 @@ class QueueCoreTests : DescribeSpec({
                 addEpisodeAt(EpisodeId("ep-3"), 1)
 
                 getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-1"), EpisodeId("ep-3"), EpisodeId("ep-2")))
+            }
+        }
+
+        describe("Reorder") {
+            it("reorders episodes by new position") {
+                addEpisodeLast(EpisodeId("ep-1"))
+                addEpisodeLast(EpisodeId("ep-2"))
+                addEpisodeLast(EpisodeId("ep-3"))
+
+                reorderQueue(listOf(EpisodeId("ep-3"), EpisodeId("ep-1"), EpisodeId("ep-2")))
+
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-3"), EpisodeId("ep-1"), EpisodeId("ep-2")))
+            }
+
+            it("ignores IDs not in the current queue") {
+                addEpisodeLast(EpisodeId("ep-1"))
+                addEpisodeLast(EpisodeId("ep-2"))
+
+                reorderQueue(listOf(EpisodeId("ep-2"), EpisodeId("ep-ghost"), EpisodeId("ep-1")))
+
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-2"), EpisodeId("ep-1")))
+            }
+
+            it("appends queue members omitted from the new order") {
+                addEpisodeLast(EpisodeId("ep-1"))
+                addEpisodeLast(EpisodeId("ep-2"))
+                addEpisodeLast(EpisodeId("ep-3"))
+
+                reorderQueue(listOf(EpisodeId("ep-3"), EpisodeId("ep-1")))
+
+                getQueue() shouldBe Queue(episodeIds = listOf(EpisodeId("ep-3"), EpisodeId("ep-1"), EpisodeId("ep-2")))
             }
         }
 

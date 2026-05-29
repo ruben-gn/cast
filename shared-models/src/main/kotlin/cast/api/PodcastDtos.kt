@@ -41,3 +41,6 @@ data class PodcastDetailDto(
 
 @Serializable
 data class AddPodcastRequest(val feed: String)
+
+@Serializable
+data class ReorderQueueRequest(val episodeIds: List<String>)

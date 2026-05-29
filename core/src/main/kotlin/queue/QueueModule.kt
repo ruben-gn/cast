@@ -9,6 +9,7 @@ import queue.core.usecase.AddEpisodeAt
 import queue.core.usecase.AddEpisodeFirst
 import queue.core.usecase.AddEpisodeLast
 import queue.core.usecase.GetQueue
+import queue.core.usecase.ReorderQueue
 
 fun Application.installQueueModule(
     queuePersistence: QueuePersistence? = null
@@ -21,5 +22,6 @@ fun Application.installQueueModule(
         provide<AddEpisodeFirst> { AddEpisodeFirst(resolve()) }
         provide<AddEpisodeAt> { AddEpisodeAt(resolve()) }
         provide<DequeueEpisode> { DequeueEpisode(resolve()) }
+        provide<ReorderQueue> { ReorderQueue(resolve()) }
     }
 }

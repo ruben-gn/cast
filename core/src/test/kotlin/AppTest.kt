@@ -281,6 +281,28 @@ class AppTest : DescribeSpec({
                     .map { it.id } shouldBe listOf(ep2)
             }
         }
+
+        it("allows reordering episodes") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val ep1 = podcast.episodes[0].id
+                val ep2 = podcast.episodes[1].id
+
+                json.post("/api/queue/${ep1.encodeURLPathPart()}")
+                json.post("/api/queue/${ep2.encodeURLPathPart()}")
+
+                json.put("/api/queue") {
+                    contentType(ContentType.Application.Json)
+                    setBody(ReorderQueueRequest(listOf(ep2, ep1)))
+                }
+
+                json.get("/api/queue").body<List<EpisodeDetailDto>>()
+                    .map { it.id } shouldBe listOf(ep2, ep1)
+            }
+        }
     }
 
     describe("the hide-played setting") {
