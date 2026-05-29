@@ -5,6 +5,7 @@ import {PodcastList} from './components/PodcastList'
 import {PodcastDetail} from './components/PodcastDetail'
 import {QueuePage, QueueList} from './components/QueuePage'
 import {RecentPage} from './components/RecentPage'
+import {SettingsPage} from './components/SettingsPage'
 import type {Podcast, PodcastDetail as PodcastDetailType, Episode} from './types'
 
 const KOTLIN_API = process.env.KOTLIN_API ?? 'http://localhost:8100'
@@ -164,6 +165,36 @@ app.delete('/api/episodes/:id/played', async (c) => {
     const id = encodeURIComponent(c.req.param('id'))
     const res = await fetch(`${KOTLIN_API}/api/episodes/${id}/played`, {method: 'DELETE'})
     return new Response(null, {status: res.status})
+})
+
+app.get('/settings', async (c) => {
+    const res = await fetch(`${KOTLIN_API}/api/settings`)
+    if (!res.ok) return new Response('', {status: res.status})
+    const settings = await res.json() as {hidePlayed: boolean}
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    const content = <SettingsPage hidePlayed={settings.hidePlayed}/>
+
+    if (isHtmx) {
+        return c.html(
+            <div id="content-container">
+                <div class="page-content">{content}</div>
+            </div>
+        )
+    }
+    return c.html(
+        <Layout title="Settings — Cast">{content}</Layout>
+    )
+})
+
+app.post('/settings', async (c) => {
+    const body = await c.req.parseBody()
+    const hidePlayed = body['hidePlayed'] === 'on'
+    await fetch(`${KOTLIN_API}/api/settings`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({hidePlayed}),
+    })
+    return new Response(null, {status: 204})
 })
 
 app.get('/podcasts/:id', async (c) => {

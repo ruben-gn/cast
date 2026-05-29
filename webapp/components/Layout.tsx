@@ -44,6 +44,15 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
               hx-push-url="true"
               hx-indicator="#nav-spinner"
             >Queue<span id="queue-badge" class="queue-badge"></span></div>
+            <div
+              class="nav-link"
+              data-path="/settings"
+              hx-get="/settings"
+              hx-target="#content-container"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+              hx-indicator="#nav-spinner"
+            >Settings</div>
           </nav>
         </div>
         <button class="header-add-btn" onclick="document.getElementById('add-feed-modal').showModal()">
