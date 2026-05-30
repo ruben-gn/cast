@@ -3,7 +3,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-# Override via env, e.g. PI_USER=me PI_HOST=host.example ./deploy-mac.sh
+# Local, gitignored overrides (PI_USER / PI_HOST). See deploy.env.example.
+[ -f deploy.env ] && source deploy.env
+
 PI_USER="${PI_USER:-ruben}"
 PI_HOST="${PI_HOST:-cast.local}"
 PI_PATH='~/projects/Cast'

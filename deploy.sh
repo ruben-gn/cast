@@ -3,7 +3,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-# Override via env, e.g. HOST=host.example ./deploy.sh
+# Local, gitignored overrides (HOST). See deploy.env.example.
+[ -f deploy.env ] && source deploy.env
+
 HOST="${HOST:-localhost}"
 
 echo "==> Building fat jar..."
