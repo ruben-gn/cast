@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 
 PI_USER=ruben
 PI_HOST=cast.local
-PI_PATH='$HOME/projects/Cast'
+PI_PATH='~/projects/Cast'
 
 SCOPE=${1:-all}
 
