@@ -3,6 +3,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+# Override via env, e.g. HOST=host.example ./deploy.sh
+HOST="${HOST:-localhost}"
+
 echo "==> Building fat jar..."
 ./gradlew buildFatJar
 
@@ -13,4 +16,4 @@ echo "==> Deploying..."
 docker compose up -d
 
 echo ""
-echo "Done. Webapp: http://localhost:3000"
+echo "Done. Webapp: http://$HOST:3000"

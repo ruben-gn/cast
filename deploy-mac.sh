@@ -3,8 +3,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-PI_USER=ruben
-PI_HOST=cast.local
+# Override via env, e.g. PI_USER=me PI_HOST=host.example ./deploy-mac.sh
+PI_USER="${PI_USER:-ruben}"
+PI_HOST="${PI_HOST:-cast.local}"
 PI_PATH='~/projects/Cast'
 
 SCOPE=${1:-all}
