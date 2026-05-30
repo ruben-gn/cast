@@ -158,6 +158,11 @@ audio.addEventListener('play', function () {
 audio.addEventListener('pause', function () {
     var btn = episodeBtn(currentEpisodeId);
     if (btn) btn.innerHTML = ICON_PLAY;
+    var cur = this.currentTime;
+    if (currentEpisodeId && ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: 'update', episodeId: currentEpisodeId, progressMs: Math.floor(cur * 1000)}));
+        lastReportedTime = cur;
+    }
 });
 
 audio.addEventListener('ended', function () {
