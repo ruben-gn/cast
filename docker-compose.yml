@@ -3,25 +3,39 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
     volumes:
-      - ./data:/app/data
+      - db-data:/app/data
     environment:
       DB_PATH: /app/data/podcasts.db
     networks:
       - internal
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8100/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   webapp:
     build:
       context: ./webapp
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       KOTLIN_API: http://api:8100
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - internal
 
 networks:
   internal:
+
+volumes:
+  db-data:
