@@ -123,22 +123,25 @@ class PlaybackService : MediaSessionService() {
             sendWs("""{"type":"get","episodeId":"$episodeId"}""")
         }
 
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            pushWidgetState(isPlaying)
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             val episodeId = currentEpisodeId ?: return
-            if (isPlaying) {
+            if (playWhenReady) {
                 if (episodeStarted) {
-                    // Resume after pause: re-sync from server so webapp progress is picked up
+                    // Resume after intentional pause: re-sync from server so webapp progress is picked up
                     episodeStarted = false
                     sendWs("""{"type":"get","episodeId":"$episodeId"}""")
                 }
                 startProgressSync(episodeId)
             } else {
-                // Flush exact position on pause so server is never stale
+                // Flush exact position on intentional pause so server is never stale
                 val progressMs = mediaSession?.player?.currentPosition ?: 0L
                 sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""")
                 stopProgressSync()
             }
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            pushWidgetState(isPlaying)
         }
 
         override fun onPlaybackStateChanged(state: Int) {
