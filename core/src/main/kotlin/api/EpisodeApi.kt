@@ -7,6 +7,7 @@ import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import playback.core.usecase.GetPlaybackState
+import playback.core.usecase.GetPlaybackStates
 import playback.core.usecase.MarkPlayed
 import playback.core.usecase.MarkUnplayed
 import podcast.core.usecase.FindEpisode
@@ -19,6 +20,7 @@ fun Route.episodeApi(dependencies: DependencyRegistry) {
     val findRecentUnplayedEpisodes: FindRecentUnplayedEpisodes by dependencies
     val getPodcast: GetPodcast by dependencies
     val getPlaybackState: GetPlaybackState by dependencies
+    val getPlaybackStates: GetPlaybackStates by dependencies
     val listPodcasts: ListPodcasts by dependencies
     val markPlayed: MarkPlayed by dependencies
     val markUnplayed: MarkUnplayed by dependencies
@@ -39,10 +41,12 @@ fun Route.episodeApi(dependencies: DependencyRegistry) {
     get("recent") {
         val episodes = findRecentUnplayedEpisodes()
         val podcasts = listPodcasts().associateBy { it.id }
+        val states = getPlaybackStates(episodes.map { it.id })
         call.respond(episodes.map { ep ->
             val podcast = podcasts[ep.podcastId]
+            val state = states[ep.id]
             episodeDetailDto(
-                EpisodeWithPlayback(ep, 0, false),
+                EpisodeWithPlayback(ep, state?.progressMs ?: 0, state?.played ?: false),
                 podcastId = ep.podcastId.value,
                 podcastName = podcast?.name,
                 podcastImage = podcast?.image,
