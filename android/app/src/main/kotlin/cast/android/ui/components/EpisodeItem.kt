@@ -1,6 +1,5 @@
 package cast.android.ui.components
 
-import android.widget.TextView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +17,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,12 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.text.HtmlCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.util.relativeTime
@@ -59,15 +54,14 @@ fun EpisodeItem(
         episode.progressMs.toFloat() / episode.durationMs!!.toFloat() else null
 
     var played by remember(episode.id, episode.played) { mutableStateOf(episode.played) }
-    var expanded by remember(episode.id) { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
         ) {
             episode.podcastImage?.let { url ->
                 AsyncImage(
@@ -83,7 +77,7 @@ fun EpisodeItem(
                 Text(
                     text = episode.title,
                     style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
                 val sub = listOfNotNull(episode.podcastName, relativeTime(episode.publishedAt), episode.duration)
@@ -97,35 +91,41 @@ fun EpisodeItem(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-            }
-            if (onTogglePlayed != null) {
-                IconButton(onClick = {
-                    val newPlayed = !played
-                    played = newPlayed
-                    onTogglePlayed(newPlayed)
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = if (played) "Mark as unplayed" else "Mark as played",
-                        tint = if (played) MaterialTheme.colorScheme.primary
-                               else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (onTogglePlayed != null) {
+                        IconButton(onClick = {
+                            val newPlayed = !played
+                            played = newPlayed
+                            onTogglePlayed(newPlayed)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = if (played) "Mark as unplayed" else "Mark as played",
+                                tint = if (played) MaterialTheme.colorScheme.primary
+                                       else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                            )
+                        }
+                    }
+                    if (onAddToQueue != null) {
+                        IconButton(onClick = onAddToQueue) {
+                            Icon(
+                                imageVector = Icons.Default.PlaylistAdd,
+                                contentDescription = "Add to queue",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    IconButton(onClick = onPlay) {
+                        Icon(
+                            imageVector = if (isCurrent && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
+                        )
+                    }
                 }
-            }
-            if (onAddToQueue != null) {
-                IconButton(onClick = onAddToQueue) {
-                    Icon(
-                        imageVector = Icons.Default.PlaylistAdd,
-                        contentDescription = "Add to queue",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            IconButton(onClick = onPlay) {
-                Icon(
-                    imageVector = if (isCurrent && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
-                )
             }
         }
         when {
@@ -137,27 +137,6 @@ fun EpisodeItem(
                 progress = { staticProgress },
                 modifier = Modifier.fillMaxWidth(),
             )
-        }
-        if (episode.description.isNotBlank()) {
-            val textColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
-            TextButton(
-                onClick = { expanded = !expanded },
-                modifier = Modifier.padding(horizontal = 8.dp),
-            ) {
-                Text(if (expanded) "Show less" else "Show more")
-            }
-            if (expanded) {
-                AndroidView(
-                    factory = { ctx -> TextView(ctx) },
-                    update = { tv ->
-                        tv.setTextColor(textColor)
-                        tv.text = HtmlCompat.fromHtml(episode.description, HtmlCompat.FROM_HTML_MODE_COMPACT)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                )
-            }
         }
     }
 }
