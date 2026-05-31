@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -17,6 +18,7 @@ import androidx.glance.LocalContext
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.action.actionStartService
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -36,6 +38,7 @@ import androidx.glance.text.TextDefaults
 import androidx.glance.unit.ColorProvider
 import cast.android.R
 import cast.android.service.PlaybackService
+import cast.android.ui.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -58,11 +61,18 @@ class NowPlayingWidget : GlanceAppWidget() {
         val textMuted = ColorProvider(Color(0xFF6B8480))
         val accent = ColorProvider(Color(0xFF1B998B))
 
+        val context = LocalContext.current
+        val openApp = actionStartActivity(
+            Intent(Intent.ACTION_VIEW, "cast://now-playing".toUri(), context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        )
+
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(bg)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .clickable(openApp),
             contentAlignment = Alignment.CenterStart,
         ) {
             if (!hasEpisode) {
