@@ -178,7 +178,7 @@ class AppTest : DescribeSpec({
         }
     }
 
-    describe("GET /api/episodes/{episodeId}") {
+    describe("episode detail") {
         it("returns 404 for an unknown episode") {
             testApp { json, _ ->
                 json.get("/api/episodes/nonexistent").status shouldBe HttpStatusCode.NotFound
