@@ -178,14 +178,14 @@ class AppTest : DescribeSpec({
         }
     }
 
-    describe("episode detail") {
-        it("returns 404 for an unknown episode") {
+    describe("an episode's detail") {
+        it("is not found for an unknown id") {
             testApp { json, _ ->
                 json.get("/api/episodes/nonexistent").status shouldBe HttpStatusCode.NotFound
             }
         }
 
-        it("returns episode metadata including podcast name") {
+        it("includes the podcast name") {
             testApp { json, _ ->
                 val podcast = json.post("/api/podcasts") {
                     contentType(ContentType.Application.Json)
@@ -201,7 +201,7 @@ class AppTest : DescribeSpec({
             }
         }
 
-        it("returns partial playback progress") {
+        it("includes partial playback progress") {
             testApp { json, ws ->
                 val podcast = json.post("/api/podcasts") {
                     contentType(ContentType.Application.Json)
