@@ -137,6 +137,25 @@ class AppTest : DescribeSpec({
             }
         }
 
+        it("includes partial playback progress") {
+            testApp { json, ws ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"update","episodeId":"$episodeId","progressMs":15000}""")
+                    send("""{"type":"get","episodeId":"$episodeId"}""")
+                    receiveState()
+                }
+
+                json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
+                    .first { it.id == episodeId }.progressMs shouldBe 15000L
+            }
+        }
+
         it("excludes episodes published more than two weeks ago") {
             val recentFeedUrl = "https://example.com/cutoff-feed.xml"
             val cutoffRss = """
@@ -155,6 +174,65 @@ class AppTest : DescribeSpec({
 
                 val titles = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>().map { it.title }
                 titles shouldBe listOf("Recent Episode")
+            }
+        }
+    }
+
+    describe("GET /api/episodes/{episodeId}") {
+        it("returns 404 for an unknown episode") {
+            testApp { json, _ ->
+                json.get("/api/episodes/nonexistent").status shouldBe HttpStatusCode.NotFound
+            }
+        }
+
+        it("returns episode metadata including podcast name") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                val episode = json.get("/api/episodes/${episodeId.encodeURLPathPart()}").body<EpisodeDetailDto>()
+
+                episode.id shouldBe episodeId
+                episode.title shouldBe "Episode 1"
+                episode.podcastName shouldBe "Test Show"
+            }
+        }
+
+        it("returns partial playback progress") {
+            testApp { json, ws ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"update","episodeId":"$episodeId","progressMs":30000}""")
+                    send("""{"type":"get","episodeId":"$episodeId"}""")
+                    receiveState()
+                }
+
+                val episode = json.get("/api/episodes/${episodeId.encodeURLPathPart()}").body<EpisodeDetailDto>()
+                episode.progressMs shouldBe 30000L
+                episode.played shouldBe false
+            }
+        }
+
+        it("reflects the played state") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                json.post("/api/episodes/${episodeId.encodeURLPathPart()}/played")
+
+                val episode = json.get("/api/episodes/${episodeId.encodeURLPathPart()}").body<EpisodeDetailDto>()
+                episode.played shouldBe true
             }
         }
     }
