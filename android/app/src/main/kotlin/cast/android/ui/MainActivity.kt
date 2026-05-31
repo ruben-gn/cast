@@ -13,7 +13,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.hasRoute
 import cast.android.network.ConnectivityObserver
 import cast.android.ui.components.OfflineBanner
 import cast.android.ui.components.PlayerBar
@@ -47,12 +49,16 @@ private fun CastApp(connectivityObserver: ConnectivityObserver) {
     val isConnected by connectivityObserver.isConnected.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val playerViewModel: PlayerViewModel = hiltViewModel()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val onNowPlaying = navBackStackEntry?.destination?.hasRoute(NowPlaying::class) == true
     CompositionLocalProvider(LocalPlayerViewModel provides playerViewModel) {
         Scaffold(
             topBar = { OfflineBanner(visible = !isConnected) },
             bottomBar = {
                 Column {
-                    PlayerBar(onClick = { navController.navigate(NowPlaying) })
+                    if (!onNowPlaying) {
+                        PlayerBar(onClick = { navController.navigate(NowPlaying) })
+                    }
                     BottomNavBar(navController)
                 }
             },

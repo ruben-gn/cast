@@ -41,6 +41,8 @@ fun PlayerBar(onClick: (() -> Unit)? = null) {
     val position by vm.position.collectAsStateWithLifecycle()
     val duration by vm.duration.collectAsStateWithLifecycle()
 
+    if (currentMediaItem == null) return
+
     val progress = if (duration > 0) (position.toFloat() / duration.toFloat()) else 0f
 
     Surface(
@@ -50,12 +52,10 @@ fun PlayerBar(onClick: (() -> Unit)? = null) {
         tonalElevation = 4.dp,
     ) {
         Column {
-            if (currentMediaItem != null) {
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth(),
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -91,19 +91,17 @@ fun PlayerBar(onClick: (() -> Unit)? = null) {
                         )
                     }
                 }
-                if (currentMediaItem != null) {
-                    IconButton(onClick = { vm.seekBack() }) {
-                        Icon(Icons.Default.FastRewind, contentDescription = "Seek back")
-                    }
-                    IconButton(onClick = { vm.playPause() }) {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
-                        )
-                    }
-                    IconButton(onClick = { vm.seekForward() }) {
-                        Icon(Icons.Default.FastForward, contentDescription = "Seek forward")
-                    }
+                IconButton(onClick = { vm.seekBack() }) {
+                    Icon(Icons.Default.FastRewind, contentDescription = "Seek back")
+                }
+                IconButton(onClick = { vm.playPause() }) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (isPlaying) "Pause" else "Play",
+                    )
+                }
+                IconButton(onClick = { vm.seekForward() }) {
+                    Icon(Icons.Default.FastForward, contentDescription = "Seek forward")
                 }
             }
         }

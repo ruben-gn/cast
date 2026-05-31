@@ -175,10 +175,10 @@ fun NowPlayingScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(
+                FilledIconButton(
                     onClick = { vm.seekBack() },
                     enabled = currentMediaItem != null,
-                    modifier = Modifier.size(56.dp),
+                    modifier = Modifier.size(64.dp),
                 ) {
                     Icon(Icons.Default.FastRewind, contentDescription = "Seek back", modifier = Modifier.size(32.dp))
                 }
@@ -186,19 +186,19 @@ fun NowPlayingScreen(navController: NavController) {
                 FilledIconButton(
                     onClick = { vm.playPause() },
                     enabled = currentMediaItem != null,
-                    modifier = Modifier.size(72.dp),
+                    modifier = Modifier.size(80.dp),
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = if (isPlaying) "Pause" else "Play",
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier.size(44.dp),
                     )
                 }
                 Spacer(Modifier.width(24.dp))
-                IconButton(
+                FilledIconButton(
                     onClick = { vm.seekForward() },
                     enabled = currentMediaItem != null,
-                    modifier = Modifier.size(56.dp),
+                    modifier = Modifier.size(64.dp),
                 ) {
                     Icon(Icons.Default.FastForward, contentDescription = "Seek forward", modifier = Modifier.size(32.dp))
                 }
