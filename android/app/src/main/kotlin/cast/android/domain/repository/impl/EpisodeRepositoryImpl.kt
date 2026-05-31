@@ -13,6 +13,8 @@ class EpisodeRepositoryImpl @Inject constructor(
 
     override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> = api.getRecentEpisodes()
 
+    override suspend fun getEpisode(episodeId: String): EpisodeDetailDto = api.getEpisode(episodeId)
+
     override suspend fun markPlayed(episodeId: String) {
         api.markPlayed(episodeId)
     }

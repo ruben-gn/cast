@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import cast.android.ui.screens.CatalogScreen
+import cast.android.ui.screens.EpisodeDetailScreen
 import cast.android.ui.screens.NowPlayingScreen
 import cast.android.ui.screens.PodcastDetailScreen
 import cast.android.ui.screens.QueueScreen
@@ -23,6 +24,7 @@ fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier)
             val dest: PodcastDetail = it.toRoute()
             PodcastDetailScreen(dest.podcastId, navController)
         }
+        composable<EpisodeDetail> { EpisodeDetailScreen(navController) }
         composable<Queue> { QueueScreen(navController) }
         composable<Settings> { SettingsScreen(navController) }
         composable<NowPlaying>(

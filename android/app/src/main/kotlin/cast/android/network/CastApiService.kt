@@ -34,6 +34,9 @@ interface CastApiService {
     @GET("api/episodes/recent")
     suspend fun getRecentEpisodes(): List<EpisodeDetailDto>
 
+    @GET("api/episodes/{episodeId}")
+    suspend fun getEpisode(@Path("episodeId") episodeId: String): EpisodeDetailDto
+
     @POST("api/episodes/{episodeId}/played")
     suspend fun markPlayed(@Path("episodeId") episodeId: String): Response<Unit>
 
