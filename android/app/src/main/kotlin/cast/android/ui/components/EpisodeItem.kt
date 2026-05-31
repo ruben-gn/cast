@@ -1,5 +1,6 @@
 package cast.android.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,7 @@ fun EpisodeItem(
     onPlay: () -> Unit,
     onTogglePlayed: ((Boolean) -> Unit)? = null,
     onAddToQueue: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val playerVm = LocalPlayerViewModel.current
@@ -50,15 +52,17 @@ fun EpisodeItem(
 
     val isCurrent = currentMediaItem?.mediaId == episode.id
     val progress = if (isCurrent && duration > 0) position.toFloat() / duration.toFloat() else 0f
-    val staticProgress = if (!isCurrent && episode.progressMs > 0 && (episode.durationMs ?: 0L) > 0L)
-        episode.progressMs.toFloat() / episode.durationMs!!.toFloat() else null
 
     var played by remember(episode.id, episode.played) { mutableStateOf(episode.played) }
+
+    val staticProgress = if (!isCurrent && !played && episode.progressMs > 0 && (episode.durationMs ?: 0L) > 0L)
+        episode.progressMs.toFloat() / episode.durationMs!!.toFloat() else null
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Top,
@@ -136,6 +140,8 @@ fun EpisodeItem(
             staticProgress != null -> LinearProgressIndicator(
                 progress = { staticProgress },
                 modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                trackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
             )
         }
     }
