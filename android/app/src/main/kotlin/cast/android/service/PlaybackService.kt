@@ -2,6 +2,7 @@ package cast.android.service
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.util.Log
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -66,6 +67,7 @@ class PlaybackService : MediaSessionService() {
 
         serviceScope.launch {
             playbackWebSocketClient.states.collect { state ->
+                Log.d(TAG, "states.collect: episodeId=${state.episodeId} currentEpisodeId=$currentEpisodeId episodeStarted=$episodeStarted progressMs=${state.progressMs} played=${state.played}")
                 if (state.episodeId != currentEpisodeId || episodeStarted) return@collect
                 val seekMs = if (state.played) 0L else state.progressMs
                 mediaSession?.player?.seekTo(seekMs)
@@ -116,6 +118,7 @@ class PlaybackService : MediaSessionService() {
     private inner class PlayerListener : Player.Listener {
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            Log.d(TAG, "onMediaItemTransition: mediaId=${mediaItem?.mediaId} reason=$reason")
             currentEpisodeId = mediaItem?.mediaId
             episodeStarted = false
             pushWidgetState(mediaSession?.player?.isPlaying ?: false)
@@ -124,6 +127,7 @@ class PlaybackService : MediaSessionService() {
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            Log.d(TAG, "onPlayWhenReadyChanged: playWhenReady=$playWhenReady reason=$reason episodeStarted=$episodeStarted")
             val episodeId = currentEpisodeId ?: return
             if (playWhenReady) {
                 if (episodeStarted) {
@@ -141,10 +145,12 @@ class PlaybackService : MediaSessionService() {
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
+            Log.d(TAG, "onIsPlayingChanged: isPlaying=$isPlaying")
             pushWidgetState(isPlaying)
         }
 
         override fun onPlaybackStateChanged(state: Int) {
+            Log.d(TAG, "onPlaybackStateChanged: state=$state")
             if (state == Player.STATE_ENDED) {
                 currentEpisodeId?.let { sendWs("""{"type":"ended","episodeId":"$it"}""") }
                 stopProgressSync()
@@ -193,9 +199,13 @@ class PlaybackService : MediaSessionService() {
         progressJob = null
     }
 
-    private fun sendWs(message: String) = playbackWebSocketClient.send(message)
+    private fun sendWs(message: String) {
+        Log.d(TAG, "sendWs: $message")
+        playbackWebSocketClient.send(message)
+    }
 
     companion object {
+        private const val TAG = "Cast/Playback"
         const val ACTION_PLAY_PAUSE = "cast.android.widget.PLAY_PAUSE"
         const val ACTION_SEEK_BACK = "cast.android.widget.SEEK_BACK"
         const val ACTION_SEEK_FORWARD = "cast.android.widget.SEEK_FORWARD"
