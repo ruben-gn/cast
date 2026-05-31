@@ -1,5 +1,6 @@
 package cast.android.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,7 +34,7 @@ import cast.android.ui.viewmodel.LocalPlayerViewModel
 import coil3.compose.AsyncImage
 
 @Composable
-fun PlayerBar() {
+fun PlayerBar(onClick: (() -> Unit)? = null) {
     val vm = LocalPlayerViewModel.current
     val isPlaying by vm.isPlaying.collectAsStateWithLifecycle()
     val currentMediaItem by vm.currentMediaItem.collectAsStateWithLifecycle()
@@ -43,7 +44,9 @@ fun PlayerBar() {
     val progress = if (duration > 0) (position.toFloat() / duration.toFloat()) else 0f
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         tonalElevation = 4.dp,
     ) {
         Column {

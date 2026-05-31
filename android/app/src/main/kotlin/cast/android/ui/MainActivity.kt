@@ -19,6 +19,7 @@ import cast.android.ui.components.OfflineBanner
 import cast.android.ui.components.PlayerBar
 import cast.android.ui.nav.AppNavGraph
 import cast.android.ui.nav.BottomNavBar
+import cast.android.ui.nav.NowPlaying
 import cast.android.ui.theme.CastTheme
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.ui.viewmodel.PlayerViewModel
@@ -51,7 +52,7 @@ private fun CastApp(connectivityObserver: ConnectivityObserver) {
             topBar = { OfflineBanner(visible = !isConnected) },
             bottomBar = {
                 Column {
-                    PlayerBar()
+                    PlayerBar(onClick = { navController.navigate(NowPlaying) })
                     BottomNavBar(navController)
                 }
             },
