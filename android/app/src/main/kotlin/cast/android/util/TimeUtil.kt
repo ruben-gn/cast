@@ -3,6 +3,15 @@ package cast.android.util
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
+fun formatDuration(ms: Long): String {
+    val totalSeconds = (ms / 1000).coerceAtLeast(0)
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+    else "%d:%02d".format(minutes, seconds)
+}
+
 fun relativeTime(iso: String?): String? {
     if (iso.isNullOrBlank()) return null
     val instant = runCatching { Instant.parse(iso) }.getOrNull() ?: return null

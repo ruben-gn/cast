@@ -133,6 +133,7 @@ class PlayerViewModel @Inject constructor(
 
     fun seekForward() { controller?.seekForward() }
     fun seekBack() { controller?.seekBack() }
+    fun seekTo(positionMs: Long) { controller?.seekTo(positionMs) }
 
     override fun onCleared() {
         controller?.removeListener(playerListener)
