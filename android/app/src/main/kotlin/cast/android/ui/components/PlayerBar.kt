@@ -26,6 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,17 +47,22 @@ fun PlayerBar(onClick: (() -> Unit)? = null) {
 
     val progress = if (duration > 0) (position.toFloat() / duration.toFloat()) else 0f
 
+    val borderColor = MaterialTheme.colorScheme.outlineVariant
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .drawBehind {
+                drawLine(
+                    color = borderColor,
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 3.dp.toPx(),
+                )
+            }
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         tonalElevation = 4.dp,
     ) {
         Column {
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxWidth(),
-            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -104,6 +111,10 @@ fun PlayerBar(onClick: (() -> Unit)? = null) {
                     Icon(Icons.Default.FastForward, contentDescription = "Seek forward")
                 }
             }
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
