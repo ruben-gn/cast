@@ -9,13 +9,22 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.MediaLibraryService.LibraryParams
+import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
+import cast.android.domain.repository.EpisodeRepository
+import cast.android.domain.repository.PodcastRepository
 import cast.android.domain.repository.QueueRepository
 import cast.android.network.PlaybackWebSocketClient
 import cast.android.ui.MainActivity
 import cast.android.widget.NowPlayingWidget
+import cast.api.EpisodeDetailDto
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,17 +32,21 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(UnstableApi::class)
 @AndroidEntryPoint
-class PlaybackService : MediaSessionService() {
+class PlaybackService : MediaLibraryService() {
 
     @Inject lateinit var playbackWebSocketClient: PlaybackWebSocketClient
     @Inject lateinit var queueRepository: QueueRepository
+    @Inject lateinit var podcastRepository: PodcastRepository
+    @Inject lateinit var episodeRepository: EpisodeRepository
 
-    private var mediaSession: MediaSession? = null
+    private var mediaSession: MediaLibrarySession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var progressJob: Job? = null
     private var currentEpisodeId: String? = null
@@ -59,7 +72,7 @@ class PlaybackService : MediaSessionService() {
             PendingIntent.FLAG_IMMUTABLE,
         )
 
-        mediaSession = MediaSession.Builder(this, player)
+        mediaSession = MediaLibrarySession.Builder(this, player, LibraryCallback())
             .setSessionActivity(sessionActivity)
             .build()
 
@@ -77,7 +90,7 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val player = mediaSession?.player
@@ -103,6 +116,126 @@ class PlaybackService : MediaSessionService() {
         }
         mediaSession = null
         super.onDestroy()
+    }
+
+    /**
+     * Browse tree for Android Auto: root → Recent / Queue / Podcasts → episodes.
+     * Episode leaf ids stay the bare episode id everywhere so Auto-initiated playback
+     * participates in the same WebSocket progress-sync and "now playing" highlight.
+     */
+    private inner class LibraryCallback : MediaLibrarySession.Callback {
+
+        override fun onGetLibraryRoot(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<MediaItem>> = serviceScope.future {
+            LibraryResult.ofItem(browsableItem(ROOT_ID, "Cast"), params)
+        }
+
+        override fun onGetChildren(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = serviceScope.future {
+            val children: List<MediaItem> = runCatching {
+                when {
+                    parentId == ROOT_ID -> listOf(
+                        browsableItem(RECENT_ID, "Recent"),
+                        browsableItem(QUEUE_ID, "Queue"),
+                        browsableItem(PODCASTS_ID, "Podcasts"),
+                    )
+                    parentId == RECENT_ID -> episodeRepository.getRecentEpisodes().map(::playableItem)
+                    parentId == QUEUE_ID -> queueRepository.getQueue().map(::playableItem)
+                    parentId == PODCASTS_ID ->
+                        podcastRepository.listPodcasts().map { podcastItem(it.id, it.name, it.image) }
+                    parentId.startsWith(PODCAST_PREFIX) ->
+                        podcastRepository.getPodcast(parentId.removePrefix(PODCAST_PREFIX))
+                            .episodes.map(::playableItem)
+                    else -> emptyList()
+                }
+            }.getOrElse { emptyList() }
+            LibraryResult.ofItemList(children, params)
+        }
+
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String,
+        ): ListenableFuture<LibraryResult<MediaItem>> = serviceScope.future {
+            val item: MediaItem? = runCatching {
+                when {
+                    mediaId == ROOT_ID -> browsableItem(ROOT_ID, "Cast")
+                    mediaId == RECENT_ID -> browsableItem(RECENT_ID, "Recent")
+                    mediaId == QUEUE_ID -> browsableItem(QUEUE_ID, "Queue")
+                    mediaId == PODCASTS_ID -> browsableItem(PODCASTS_ID, "Podcasts")
+                    mediaId.startsWith(PODCAST_PREFIX) -> {
+                        val p = podcastRepository.getPodcast(mediaId.removePrefix(PODCAST_PREFIX))
+                        podcastItem(p.id, p.name, p.image)
+                    }
+                    else -> playableItem(episodeRepository.getEpisode(mediaId))
+                }
+            }.getOrNull()
+            if (item != null) LibraryResult.ofItem(item, null)
+            else LibraryResult.ofError(LibraryResult.RESULT_ERROR_UNKNOWN)
+        }
+
+        /**
+         * Auto sends media items carrying only a mediaId (the audio URI is stripped over the
+         * binder), so resolve those back to a full playable item. In-app items already carry
+         * their URI (localConfiguration), so pass them straight through with no extra fetch.
+         */
+        override fun onAddMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>,
+        ): ListenableFuture<MutableList<MediaItem>> = serviceScope.future {
+            mediaItems.map { item ->
+                if (item.localConfiguration != null) item
+                else runCatching { playableItem(episodeRepository.getEpisode(item.mediaId)) }
+                    .getOrDefault(item)
+            }.toMutableList()
+        }
+    }
+
+    private fun browsableItem(id: String, title: String): MediaItem {
+        val metadata = MediaMetadata.Builder()
+            .setTitle(title)
+            .setIsBrowsable(true)
+            .setIsPlayable(false)
+            .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+            .build()
+        return MediaItem.Builder().setMediaId(id).setMediaMetadata(metadata).build()
+    }
+
+    private fun podcastItem(id: String, name: String, image: String?): MediaItem {
+        val metadata = MediaMetadata.Builder()
+            .setTitle(name)
+            .setArtworkUri(image?.toUri())
+            .setIsBrowsable(true)
+            .setIsPlayable(false)
+            .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_PODCASTS)
+            .build()
+        return MediaItem.Builder().setMediaId(PODCAST_PREFIX + id).setMediaMetadata(metadata).build()
+    }
+
+    private fun playableItem(episode: EpisodeDetailDto): MediaItem {
+        val metadata = MediaMetadata.Builder()
+            .setTitle(episode.title)
+            .setArtist(episode.podcastName)
+            .setArtworkUri(episode.podcastImage?.toUri())
+            .setIsBrowsable(false)
+            .setIsPlayable(true)
+            .setMediaType(MediaMetadata.MEDIA_TYPE_PODCAST_EPISODE)
+            .build()
+        return MediaItem.Builder()
+            .setMediaId(episode.id)
+            .setUri(episode.audioUrl)
+            .setMediaMetadata(metadata)
+            .build()
     }
 
     private fun pushWidgetState(isPlaying: Boolean) {
@@ -167,19 +300,8 @@ class PlaybackService : MediaSessionService() {
             val queue = try { queueRepository.getQueue() } catch (_: Exception) { return@launch }
             val next = queue.firstOrNull() ?: return@launch
             try { queueRepository.removeFromQueue(next.id) } catch (_: Exception) {}
-            val mediaItem = MediaItem.Builder()
-                .setMediaId(next.id)
-                .setUri(next.audioUrl)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(next.title)
-                        .setArtist(next.podcastName)
-                        .setArtworkUri(next.podcastImage?.toUri())
-                        .build()
-                )
-                .build()
             mediaSession?.player?.let { player ->
-                player.setMediaItem(mediaItem)
+                player.setMediaItem(playableItem(next))
                 player.prepare()
                 player.play()
             }
@@ -212,5 +334,11 @@ class PlaybackService : MediaSessionService() {
         const val ACTION_PLAY_PAUSE = "cast.android.widget.PLAY_PAUSE"
         const val ACTION_SEEK_BACK = "cast.android.widget.SEEK_BACK"
         const val ACTION_SEEK_FORWARD = "cast.android.widget.SEEK_FORWARD"
+
+        private const val ROOT_ID = "root"
+        private const val RECENT_ID = "recent"
+        private const val QUEUE_ID = "queue"
+        private const val PODCASTS_ID = "podcasts"
+        private const val PODCAST_PREFIX = "podcast/"
     }
 }

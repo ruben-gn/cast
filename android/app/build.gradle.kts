@@ -92,6 +92,7 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.guava)
 
     // DataStore
     implementation(libs.datastore.preferences)
