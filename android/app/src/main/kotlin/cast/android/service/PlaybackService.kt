@@ -82,7 +82,10 @@ class PlaybackService : MediaSessionService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val player = mediaSession?.player
         when (intent?.action) {
-            ACTION_PLAY_PAUSE -> player?.let { if (it.isPlaying) it.pause() else it.play() }
+            ACTION_PLAY_PAUSE -> player?.let {
+                if (it.isPlaying) it.pause()
+                else { if (it.playbackState == Player.STATE_IDLE) it.prepare(); it.play() }
+            }
             ACTION_SEEK_BACK -> player?.seekBack()
             ACTION_SEEK_FORWARD -> player?.seekForward()
         }

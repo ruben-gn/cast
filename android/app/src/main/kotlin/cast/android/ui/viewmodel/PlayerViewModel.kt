@@ -128,7 +128,12 @@ class PlayerViewModel @Inject constructor(
 
     fun playPause() {
         val ctrl = controller ?: return
-        if (ctrl.isPlaying) ctrl.pause() else ctrl.play()
+        if (ctrl.isPlaying) {
+            ctrl.pause()
+        } else {
+            if (ctrl.playbackState == Player.STATE_IDLE) ctrl.prepare()
+            ctrl.play()
+        }
     }
 
     fun seekForward() { controller?.seekForward() }
