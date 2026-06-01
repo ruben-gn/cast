@@ -56,10 +56,9 @@ class NowPlayingWidget : GlanceAppWidget() {
         val isPlaying = prefs[IS_PLAYING_KEY] ?: false
         val hasEpisode = prefs[HAS_EPISODE_KEY] ?: false
 
-        val bg = ColorProvider(Color(0xFFEEF4F3))
-        val textPrimary = ColorProvider(Color(0xFF1A2C2A))
-        val textMuted = ColorProvider(Color(0xFF6B8480))
-        val accent = ColorProvider(Color(0xFF1B998B))
+        val textPrimary = ColorProvider(Color(0xFFEBF4F2))
+        val textMuted = ColorProvider(Color(0xFF7DBDB8))
+        val accent = ColorProvider(Color(0xFF3DCFC6))
 
         val context = LocalContext.current
         val openApp = actionStartActivity(
@@ -70,7 +69,7 @@ class NowPlayingWidget : GlanceAppWidget() {
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(bg)
+                .background(ImageProvider(R.drawable.widget_background))
                 .padding(horizontal = 14.dp, vertical = 10.dp)
                 .clickable(openApp),
             contentAlignment = Alignment.CenterStart,
