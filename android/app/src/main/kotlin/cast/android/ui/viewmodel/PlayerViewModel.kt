@@ -50,13 +50,27 @@ class PlayerViewModel @Inject constructor(
             _isPlaying.value = isPlaying
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            if (mediaItem?.mediaId != _currentMediaItem.value?.mediaId) {
+                _position.value = 0L
+            }
             _currentMediaItem.value = mediaItem
-            _position.value = 0L
         }
         override fun onPlaybackStateChanged(state: Int) {
             if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
                 _isPlaying.value = false
             }
+            if (state == Player.STATE_READY) {
+                val ctrl = controller ?: return
+                _position.value = ctrl.currentPosition
+                _duration.value = ctrl.duration.coerceAtLeast(0L)
+            }
+        }
+        override fun onPositionDiscontinuity(
+            oldPosition: Player.PositionInfo,
+            newPosition: Player.PositionInfo,
+            reason: Int,
+        ) {
+            _position.value = newPosition.positionMs
         }
     }
 
