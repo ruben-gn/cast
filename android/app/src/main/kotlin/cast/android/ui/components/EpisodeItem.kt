@@ -51,12 +51,17 @@ fun EpisodeItem(
     val duration by playerVm.duration.collectAsStateWithLifecycle()
 
     val isCurrent = currentMediaItem?.mediaId == episode.id
-    val progress = if (isCurrent && duration > 0) position.toFloat() / duration.toFloat() else 0f
 
     var played by remember(episode.id, episode.played) { mutableStateOf(episode.played) }
 
-    val staticProgress = if (!isCurrent && !played && episode.progressMs > 0 && (episode.durationMs ?: 0L) > 0L)
+    val savedProgress = if (!played && episode.progressMs > 0 && (episode.durationMs ?: 0L) > 0L)
         episode.progressMs.toFloat() / episode.durationMs!!.toFloat() else null
+
+    val progress = if (isCurrent && duration > 0) position.toFloat() / duration.toFloat()
+                   else if (isCurrent) savedProgress ?: 0f
+                   else 0f
+
+    val staticProgress = if (!isCurrent) savedProgress else null
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
