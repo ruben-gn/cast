@@ -42,6 +42,9 @@ class PlayerViewModel @Inject constructor(
     private val _duration = MutableStateFlow(0L)
     val duration: StateFlow<Long> = _duration.asStateFlow()
 
+    private val _lastKnownProgress = MutableStateFlow<Map<String, Pair<Long, Long>>>(emptyMap())
+    val lastKnownProgress: StateFlow<Map<String, Pair<Long, Long>>> = _lastKnownProgress.asStateFlow()
+
     @Volatile private var controller: MediaController? = null
     private var controllerFuture: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
 
@@ -50,6 +53,12 @@ class PlayerViewModel @Inject constructor(
             _isPlaying.value = isPlaying
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            val prevId = _currentMediaItem.value?.mediaId
+            val prevPos = _position.value
+            val prevDur = _duration.value
+            if (prevId != null && prevPos > 0 && prevDur > 0) {
+                _lastKnownProgress.value = _lastKnownProgress.value + (prevId to (prevPos to prevDur))
+            }
             if (mediaItem?.mediaId != _currentMediaItem.value?.mediaId) {
                 _position.value = 0L
             }
