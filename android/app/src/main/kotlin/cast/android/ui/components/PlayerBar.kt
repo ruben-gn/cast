@@ -114,6 +114,7 @@ fun PlayerBar(onClick: (() -> Unit)? = null) {
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth(),
+                stopIndicatorSize = 0.dp,
             )
         }
     }

@@ -151,12 +151,14 @@ fun EpisodeItem(
             isCurrent -> LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth(),
+                stopIndicatorSize = 0.dp,
             )
             staticProgress != null -> LinearProgressIndicator(
                 progress = { staticProgress },
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                stopIndicatorSize = 0.dp,
             )
         }
     }
