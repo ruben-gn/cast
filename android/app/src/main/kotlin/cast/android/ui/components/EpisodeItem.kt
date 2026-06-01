@@ -155,8 +155,8 @@ fun EpisodeItem(
             staticProgress != null -> LinearProgressIndicator(
                 progress = { staticProgress },
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                trackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
         }
     }
