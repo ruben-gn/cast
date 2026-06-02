@@ -11,6 +11,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.LibraryParams
@@ -80,8 +81,23 @@ class PlaybackService : MediaLibraryService() {
             PendingIntent.FLAG_IMMUTABLE,
         )
 
+        // Android Auto shows skip-to-prev/next by default, which do nothing during single-episode
+        // playback. Put rewind/fast-forward in those slots instead. Using player commands (not custom
+        // session commands) wires the seek automatically; icons match ExoPlayer's 5s/15s defaults.
+        val rewindButton = CommandButton.Builder(CommandButton.ICON_SKIP_BACK_5)
+            .setDisplayName("Rewind")
+            .setPlayerCommand(Player.COMMAND_SEEK_BACK)
+            .setSlots(CommandButton.SLOT_BACK)
+            .build()
+        val fastForwardButton = CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_15)
+            .setDisplayName("Fast forward")
+            .setPlayerCommand(Player.COMMAND_SEEK_FORWARD)
+            .setSlots(CommandButton.SLOT_FORWARD)
+            .build()
+
         mediaSession = MediaLibrarySession.Builder(this, player, LibraryCallback())
             .setSessionActivity(sessionActivity)
+            .setMediaButtonPreferences(ImmutableList.of(rewindButton, fastForwardButton))
             .build()
 
         playbackWebSocketClient.connect()
