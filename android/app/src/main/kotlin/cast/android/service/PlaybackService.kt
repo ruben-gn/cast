@@ -48,6 +48,14 @@ class PlaybackService : MediaLibraryService() {
 
     private var mediaSession: MediaLibrarySession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    /**
+     * Library/browse callbacks run off the main thread. When Android Auto connects over the
+     * legacy MediaBrowserCompat protocol, Media3's [MediaLibraryServiceLegacyStub] blocks the
+     * main thread on `future.get()`; if the future's coroutine were also dispatched to the main
+     * thread it could never run, deadlocking the service start (200s ANR → endless spinner).
+     */
+    private val libraryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var progressJob: Job? = null
     private var currentEpisodeId: String? = null
     private var episodeStarted = false
@@ -109,6 +117,7 @@ class PlaybackService : MediaLibraryService() {
         stopProgressSync()
         serviceScope.launch { NowPlayingWidget.update(this@PlaybackService, "", "", false, false) }
         serviceScope.cancel()
+        libraryScope.cancel()
         playbackWebSocketClient.disconnect()
         mediaSession?.run {
             player.release()
@@ -137,7 +146,7 @@ class PlaybackService : MediaLibraryService() {
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
-        ): ListenableFuture<LibraryResult<MediaItem>> = serviceScope.future {
+        ): ListenableFuture<LibraryResult<MediaItem>> = libraryScope.future {
             Log.d(TAG, "onGetLibraryRoot: pkg=${browser.packageName} params=$params")
             LibraryResult.ofItem(browsableItem(ROOT_ID, "Cast"), params)
         }
@@ -149,7 +158,7 @@ class PlaybackService : MediaLibraryService() {
             page: Int,
             pageSize: Int,
             params: LibraryParams?,
-        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = serviceScope.future {
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = libraryScope.future {
             Log.d(TAG, "onGetChildren: parentId=$parentId page=$page pageSize=$pageSize")
             val children: List<MediaItem> = runCatching {
                 when {
@@ -176,7 +185,7 @@ class PlaybackService : MediaLibraryService() {
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             mediaId: String,
-        ): ListenableFuture<LibraryResult<MediaItem>> = serviceScope.future {
+        ): ListenableFuture<LibraryResult<MediaItem>> = libraryScope.future {
             val item: MediaItem? = runCatching {
                 when {
                     mediaId == ROOT_ID -> browsableItem(ROOT_ID, "Cast")
@@ -203,7 +212,7 @@ class PlaybackService : MediaLibraryService() {
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>,
-        ): ListenableFuture<MutableList<MediaItem>> = serviceScope.future {
+        ): ListenableFuture<MutableList<MediaItem>> = libraryScope.future {
             mediaItems.map { item ->
                 if (item.localConfiguration != null) item
                 else runCatching { playableItem(episodeRepository.getEpisode(item.mediaId)) }
