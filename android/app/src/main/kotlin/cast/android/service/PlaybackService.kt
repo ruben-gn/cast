@@ -4,6 +4,10 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.util.Log
 import androidx.core.net.toUri
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -33,6 +37,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -46,6 +51,7 @@ class PlaybackService : MediaLibraryService() {
     @Inject lateinit var queueRepository: QueueRepository
     @Inject lateinit var podcastRepository: PodcastRepository
     @Inject lateinit var episodeRepository: EpisodeRepository
+    @Inject lateinit var dataStore: DataStore<Preferences>
 
     private var mediaSession: MediaLibrarySession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -224,6 +230,24 @@ class PlaybackService : MediaLibraryService() {
                     .getOrDefault(item)
             }.toMutableList()
         }
+
+        /**
+         * Resume the last-played episode when a controller (Android Auto, Bluetooth, system UI)
+         * presses play with no current item — e.g. after the service was killed. Failing the
+         * future signals "nothing to resume". The exact start position is non-critical: once the
+         * item loads, the WebSocket sync ([onMediaItemTransition] → "get") re-seeks to the server's
+         * authoritative progress.
+         */
+        override fun onPlaybackResumption(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            isForPlayback: Boolean,
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = libraryScope.future {
+            val episodeId = dataStore.data.first()[LAST_EPISODE_ID]
+                ?: throw UnsupportedOperationException("No previous episode to resume")
+            val episode = episodeRepository.getEpisode(episodeId)
+            MediaSession.MediaItemsWithStartPosition(listOf(playableItem(episode)), 0, episode.progressMs)
+        }
     }
 
     private fun browsableItem(id: String, title: String): MediaItem {
@@ -284,6 +308,8 @@ class PlaybackService : MediaLibraryService() {
             episodeStarted = false
             pushWidgetState(mediaSession?.player?.isPlaying ?: false)
             val episodeId = currentEpisodeId ?: return
+            // Remember it so Auto/Bluetooth can resume after the service is killed (onPlaybackResumption).
+            libraryScope.launch { runCatching { dataStore.edit { it[LAST_EPISODE_ID] = episodeId } } }
             sendWs("""{"type":"get","episodeId":"$episodeId"}""")
         }
 
@@ -323,7 +349,11 @@ class PlaybackService : MediaLibraryService() {
     private fun playNextInQueue() {
         serviceScope.launch {
             val queue = try { queueRepository.getQueue() } catch (_: Exception) { return@launch }
-            val next = queue.firstOrNull() ?: return@launch
+            val next = queue.firstOrNull() ?: run {
+                // Nothing left to play: don't let resumption replay the finished episode.
+                runCatching { dataStore.edit { it.remove(LAST_EPISODE_ID) } }
+                return@launch
+            }
             try { queueRepository.removeFromQueue(next.id) } catch (_: Exception) {}
             mediaSession?.player?.let { player ->
                 player.setMediaItem(playableItem(next))
@@ -359,6 +389,8 @@ class PlaybackService : MediaLibraryService() {
         const val ACTION_PLAY_PAUSE = "cast.android.widget.PLAY_PAUSE"
         const val ACTION_SEEK_BACK = "cast.android.widget.SEEK_BACK"
         const val ACTION_SEEK_FORWARD = "cast.android.widget.SEEK_FORWARD"
+
+        private val LAST_EPISODE_ID = stringPreferencesKey("last_episode_id")
 
         private const val ROOT_ID = "root"
         private const val RECENT_ID = "recent"
