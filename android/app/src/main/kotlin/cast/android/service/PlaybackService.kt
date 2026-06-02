@@ -161,7 +161,18 @@ class PlaybackService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<MediaItem>> = libraryScope.future {
-            LibraryResult.ofItem(browsableItem(ROOT_ID, "Cast"), params)
+            // Auto requests a "recent" root on connect to surface continue-listening content. Advertise
+            // it only when we have a last-played episode. This must stay a cheap LOCAL read: Auto's
+            // legacy stub blocks the main thread on this future (see libraryScope above), so a Pi fetch
+            // here would risk an ANR. The actual episode is fetched lazily in onGetChildren.
+            if (params?.isRecent == true) {
+                if (dataStore.data.first()[LAST_EPISODE_ID] != null)
+                    LibraryResult.ofItem(browsableItem(RECENT_ROOT_ID, "Cast"), params)
+                else
+                    LibraryResult.ofError(LibraryResult.RESULT_ERROR_NOT_SUPPORTED)
+            } else {
+                LibraryResult.ofItem(browsableItem(ROOT_ID, "Cast"), params)
+            }
         }
 
         override fun onGetChildren(
@@ -179,6 +190,7 @@ class PlaybackService : MediaLibraryService() {
                         browsableItem(QUEUE_ID, "Queue"),
                         browsableItem(PODCASTS_ID, "Podcasts"),
                     )
+                    parentId == RECENT_ROOT_ID -> listOfNotNull(lastUnfinishedEpisode()?.let(::playableItem))
                     parentId == RECENT_ID -> episodeRepository.getRecentEpisodes().map(::playableItem)
                     parentId == QUEUE_ID -> queueRepository.getQueue().map(::playableItem)
                     parentId == PODCASTS_ID ->
@@ -200,6 +212,7 @@ class PlaybackService : MediaLibraryService() {
             val item: MediaItem? = runCatching {
                 when {
                     mediaId == ROOT_ID -> browsableItem(ROOT_ID, "Cast")
+                    mediaId == RECENT_ROOT_ID -> browsableItem(RECENT_ROOT_ID, "Cast")
                     mediaId == RECENT_ID -> browsableItem(RECENT_ID, "Recent")
                     mediaId == QUEUE_ID -> browsableItem(QUEUE_ID, "Queue")
                     mediaId == PODCASTS_ID -> browsableItem(PODCASTS_ID, "Podcasts")
@@ -243,11 +256,20 @@ class PlaybackService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             isForPlayback: Boolean,
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = libraryScope.future {
-            val episodeId = dataStore.data.first()[LAST_EPISODE_ID]
+            val episode = lastUnfinishedEpisode()
                 ?: throw UnsupportedOperationException("No previous episode to resume")
-            val episode = episodeRepository.getEpisode(episodeId)
             MediaSession.MediaItemsWithStartPosition(listOf(playableItem(episode)), 0, episode.progressMs)
         }
+    }
+
+    /**
+     * The episode last played through this device, if still unfinished — the source for both Android
+     * Auto's continue-listening (recent) root and playback resumption. One Pi fetch; never call this
+     * from [LibraryCallback.onGetLibraryRoot], whose future blocks Auto's main thread.
+     */
+    private suspend fun lastUnfinishedEpisode(): EpisodeDetailDto? {
+        val id = dataStore.data.first()[LAST_EPISODE_ID] ?: return null
+        return runCatching { episodeRepository.getEpisode(id) }.getOrNull()?.takeIf { !it.played }
     }
 
     private fun browsableItem(id: String, title: String): MediaItem {
@@ -393,6 +415,7 @@ class PlaybackService : MediaLibraryService() {
         private val LAST_EPISODE_ID = stringPreferencesKey("last_episode_id")
 
         private const val ROOT_ID = "root"
+        private const val RECENT_ROOT_ID = "recent_root"
         private const val RECENT_ID = "recent"
         private const val QUEUE_ID = "queue"
         private const val PODCASTS_ID = "podcasts"
