@@ -19,6 +19,10 @@ Usage context: phone is used **both at home (low latency) and out (Tailscale, oc
 - **Tap Play starts immediately** — from a downloaded/cached file when available, and at the correct resume position without waiting on the Pi.
 - Queued episodes are available offline.
 
+## Source of Truth
+
+**The Pi server is the absolute source of truth.** Room is strictly a **read-through cache / local mirror**, never a competing authority. The invariant: **the server always wins a reconcile; local rows never override server data.** Every `refresh()` overwrites local rows with the server's response. The only consequence of the cache is that reads may be *stale* between syncs (or offline) — stale is not a second source of truth, because the moment the server is reachable it overwrites.
+
 ## Non-Goals (v1)
 
 - **Offline writes.** Mark-played / queue edits require the Pi to be reachable. See [Deferred Work](#deferred-work) for the proper offline-write build, which we *do* intend to do.
@@ -26,15 +30,15 @@ Usage context: phone is used **both at home (low latency) and out (Tailscale, oc
 
 ## Architecture
 
-### 1. Data layer — Room as the on-device source of truth
+### 1. Data layer — Room as a read-through cache
 
-Add a `CastDatabase` (Room) with entities for podcasts, episodes, and the queue. DAOs expose `Flow<…>` reads.
+Add a `CastDatabase` (Room) with entities for podcasts, episodes, and the queue. DAOs expose `Flow<…>` reads. Room mirrors the server; it is never authoritative (see [Source of Truth](#source-of-truth)).
 
-Repositories flip from "call the API" to **local-first stale-while-revalidate**:
+Repositories flip from "call the API" to **local-first stale-while-revalidate** for reads, and **write-through** for mutations:
 
 - **Reads:** expose `Flow` backed by Room. ViewModels collect these and render immediately from cache.
-- **`suspend fun refresh()`:** fetches from the Pi via the existing `CastApiService` and upserts into Room. Triggered on screen-open, pull-to-refresh, and the background `RefreshFeedsWorker`.
-- **Writes (mark-played, queue add/remove, add-podcast):** optimistic — update Room immediately so the UI reacts instantly, push to the Pi, and roll the local change back on failure. Requires connectivity (v1).
+- **`suspend fun refresh()`:** fetches from the Pi via the existing `CastApiService` and upserts into Room (server overwrites local). Triggered on screen-open, pull-to-refresh, and the background `RefreshFeedsWorker`.
+- **Writes (mark-played, queue add/remove, add-podcast) — write-through:** call the Pi **first**, then update Room from the server's response. Room is never ahead of the server; there is no transient local-ahead state. Requires connectivity (v1). The mutating tap is slightly less instant than an optimistic update, but reads and playback stay instant. (Optimistic-then-reconcile is a possible future change — see [Deferred Work](#deferred-work).)
 
 This is the single most impactful change and also the most invasive: **five ViewModels** (`CatalogViewModel`, `PodcastDetailViewModel`, `EpisodeDetailViewModel`, `RecentViewModel`, `QueueViewModel`) flip from `suspend`-load-into-`UiState` to collecting a `Flow`. This conversion is where regressions hide, so it is the first reviewable slice.
 
@@ -63,7 +67,7 @@ Screen open ──► ViewModel collects repo.Flow ──► renders Room data I
                       │
                       └► repo.refresh() ──► CastApiService ──► Pi ──► upsert Room ──► Flow re-emits
 
-Add to queue ──► optimistic Room write (UI updates) ──► Pi push (rollback on fail)
+Add to queue ──► Pi push (write-through) ──► update Room from server response ──► UI updates
                       │
                       └► queue observer ──► DownloadManager.enqueue(episode)
 
@@ -82,7 +86,7 @@ Felt snappiness lands first, even within the larger build.
 
 ## Testing
 
-- **Repository tests:** Room-backed reads emit cached data without a network call; `refresh()` upserts and re-emits; optimistic writes roll back on API failure.
+- **Repository tests:** Room-backed reads emit cached data without a network call; `refresh()` upserts and re-emits with server data overwriting local; write-through mutations update Room only after the API succeeds, and a failed API call leaves Room unchanged.
 - **DAO tests:** in-memory Room, query/upsert/ordering for the queue.
 - **Playback:** unit-test that the resume seek uses Room progress before any WS response (extract the seek decision so it is testable without a live player/session).
 - **Cache key:** assert `MediaItem` and `DownloadRequest` carry the episode-id `customCacheKey`.
@@ -92,7 +96,8 @@ Felt snappiness lands first, even within the larger build.
 
 These are explicitly out of v1 but **intended**:
 
-1. **Offline-write outbox (the "really do it" item).** Mutations (mark-played, queue edits, progress) apply locally and queue into a pending-ops outbox that replays to the Pi on reconnect, with conflict reconciliation. This is what makes the app fully usable offline, not just browsable.
-2. **Offline progress persistence.** Persist playback `progressMs` locally while offline so resume is correct without the Pi, feeding the outbox above.
+1. **Optimistic writes.** Possibly switch mutations from write-through to optimistic-then-reconcile (Room updates instantly on the tap, server push reconciles, rollback on failure) for snappier mutating taps — accepting a brief, self-correcting window where local is ahead of the server. Deferred because the server is the absolute source of truth and write-through keeps zero divergence; revisit if the mutating tap feels slow.
+2. **Offline-write outbox (the "really do it" item).** Mutations (mark-played, queue edits, progress) apply locally and queue into a pending-ops outbox that replays to the Pi on reconnect, with conflict reconciliation. This is what makes the app fully usable offline, not just browsable. (This is the piece most in tension with "server is the absolute source of truth" — it needs an explicit conflict-resolution policy where the server still arbitrates.)
+3. **Offline progress persistence.** Persist playback `progressMs` locally while offline so resume is correct without the Pi, feeding the outbox above.
 
 These two, plus the in-memory stale-while-revalidate and seek-to-local-progress in slice 1, are what buy most of the *felt* snappiness — which is why slice 1 leads.
