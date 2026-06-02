@@ -134,20 +134,11 @@ class PlaybackService : MediaLibraryService() {
      */
     private inner class LibraryCallback : MediaLibrarySession.Callback {
 
-        override fun onConnect(
-            session: MediaSession,
-            controller: MediaSession.ControllerInfo,
-        ): MediaSession.ConnectionResult {
-            Log.d(TAG, "onConnect: pkg=${controller.packageName} uid=${controller.uid}")
-            return super.onConnect(session, controller)
-        }
-
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<MediaItem>> = libraryScope.future {
-            Log.d(TAG, "onGetLibraryRoot: pkg=${browser.packageName} params=$params")
             LibraryResult.ofItem(browsableItem(ROOT_ID, "Cast"), params)
         }
 
@@ -159,7 +150,6 @@ class PlaybackService : MediaLibraryService() {
             pageSize: Int,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = libraryScope.future {
-            Log.d(TAG, "onGetChildren: parentId=$parentId page=$page pageSize=$pageSize")
             val children: List<MediaItem> = runCatching {
                 when {
                     parentId == ROOT_ID -> listOf(
@@ -177,7 +167,6 @@ class PlaybackService : MediaLibraryService() {
                     else -> emptyList()
                 }
             }.getOrElse { e -> Log.w(TAG, "onGetChildren failed for parentId=$parentId", e); emptyList() }
-            Log.d(TAG, "onGetChildren: parentId=$parentId -> ${children.size} items")
             LibraryResult.ofItemList(children, params)
         }
 
