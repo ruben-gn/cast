@@ -46,3 +46,7 @@ out/
 
 ### JS ###
 **/node_modules/
+# debug artifacts
+anr-trace.txt
+cast.log
+*.log
