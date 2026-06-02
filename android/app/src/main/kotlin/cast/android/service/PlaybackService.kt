@@ -2,6 +2,7 @@ package cast.android.service
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
@@ -19,6 +20,7 @@ import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.LibraryParams
+import androidx.media3.session.MediaConstants
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
 import cast.android.domain.repository.EpisodeRepository
@@ -190,7 +192,8 @@ class PlaybackService : MediaLibraryService() {
                         browsableItem(QUEUE_ID, "Queue"),
                         browsableItem(PODCASTS_ID, "Podcasts"),
                     )
-                    parentId == RECENT_ROOT_ID -> listOfNotNull(lastUnfinishedEpisode()?.let(::playableItem))
+                    parentId == RECENT_ROOT_ID ->
+                        listOfNotNull(lastUnfinishedEpisode()?.let { playableItem(it, completionExtras(it)) })
                     parentId == RECENT_ID -> episodeRepository.getRecentEpisodes().map(::playableItem)
                     parentId == QUEUE_ID -> queueRepository.getQueue().map(::playableItem)
                     parentId == PODCASTS_ID ->
@@ -293,7 +296,7 @@ class PlaybackService : MediaLibraryService() {
         return MediaItem.Builder().setMediaId(PODCAST_PREFIX + id).setMediaMetadata(metadata).build()
     }
 
-    private fun playableItem(episode: EpisodeDetailDto): MediaItem {
+    private fun playableItem(episode: EpisodeDetailDto, extras: Bundle? = null): MediaItem {
         val metadata = MediaMetadata.Builder()
             .setTitle(episode.title)
             .setArtist(episode.podcastName)
@@ -301,12 +304,36 @@ class PlaybackService : MediaLibraryService() {
             .setIsBrowsable(false)
             .setIsPlayable(true)
             .setMediaType(MediaMetadata.MEDIA_TYPE_PODCAST_EPISODE)
+            .apply { extras?.let { setExtras(it) } }
             .build()
         return MediaItem.Builder()
             .setMediaId(episode.id)
             .setUri(episode.audioUrl)
             .setMediaMetadata(metadata)
             .build()
+    }
+
+    /**
+     * Completion-status extras so Android Auto renders a progress bar on the continue-listening
+     * item. Auto reads these off the media description; partial progress also needs a percentage.
+     */
+    private fun completionExtras(episode: EpisodeDetailDto): Bundle = Bundle().apply {
+        val durationMs = episode.durationMs
+        if (episode.progressMs > 0 && durationMs != null && durationMs > 0) {
+            putInt(
+                MediaConstants.EXTRAS_KEY_COMPLETION_STATUS,
+                MediaConstants.EXTRAS_VALUE_COMPLETION_STATUS_PARTIALLY_PLAYED,
+            )
+            putDouble(
+                MediaConstants.EXTRAS_KEY_COMPLETION_PERCENTAGE,
+                (episode.progressMs.toDouble() / durationMs).coerceIn(0.0, 1.0),
+            )
+        } else {
+            putInt(
+                MediaConstants.EXTRAS_KEY_COMPLETION_STATUS,
+                MediaConstants.EXTRAS_VALUE_COMPLETION_STATUS_NOT_PLAYED,
+            )
+        }
     }
 
     private fun pushWidgetState(isPlaying: Boolean) {
