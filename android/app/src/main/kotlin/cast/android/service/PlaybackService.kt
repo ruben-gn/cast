@@ -363,6 +363,14 @@ class PlaybackService : MediaLibraryService() {
             episodeStarted = false
             pushWidgetState(mediaSession?.player?.isPlaying ?: false)
             val episodeId = currentEpisodeId ?: return
+            // Head-start seek from local cache so playback doesn't jump while we fetch the server position.
+            // Does NOT set episodeStarted: the WS `get` reconcile (states.collect) still re-seeks to the
+            // authoritative server value when it arrives. Server stays the source of truth.
+            serviceScope.launch {
+                val cached = runCatching { dataStore.data.first()[progressKey(episodeId)] }.getOrNull()
+                if (currentEpisodeId != episodeId || episodeStarted) return@launch
+                localResumePositionMs(cached, played = false)?.let { mediaSession?.player?.seekTo(it) }
+            }
             // Remember it so Auto/Bluetooth can resume after the service is killed (onPlaybackResumption).
             libraryScope.launch { runCatching { dataStore.edit { it[LAST_EPISODE_ID] = episodeId } } }
             sendWs("""{"type":"get","episodeId":"$episodeId"}""")
