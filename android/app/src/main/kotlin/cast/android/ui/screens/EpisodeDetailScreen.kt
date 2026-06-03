@@ -49,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import cast.android.ui.UiState
+import cast.android.ui.components.ConfirmIconButton
 import cast.android.ui.viewmodel.EpisodeDetailViewModel
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.util.relativeTime
@@ -165,9 +166,11 @@ private fun EpisodeDetailContent(
                     modifier = Modifier.size(28.dp),
                 )
             }
-            IconButton(onClick = onAddToQueue) {
-                Icon(Icons.Default.PlaylistAdd, contentDescription = "Add to queue")
-            }
+            ConfirmIconButton(
+                icon = Icons.Default.PlaylistAdd,
+                contentDescription = "Add to queue",
+                onClick = onAddToQueue,
+            )
             IconButton(onClick = {
                 val newPlayed = !played
                 played = newPlayed
