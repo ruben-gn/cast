@@ -892,24 +892,32 @@ details[open] .episode-description-summary::before {
     border-top: 1px solid rgba(255,255,255,0.08);
 }
 
+.player-bar-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.player-artwork {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
 .player-info {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    flex: 1;
     min-width: 0;
     overflow: hidden;
 }
 
-.player-now-playing {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-}
-
-#player-title {
+.player-title {
     font-size: 13px;
     font-weight: 600;
     overflow: hidden;
@@ -918,11 +926,56 @@ details[open] .episode-description-summary::before {
     color: white;
 }
 
-#player-audio {
-    flex: 2;
-    min-width: 0;
-    accent-color: var(--accent);
+.player-podcast {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.player-ctrl-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    opacity: 0.85;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.player-ctrl-btn:hover { opacity: 1; }
+.player-ctrl-btn--main:active { transform: scale(0.92); }
+
+.player-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.12);
+}
+
+.player-progress-fill {
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+}
+
+#player-audio { display: none; }
+
+body.has-playback #player-bar { display: flex; }
+body.now-playing-active #player-bar { display: none; }
 
 /* Settings page */
 .settings-title {
@@ -1078,24 +1131,12 @@ details[open] .episode-description-summary::before {
 
     /* Player bar */
     #player-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-        padding: 10px 16px;
+        padding: 8px 14px;
+        gap: 10px;
     }
 
-    .player-now-playing {
-        display: none;
-    }
-
-    #player-title {
-        font-size: 12px;
-        flex: none;
-    }
-
-    #player-audio {
-        flex: none;
-        width: 100%;
+    .player-controls {
+        gap: 2px;
     }
 
     /* Episode row */

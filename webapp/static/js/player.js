@@ -14,8 +14,7 @@ window.addEventListener('popstate', function (e) {
 
 function syncPlayButtonState() {
     if (!currentEpisodeId) return;
-    var btn = episodeBtn(currentEpisodeId);
-    if (btn) btn.innerHTML = audio.paused ? ICON_PLAY : ICON_PAUSE;
+    setPlayIcon(audio.paused);
 }
 
 document.addEventListener('htmx:afterSettle', syncPlayButtonState);
@@ -41,6 +40,36 @@ function handleSubResult(event) {
 
 var ICON_PLAY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+
+var ICON_PLAY_LG = '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+var ICON_PAUSE_LG = '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+
+function setPlayIcon(paused) {
+    var rowBtn = episodeBtn(currentEpisodeId);
+    if (rowBtn) rowBtn.innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
+    var barBtn = document.getElementById('player-playpause');
+    if (barBtn) barBtn.innerHTML = paused ? ICON_PLAY_LG : ICON_PAUSE_LG;
+    var npBtn = document.getElementById('np-playpause');
+    if (npBtn) npBtn.innerHTML = paused ? ICON_PLAY_LG : ICON_PAUSE_LG;
+}
+
+function togglePlayPause(e) {
+    if (e) e.stopPropagation();
+    if (!currentEpisodeId) return;
+    if (audio.paused) audio.play().catch(function() {}); else audio.pause();
+}
+
+function seekBack(e) {
+    if (e) e.stopPropagation();
+    if (!currentEpisodeId) return;
+    audio.currentTime = Math.max(0, audio.currentTime - 15);
+}
+
+function seekForward(e) {
+    if (e) e.stopPropagation();
+    if (!currentEpisodeId || !audio.duration) return;
+    audio.currentTime = Math.min(audio.duration, audio.currentTime + 30);
+}
 var currentEpisodeId = null;
 var currentArtwork = '';
 var currentPodcast = '';
@@ -140,6 +169,8 @@ audio.addEventListener('timeupdate', function () {
         lastReportedTime = cur;
     }
     updateEpisodeProgress(cur, this.duration);
+    var fill = document.getElementById('player-progress-fill');
+    if (fill && this.duration) fill.style.width = Math.round(cur / this.duration * 100) + '%';
 });
 
 function updateEpisodeProgress(cur, duration) {
@@ -159,13 +190,11 @@ function updateEpisodeProgress(cur, duration) {
 }
 
 audio.addEventListener('play', function () {
-    var btn = episodeBtn(currentEpisodeId);
-    if (btn) btn.innerHTML = ICON_PAUSE;
+    setPlayIcon(false);
 });
 
 audio.addEventListener('pause', function () {
-    var btn = episodeBtn(currentEpisodeId);
-    if (btn) btn.innerHTML = ICON_PLAY;
+    setPlayIcon(true);
     var cur = this.currentTime;
     if (currentEpisodeId && ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({type: 'update', episodeId: currentEpisodeId, progressMs: Math.floor(cur * 1000)}));
@@ -174,8 +203,7 @@ audio.addEventListener('pause', function () {
 });
 
 audio.addEventListener('ended', function () {
-    var btn = episodeBtn(currentEpisodeId);
-    if (btn) btn.innerHTML = ICON_PLAY;
+    setPlayIcon(true);
     if (currentEpisodeId && ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'ended', episodeId: currentEpisodeId }));
     }
@@ -239,8 +267,17 @@ function playEpisodeData(id, url, title, artwork, podcast) {
 
     currentEpisodeId = id;
     lastReportedTime = 0;
+    currentTitle = title;
     document.getElementById('player-title').textContent = title;
-    document.getElementById('player-bar').style.display = 'flex';
+    var podcastEl = document.getElementById('player-podcast');
+    if (podcastEl) podcastEl.textContent = podcast || '';
+    var artEl = document.getElementById('player-artwork');
+    if (artEl) {
+        if (artwork) { artEl.src = artwork; artEl.style.display = ''; }
+        else { artEl.removeAttribute('src'); artEl.style.display = 'none'; }
+    }
+    document.body.classList.add('has-playback');
+    if (typeof syncNowPlaying === 'function') syncNowPlaying();
     audio.src = url;
     audio.play().catch(function (e) {
         console.error('Playback failed:', e);
