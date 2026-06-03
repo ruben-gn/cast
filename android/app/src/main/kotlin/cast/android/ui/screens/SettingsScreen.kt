@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import cast.android.ui.components.ConfirmButton
 import cast.android.ui.viewmodel.SettingsViewModel
 
 @Composable
@@ -60,13 +60,13 @@ fun SettingsScreen(navController: NavHostController) {
             ),
         )
         Spacer(Modifier.height(8.dp))
-        Button(
+        ConfirmButton(
+            text = "Save server URL",
+            confirmedText = "Saved ✓",
             onClick = { vm.updateSettings(settings.copy(serverUrl = serverUrl)) },
             enabled = serverUrl.isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Save server URL")
-        }
+        )
 
         Spacer(Modifier.height(24.dp))
 
