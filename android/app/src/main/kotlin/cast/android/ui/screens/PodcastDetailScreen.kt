@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -35,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import cast.android.ui.UiState
+import cast.android.ui.components.ConfirmButton
 import cast.android.ui.components.EpisodeItem
 import cast.android.ui.nav.EpisodeDetail
 import cast.android.ui.viewmodel.LocalPlayerViewModel
@@ -112,9 +112,11 @@ fun PodcastDetailScreen(podcastId: String, navController: NavHostController) {
                             ) {
                                 Text(podcast.name, style = MaterialTheme.typography.titleMedium)
                                 Spacer(Modifier.height(8.dp))
-                                Button(onClick = { vm.markAllPlayed() }) {
-                                    Text("Mark all played")
-                                }
+                                ConfirmButton(
+                                    text = "Mark all played",
+                                    confirmedText = "Done ✓",
+                                    onClick = { vm.markAllPlayed() },
+                                )
                             }
                         }
                         HorizontalDivider()
