@@ -6,6 +6,8 @@ import {PodcastDetail} from './components/PodcastDetail'
 import {QueuePage, QueueList} from './components/QueuePage'
 import {RecentPage} from './components/RecentPage'
 import {SettingsPage} from './components/SettingsPage'
+import {NowPlaying} from './components/NowPlaying'
+import {EpisodeDetail} from './components/EpisodeDetail'
 import type {Podcast, PodcastDetail as PodcastDetailType, Episode} from './types'
 
 const KOTLIN_API = process.env.KOTLIN_API ?? 'http://localhost:8100'
@@ -106,6 +108,36 @@ app.post('/podcasts/import', async (c) => {
     return c.redirect('/podcasts')
 })
 
+app.get('/now-playing', async (c) => {
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    const content = <NowPlaying/>
+    if (isHtmx) {
+        return c.html(
+            <div id="content-container">
+                <div class="page-content">{content}</div>
+            </div>
+        )
+    }
+    return c.html(<Layout title="Now Playing — Cast">{content}</Layout>)
+})
+
+app.get('/episodes/:id', async (c) => {
+    const id = c.req.param('id')
+    const res = await fetch(`${KOTLIN_API}/api/episodes/${encodeURIComponent(id)}`)
+    if (!res.ok) return c.notFound()
+    const episode: Episode = await res.json()
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    const content = <EpisodeDetail episode={episode}/>
+    if (isHtmx) {
+        return c.html(
+            <div id="content-container">
+                <div class="page-content">{content}</div>
+            </div>
+        )
+    }
+    return c.html(<Layout title={episode.title}>{content}</Layout>)
+})
+
 app.get('/queue', async (c) => {
     const res = await fetch(`${KOTLIN_API}/api/queue`)
     if (!res.ok) return new Response('', {status: res.status})
@@ -143,6 +175,19 @@ app.delete('/queue/:id', async (c) => {
 
 app.get('/api/queue', async (c) => {
     const res = await fetch(`${KOTLIN_API}/api/queue`)
+    return new Response(res.body, {
+        status: res.status,
+        headers: {'Content-Type': res.headers.get('content-type') ?? 'application/json'},
+    })
+})
+
+app.put('/api/queue', async (c) => {
+    const body = await c.req.text()
+    const res = await fetch(`${KOTLIN_API}/api/queue`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body,
+    })
     return new Response(res.body, {
         status: res.status,
         headers: {'Content-Type': res.headers.get('content-type') ?? 'application/json'},

@@ -16,7 +16,13 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
                 </span>
             )}
             <div class="episode-main">
-                <div class="episode-header episode-header--static">
+                <div
+                    class="episode-header"
+                    hx-get={`/episodes/${encodeURIComponent(episode.id)}`}
+                    hx-target="#content-container"
+                    hx-swap="outerHTML"
+                    hx-push-url="true"
+                >
                     <EpisodeRow episode={episode}/>
                 </div>
                 <div class="episode-actions">
@@ -40,7 +46,9 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
                         data-id={episode.id}
                         data-audio-url={episode.audioUrl}
                         data-title={episode.title}
-                        onclick="playEpisode(this.dataset.id, this.dataset.audioUrl, this.dataset.title)"
+                        data-artwork={episode.podcastImage ?? ''}
+                        data-podcast={episode.podcastName ?? ''}
+                        onclick="playEpisode(this)"
                         title={`Play ${episode.title}`}
                     >
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">

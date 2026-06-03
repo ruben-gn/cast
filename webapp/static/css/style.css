@@ -892,24 +892,32 @@ details[open] .episode-description-summary::before {
     border-top: 1px solid rgba(255,255,255,0.08);
 }
 
+.player-bar-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.player-artwork {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
 .player-info {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    flex: 1;
     min-width: 0;
     overflow: hidden;
 }
 
-.player-now-playing {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-}
-
-#player-title {
+.player-title {
     font-size: 13px;
     font-weight: 600;
     overflow: hidden;
@@ -918,11 +926,56 @@ details[open] .episode-description-summary::before {
     color: white;
 }
 
-#player-audio {
-    flex: 2;
-    min-width: 0;
-    accent-color: var(--accent);
+.player-podcast {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.player-ctrl-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    opacity: 0.85;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.player-ctrl-btn:hover { opacity: 1; }
+.player-ctrl-btn--main:active { transform: scale(0.92); }
+
+.player-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.12);
+}
+
+.player-progress-fill {
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+}
+
+#player-audio { display: none; }
+
+body.has-playback #player-bar { display: flex; }
+body.now-playing-active #player-bar { display: none; }
 
 /* Settings page */
 .settings-title {
@@ -1078,24 +1131,12 @@ details[open] .episode-description-summary::before {
 
     /* Player bar */
     #player-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-        padding: 10px 16px;
+        padding: 8px 14px;
+        gap: 10px;
     }
 
-    .player-now-playing {
-        display: none;
-    }
-
-    #player-title {
-        font-size: 12px;
-        flex: none;
-    }
-
-    #player-audio {
-        flex: none;
-        width: 100%;
+    .player-controls {
+        gap: 2px;
     }
 
     /* Episode row */
@@ -1104,3 +1145,67 @@ details[open] .episode-description-summary::before {
         gap: 4px;
     }
 }
+
+/* Now Playing view */
+.now-playing-view { max-width: 480px; margin: 0 auto; }
+
+.np-empty { display: none; text-align: center; color: var(--text-muted); margin-top: 80px; font-size: 15px; }
+
+.np-body { display: flex; flex-direction: column; align-items: center; gap: 20px; padding-top: 8px; }
+
+.np-artwork {
+    width: 280px; max-width: 80vw; aspect-ratio: 1; object-fit: cover;
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+}
+
+.np-meta { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; width: 100%; }
+.np-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.np-podcast { font-size: 13px; color: var(--text-muted); }
+
+.np-scrubber { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+.np-times { display: flex; justify-content: space-between; width: 100%; font-size: 11px; color: var(--text-muted); }
+
+.np-controls { display: flex; align-items: center; gap: 28px; margin-top: 8px; }
+
+.np-controls .player-ctrl-btn { color: var(--text-muted); }
+.np-controls .player-ctrl-btn:hover { color: var(--text); }
+
+.np-playpause {
+    width: 72px; height: 72px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--accent); color: white;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(27,153,139,0.4); transition: transform 0.1s;
+}
+.np-playpause:active { transform: scale(0.94); }
+
+/* Episode detail page */
+.episode-detail-page { max-width: 720px; }
+
+.episode-detail-header { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 18px; }
+
+.episode-detail-cover {
+    width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-md);
+    flex-shrink: 0; box-shadow: var(--shadow-sm);
+}
+
+.episode-detail-title { margin: 0 0 6px; font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.episode-detail-meta { margin: 0; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+.episode-detail-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+
+.episode-detail-progress {
+    position: static; height: 4px; border-radius: 2px; overflow: hidden; margin-bottom: 20px;
+}
+
+.episode-detail-description {
+    font-size: 14px; line-height: 1.7; color: var(--text); word-wrap: break-word;
+}
+.episode-detail-description a { color: var(--accent); }
+
+.queue-drag-handle {
+    display: flex; align-items: center; color: var(--text-muted);
+    cursor: grab; flex-shrink: 0; touch-action: none;
+}
+.queue-drag-handle:active { cursor: grabbing; }
+.queue-row.dragging { opacity: 0.5; box-shadow: var(--shadow-md); }

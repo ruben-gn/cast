@@ -24,7 +24,10 @@ export const QueueList: FC<{ episodes: Episode[] }> = ({episodes}) => (
 )
 
 const QueueRow: FC<{ episode: Episode; position: number }> = ({episode, position}) => (
-    <div class="queue-row" id={`queue-row-${episode.id}`}>
+    <div class="queue-row" id={`queue-row-${episode.id}`} data-id={episode.id} draggable="true">
+        <span class="queue-drag-handle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+        </span>
         <span class="queue-position">{position}</span>
         <div class="queue-row-info">
             <span class="queue-row-title">{episode.title}</span>
@@ -38,7 +41,9 @@ const QueueRow: FC<{ episode: Episode; position: number }> = ({episode, position
                 data-id={episode.id}
                 data-audio-url={episode.audioUrl}
                 data-title={episode.title}
-                onclick="playEpisode(this.dataset.id, this.dataset.audioUrl, this.dataset.title)"
+                data-artwork={episode.podcastImage ?? ''}
+                data-podcast={episode.podcastName ?? ''}
+                onclick="playEpisode(this)"
                 title={`Play ${episode.title}`}
             >
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
