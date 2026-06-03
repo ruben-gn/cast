@@ -3,6 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
     implementation(project(":shared-models"))
     implementation(libs.ktor.server.core)
