@@ -38,7 +38,9 @@ const QueueRow: FC<{ episode: Episode; position: number }> = ({episode, position
                 data-id={episode.id}
                 data-audio-url={episode.audioUrl}
                 data-title={episode.title}
-                onclick="playEpisode(this.dataset.id, this.dataset.audioUrl, this.dataset.title)"
+                data-artwork={episode.podcastImage ?? ''}
+                data-podcast={episode.podcastName ?? ''}
+                onclick="playEpisode(this)"
                 title={`Play ${episode.title}`}
             >
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">

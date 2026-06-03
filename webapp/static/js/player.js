@@ -42,6 +42,9 @@ function handleSubResult(event) {
 var ICON_PLAY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 var currentEpisodeId = null;
+var currentArtwork = '';
+var currentPodcast = '';
+var currentTitle = '';
 var lastReportedTime = 0;
 var audio = document.getElementById('player-audio');
 var ws = null;
@@ -76,6 +79,7 @@ function markPlayed(id) {
     var btn = episodeBtn(id);
     if (!btn) return;
     var item = btn.closest('.episode-item');
+    if (!item) return;
     if (item.closest('.recent-page')) {
         item.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
         item.style.opacity = '0';
@@ -97,6 +101,7 @@ function unmarkPlayed(id) {
     var btn = episodeBtn(id);
     if (!btn) return;
     var item = btn.closest('.episode-item');
+    if (!item) return;
     item.classList.remove('is-played');
     var toggleBtn = item.querySelector('.episode-played-btn');
     if (toggleBtn) {
@@ -112,9 +117,11 @@ function togglePlayed(btn) {
     var method = played ? 'DELETE' : 'POST';
     fetch('/api/episodes/' + encodeURIComponent(id) + '/played', {method: method})
         .then(function(r) {
-            if (r.ok) {
-                if (played) unmarkPlayed(id); else markPlayed(id);
-            }
+            if (!r.ok) return;
+            if (played) unmarkPlayed(id); else markPlayed(id);
+            btn.dataset.played = (!played).toString();
+            btn.classList.toggle('is-played', !played);
+            btn.title = !played ? 'Mark as unplayed' : 'Mark as played';
         })
         .catch(function() {});
 }
@@ -203,12 +210,18 @@ function playNextInQueue() {
             var next = episodes[0];
             fetch('/queue/' + encodeURIComponent(next.id), {method: 'DELETE'});
             updateQueueBadge(episodes.length - 1);
-            playEpisode(next.id, next.audioUrl, next.title);
+            playEpisodeData(next.id, next.audioUrl, next.title, next.podcastImage || '', next.podcastName || '');
         })
         .catch(function () {});
 }
 
-function playEpisode(id, url, title) {
+function playEpisode(el) {
+    playEpisodeData(el.dataset.id, el.dataset.audioUrl, el.dataset.title, el.dataset.artwork || '', el.dataset.podcast || '');
+}
+
+function playEpisodeData(id, url, title, artwork, podcast) {
+    currentArtwork = artwork || '';
+    currentPodcast = podcast || '';
     if (currentEpisodeId === id) {
         if (audio.paused) {
             audio.play().catch(function (e) {
