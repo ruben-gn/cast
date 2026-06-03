@@ -130,13 +130,12 @@ fun EpisodeItem(
                         }
                     }
                     if (onAddToQueue != null) {
-                        IconButton(onClick = onAddToQueue) {
-                            Icon(
-                                imageVector = Icons.Default.PlaylistAdd,
-                                contentDescription = "Add to queue",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        ConfirmIconButton(
+                            icon = Icons.Default.PlaylistAdd,
+                            contentDescription = "Add to queue",
+                            onClick = onAddToQueue,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     IconButton(onClick = onPlay) {
                         Icon(
