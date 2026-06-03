@@ -50,3 +50,6 @@ out/
 anr-trace.txt
 cast.log
 *.log
+
+# Claude Code agent worktrees
+.claude/worktrees/
