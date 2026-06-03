@@ -29,7 +29,9 @@ class CatalogViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<UiState<List<PodcastSummaryDto>>>(UiState.Loading)
+    private val _uiState = MutableStateFlow<UiState<List<PodcastSummaryDto>>>(
+        podcastRepository.cachedPodcasts()?.let { UiState.Success(it) } ?: UiState.Loading
+    )
     val uiState: StateFlow<UiState<List<PodcastSummaryDto>>> = _uiState.asStateFlow()
 
     var showAddSheet by mutableStateOf(false)
@@ -43,11 +45,13 @@ class CatalogViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
+            if (_uiState.value !is UiState.Success) _uiState.value = UiState.Loading
             _uiState.value = try {
                 UiState.Success(podcastRepository.listPodcasts())
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Failed to load podcasts")
+                // Keep showing cached data on refresh failure; only surface Error on cold start.
+                if (_uiState.value is UiState.Success) _uiState.value
+                else UiState.Error(e.message ?: "Failed to load podcasts")
             }
         }
     }

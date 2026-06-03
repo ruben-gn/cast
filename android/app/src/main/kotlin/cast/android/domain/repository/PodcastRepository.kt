@@ -5,6 +5,7 @@ import cast.api.PodcastSummaryDto
 import okhttp3.MultipartBody
 
 interface PodcastRepository {
+    fun cachedPodcasts(): List<PodcastSummaryDto>?
     suspend fun listPodcasts(): List<PodcastSummaryDto>
     suspend fun getPodcast(id: String): PodcastDetailDto
     suspend fun addPodcast(feedUrl: String): PodcastDetailDto

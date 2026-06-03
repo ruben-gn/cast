@@ -2,18 +2,28 @@ package cast.android.service
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import androidx.core.net.toUri
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.LibraryParams
+import androidx.media3.session.MediaConstants
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
 import cast.android.domain.repository.EpisodeRepository
@@ -32,6 +42,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -45,6 +56,8 @@ class PlaybackService : MediaLibraryService() {
     @Inject lateinit var queueRepository: QueueRepository
     @Inject lateinit var podcastRepository: PodcastRepository
     @Inject lateinit var episodeRepository: EpisodeRepository
+    @Inject lateinit var dataStore: DataStore<Preferences>
+    @Inject lateinit var cacheDataSourceFactory: CacheDataSource.Factory
 
     private var mediaSession: MediaLibrarySession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -71,6 +84,7 @@ class PlaybackService : MediaLibraryService() {
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
             .build()
             .also { it.addListener(PlayerListener()) }
 
@@ -80,8 +94,23 @@ class PlaybackService : MediaLibraryService() {
             PendingIntent.FLAG_IMMUTABLE,
         )
 
+        // Android Auto shows skip-to-prev/next by default, which do nothing during single-episode
+        // playback. Put rewind/fast-forward in those slots instead. Using player commands (not custom
+        // session commands) wires the seek automatically; icons match ExoPlayer's 5s/15s defaults.
+        val rewindButton = CommandButton.Builder(CommandButton.ICON_SKIP_BACK_5)
+            .setDisplayName("Rewind")
+            .setPlayerCommand(Player.COMMAND_SEEK_BACK)
+            .setSlots(CommandButton.SLOT_BACK)
+            .build()
+        val fastForwardButton = CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_15)
+            .setDisplayName("Fast forward")
+            .setPlayerCommand(Player.COMMAND_SEEK_FORWARD)
+            .setSlots(CommandButton.SLOT_FORWARD)
+            .build()
+
         mediaSession = MediaLibrarySession.Builder(this, player, LibraryCallback())
             .setSessionActivity(sessionActivity)
+            .setMediaButtonPreferences(ImmutableList.of(rewindButton, fastForwardButton))
             .build()
 
         playbackWebSocketClient.connect()
@@ -139,7 +168,18 @@ class PlaybackService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<MediaItem>> = libraryScope.future {
-            LibraryResult.ofItem(browsableItem(ROOT_ID, "Cast"), params)
+            // Auto requests a "recent" root on connect to surface continue-listening content. Advertise
+            // it only when we have a last-played episode. This must stay a cheap LOCAL read: Auto's
+            // legacy stub blocks the main thread on this future (see libraryScope above), so a Pi fetch
+            // here would risk an ANR. The actual episode is fetched lazily in onGetChildren.
+            if (params?.isRecent == true) {
+                if (dataStore.data.first()[LAST_EPISODE_ID] != null)
+                    LibraryResult.ofItem(browsableItem(RECENT_ROOT_ID, "Cast"), params)
+                else
+                    LibraryResult.ofError(LibraryResult.RESULT_ERROR_NOT_SUPPORTED)
+            } else {
+                LibraryResult.ofItem(browsableItem(ROOT_ID, "Cast"), params)
+            }
         }
 
         override fun onGetChildren(
@@ -157,6 +197,8 @@ class PlaybackService : MediaLibraryService() {
                         browsableItem(QUEUE_ID, "Queue"),
                         browsableItem(PODCASTS_ID, "Podcasts"),
                     )
+                    parentId == RECENT_ROOT_ID ->
+                        listOfNotNull(lastUnfinishedEpisode()?.let { playableItem(it, completionExtras(it)) })
                     parentId == RECENT_ID -> episodeRepository.getRecentEpisodes().map(::playableItem)
                     parentId == QUEUE_ID -> queueRepository.getQueue().map(::playableItem)
                     parentId == PODCASTS_ID ->
@@ -178,6 +220,7 @@ class PlaybackService : MediaLibraryService() {
             val item: MediaItem? = runCatching {
                 when {
                     mediaId == ROOT_ID -> browsableItem(ROOT_ID, "Cast")
+                    mediaId == RECENT_ROOT_ID -> browsableItem(RECENT_ROOT_ID, "Cast")
                     mediaId == RECENT_ID -> browsableItem(RECENT_ID, "Recent")
                     mediaId == QUEUE_ID -> browsableItem(QUEUE_ID, "Queue")
                     mediaId == PODCASTS_ID -> browsableItem(PODCASTS_ID, "Podcasts")
@@ -208,6 +251,33 @@ class PlaybackService : MediaLibraryService() {
                     .getOrDefault(item)
             }.toMutableList()
         }
+
+        /**
+         * Resume the last-played episode when a controller (Android Auto, Bluetooth, system UI)
+         * presses play with no current item — e.g. after the service was killed. Failing the
+         * future signals "nothing to resume". The exact start position is non-critical: once the
+         * item loads, the WebSocket sync ([onMediaItemTransition] → "get") re-seeks to the server's
+         * authoritative progress.
+         */
+        override fun onPlaybackResumption(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            isForPlayback: Boolean,
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = libraryScope.future {
+            val episode = lastUnfinishedEpisode()
+                ?: throw UnsupportedOperationException("No previous episode to resume")
+            MediaSession.MediaItemsWithStartPosition(listOf(playableItem(episode)), 0, episode.progressMs)
+        }
+    }
+
+    /**
+     * The episode last played through this device, if still unfinished — the source for both Android
+     * Auto's continue-listening (recent) root and playback resumption. One Pi fetch; never call this
+     * from [LibraryCallback.onGetLibraryRoot], whose future blocks Auto's main thread.
+     */
+    private suspend fun lastUnfinishedEpisode(): EpisodeDetailDto? {
+        val id = dataStore.data.first()[LAST_EPISODE_ID] ?: return null
+        return runCatching { episodeRepository.getEpisode(id) }.getOrNull()?.takeIf { !it.played }
     }
 
     private fun browsableItem(id: String, title: String): MediaItem {
@@ -231,7 +301,7 @@ class PlaybackService : MediaLibraryService() {
         return MediaItem.Builder().setMediaId(PODCAST_PREFIX + id).setMediaMetadata(metadata).build()
     }
 
-    private fun playableItem(episode: EpisodeDetailDto): MediaItem {
+    private fun playableItem(episode: EpisodeDetailDto, extras: Bundle? = null): MediaItem {
         val metadata = MediaMetadata.Builder()
             .setTitle(episode.title)
             .setArtist(episode.podcastName)
@@ -239,12 +309,37 @@ class PlaybackService : MediaLibraryService() {
             .setIsBrowsable(false)
             .setIsPlayable(true)
             .setMediaType(MediaMetadata.MEDIA_TYPE_PODCAST_EPISODE)
+            .apply { extras?.let { setExtras(it) } }
             .build()
         return MediaItem.Builder()
             .setMediaId(episode.id)
             .setUri(episode.audioUrl)
+            .setCustomCacheKey(episode.id)
             .setMediaMetadata(metadata)
             .build()
+    }
+
+    /**
+     * Completion-status extras so Android Auto renders a progress bar on the continue-listening
+     * item. Auto reads these off the media description; partial progress also needs a percentage.
+     */
+    private fun completionExtras(episode: EpisodeDetailDto): Bundle = Bundle().apply {
+        val durationMs = episode.durationMs
+        if (episode.progressMs > 0 && durationMs != null && durationMs > 0) {
+            putInt(
+                MediaConstants.EXTRAS_KEY_COMPLETION_STATUS,
+                MediaConstants.EXTRAS_VALUE_COMPLETION_STATUS_PARTIALLY_PLAYED,
+            )
+            putDouble(
+                MediaConstants.EXTRAS_KEY_COMPLETION_PERCENTAGE,
+                (episode.progressMs.toDouble() / durationMs).coerceIn(0.0, 1.0),
+            )
+        } else {
+            putInt(
+                MediaConstants.EXTRAS_KEY_COMPLETION_STATUS,
+                MediaConstants.EXTRAS_VALUE_COMPLETION_STATUS_NOT_PLAYED,
+            )
+        }
     }
 
     private fun pushWidgetState(isPlaying: Boolean) {
@@ -268,6 +363,16 @@ class PlaybackService : MediaLibraryService() {
             episodeStarted = false
             pushWidgetState(mediaSession?.player?.isPlaying ?: false)
             val episodeId = currentEpisodeId ?: return
+            // Head-start seek from local cache so playback doesn't jump while we fetch the server position.
+            // Does NOT set episodeStarted: the WS `get` reconcile (states.collect) still re-seeks to the
+            // authoritative server value when it arrives. Server stays the source of truth.
+            serviceScope.launch {
+                val cached = runCatching { dataStore.data.first()[progressKey(episodeId)] }.getOrNull()
+                if (currentEpisodeId != episodeId || episodeStarted) return@launch
+                localResumePositionMs(cached, played = false)?.let { mediaSession?.player?.seekTo(it) }
+            }
+            // Remember it so Auto/Bluetooth can resume after the service is killed (onPlaybackResumption).
+            libraryScope.launch { runCatching { dataStore.edit { it[LAST_EPISODE_ID] = episodeId } } }
             sendWs("""{"type":"get","episodeId":"$episodeId"}""")
         }
 
@@ -284,6 +389,7 @@ class PlaybackService : MediaLibraryService() {
             } else {
                 // Flush exact position on intentional pause so server is never stale
                 val progressMs = mediaSession?.player?.currentPosition ?: 0L
+                cacheProgress(episodeId, progressMs)
                 sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""")
                 stopProgressSync()
             }
@@ -297,7 +403,10 @@ class PlaybackService : MediaLibraryService() {
         override fun onPlaybackStateChanged(state: Int) {
             Log.d(TAG, "onPlaybackStateChanged: state=$state")
             if (state == Player.STATE_ENDED) {
-                currentEpisodeId?.let { sendWs("""{"type":"ended","episodeId":"$it"}""") }
+                currentEpisodeId?.let {
+                    sendWs("""{"type":"ended","episodeId":"$it"}""")
+                    clearCachedProgress(it)
+                }
                 stopProgressSync()
                 playNextInQueue()
             }
@@ -307,7 +416,11 @@ class PlaybackService : MediaLibraryService() {
     private fun playNextInQueue() {
         serviceScope.launch {
             val queue = try { queueRepository.getQueue() } catch (_: Exception) { return@launch }
-            val next = queue.firstOrNull() ?: return@launch
+            val next = queue.firstOrNull() ?: run {
+                // Nothing left to play: don't let resumption replay the finished episode.
+                runCatching { dataStore.edit { it.remove(LAST_EPISODE_ID) } }
+                return@launch
+            }
             try { queueRepository.removeFromQueue(next.id) } catch (_: Exception) {}
             mediaSession?.player?.let { player ->
                 player.setMediaItem(playableItem(next))
@@ -323,6 +436,7 @@ class PlaybackService : MediaLibraryService() {
             while (isActive) {
                 delay(10_000)
                 val progressMs = mediaSession?.player?.currentPosition ?: break
+                cacheProgress(episodeId, progressMs)
                 sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""")
             }
         }
@@ -331,6 +445,19 @@ class PlaybackService : MediaLibraryService() {
     private fun stopProgressSync() {
         progressJob?.cancel()
         progressJob = null
+    }
+
+    private fun progressKey(episodeId: String) = longPreferencesKey("progress_$episodeId")
+
+    private fun cacheProgress(episodeId: String, progressMs: Long) {
+        if (progressMs <= 0L) return
+        libraryScope.launch {
+            runCatching { dataStore.edit { it[progressKey(episodeId)] = progressMs } }
+        }
+    }
+
+    private fun clearCachedProgress(episodeId: String) {
+        libraryScope.launch { runCatching { dataStore.edit { it.remove(progressKey(episodeId)) } } }
     }
 
     private fun sendWs(message: String) {
@@ -344,7 +471,10 @@ class PlaybackService : MediaLibraryService() {
         const val ACTION_SEEK_BACK = "cast.android.widget.SEEK_BACK"
         const val ACTION_SEEK_FORWARD = "cast.android.widget.SEEK_FORWARD"
 
+        private val LAST_EPISODE_ID = stringPreferencesKey("last_episode_id")
+
         private const val ROOT_ID = "root"
+        private const val RECENT_ROOT_ID = "recent_root"
         private const val RECENT_ID = "recent"
         private const val QUEUE_ID = "queue"
         private const val PODCASTS_ID = "podcasts"
