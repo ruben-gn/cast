@@ -1178,3 +1178,27 @@ body.now-playing-active #player-bar { display: none; }
     box-shadow: 0 4px 14px rgba(27,153,139,0.4); transition: transform 0.1s;
 }
 .np-playpause:active { transform: scale(0.94); }
+
+/* Episode detail page */
+.episode-detail-page { max-width: 720px; }
+
+.episode-detail-header { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 18px; }
+
+.episode-detail-cover {
+    width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-md);
+    flex-shrink: 0; box-shadow: var(--shadow-sm);
+}
+
+.episode-detail-title { margin: 0 0 6px; font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.episode-detail-meta { margin: 0; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+.episode-detail-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+
+.episode-detail-progress {
+    position: static; height: 4px; border-radius: 2px; overflow: hidden; margin-bottom: 20px;
+}
+
+.episode-detail-description {
+    font-size: 14px; line-height: 1.7; color: var(--text); word-wrap: break-word;
+}
+.episode-detail-description a { color: var(--accent); }

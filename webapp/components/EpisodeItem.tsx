@@ -16,7 +16,13 @@ export const EpisodeItem: FC<{ episode: Episode }> = ({episode}) => {
                 </span>
             )}
             <div class="episode-main">
-                <div class="episode-header episode-header--static">
+                <div
+                    class="episode-header"
+                    hx-get={`/episodes/${encodeURIComponent(episode.id)}`}
+                    hx-target="#content-container"
+                    hx-swap="outerHTML"
+                    hx-push-url="true"
+                >
                     <EpisodeRow episode={episode}/>
                 </div>
                 <div class="episode-actions">
