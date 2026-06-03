@@ -45,6 +45,11 @@ class RecentViewModel @Inject constructor(
         }
     }
 
+    fun onEpisodeCompleted(episodeId: String) {
+        val current = (_uiState.value as? UiState.Success)?.data ?: return
+        _uiState.value = UiState.Success(current.filterNot { it.id == episodeId })
+    }
+
     fun togglePlayed(episodeId: String, newPlayed: Boolean) {
         viewModelScope.launch {
             try {

@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +32,10 @@ fun RecentScreen(navController: NavHostController) {
     val vm: RecentViewModel = hiltViewModel()
     val playerVm = LocalPlayerViewModel.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(playerVm) {
+        playerVm.episodeCompleted.collect { episodeId -> vm.onEpisodeCompleted(episodeId) }
+    }
 
     PullToRefreshBox(
         isRefreshing = uiState is UiState.Loading,

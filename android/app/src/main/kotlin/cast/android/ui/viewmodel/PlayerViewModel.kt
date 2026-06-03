@@ -18,8 +18,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,6 +48,9 @@ class PlayerViewModel @Inject constructor(
     private val _lastKnownProgress = MutableStateFlow<Map<String, Pair<Long, Long>>>(emptyMap())
     val lastKnownProgress: StateFlow<Map<String, Pair<Long, Long>>> = _lastKnownProgress.asStateFlow()
 
+    private val _episodeCompleted = MutableSharedFlow<String>(replay = 0)
+    val episodeCompleted: SharedFlow<String> = _episodeCompleted.asSharedFlow()
+
     @Volatile private var controller: MediaController? = null
     private var controllerFuture: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
 
@@ -67,6 +73,11 @@ class PlayerViewModel @Inject constructor(
         override fun onPlaybackStateChanged(state: Int) {
             if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
                 _isPlaying.value = false
+            }
+            if (state == Player.STATE_ENDED) {
+                _currentMediaItem.value?.mediaId?.let { id ->
+                    viewModelScope.launch { _episodeCompleted.emit(id) }
+                }
             }
             if (state == Player.STATE_READY) {
                 val ctrl = controller ?: return
