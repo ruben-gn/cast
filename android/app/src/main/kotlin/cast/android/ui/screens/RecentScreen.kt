@@ -23,6 +23,7 @@ import cast.android.ui.UiState
 import cast.android.ui.components.EpisodeItem
 import cast.android.ui.components.RecentScreenSkeleton
 import cast.android.ui.nav.EpisodeDetail
+import cast.android.ui.nav.PodcastDetail
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.ui.viewmodel.RecentViewModel
 
@@ -61,6 +62,9 @@ fun RecentScreen(navController: NavHostController) {
                         onTogglePlayed = { newPlayed -> vm.togglePlayed(episode.id, newPlayed) },
                         onAddToQueue = { vm.addToQueue(episode.id) },
                         onClick = { navController.navigate(EpisodeDetail(episode.id)) },
+                        onGoToPodcast = episode.podcastId?.let { id ->
+                            { navController.navigate(PodcastDetail(id)) }
+                        },
                     )
                     HorizontalDivider()
                 }
