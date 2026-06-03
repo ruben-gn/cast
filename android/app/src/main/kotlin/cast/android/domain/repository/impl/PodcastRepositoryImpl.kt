@@ -1,5 +1,6 @@
 package cast.android.domain.repository.impl
 
+import cast.android.domain.cache.LatestCache
 import cast.android.domain.repository.PodcastRepository
 import cast.android.network.CastApiService
 import cast.api.AddPodcastRequest
@@ -14,7 +15,12 @@ class PodcastRepositoryImpl @Inject constructor(
     private val api: CastApiService,
 ) : PodcastRepository {
 
-    override suspend fun listPodcasts(): List<PodcastSummaryDto> = api.listPodcasts()
+    private val podcastsCache = LatestCache<List<PodcastSummaryDto>>()
+
+    override fun cachedPodcasts(): List<PodcastSummaryDto>? = podcastsCache.latest
+
+    override suspend fun listPodcasts(): List<PodcastSummaryDto> =
+        api.listPodcasts().also(podcastsCache::put)
 
     override suspend fun getPodcast(id: String): PodcastDetailDto = api.getPodcast(id)
 

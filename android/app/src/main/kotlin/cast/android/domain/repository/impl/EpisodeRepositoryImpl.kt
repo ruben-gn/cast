@@ -1,5 +1,6 @@
 package cast.android.domain.repository.impl
 
+import cast.android.domain.cache.LatestCache
 import cast.android.domain.repository.EpisodeRepository
 import cast.android.network.CastApiService
 import cast.api.EpisodeDetailDto
@@ -11,15 +12,25 @@ class EpisodeRepositoryImpl @Inject constructor(
     private val api: CastApiService,
 ) : EpisodeRepository {
 
-    override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> = api.getRecentEpisodes()
+    private val recentCache = LatestCache<List<EpisodeDetailDto>>()
+
+    override fun cachedRecentEpisodes(): List<EpisodeDetailDto>? = recentCache.latest
+
+    override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> =
+        api.getRecentEpisodes().also(recentCache::put)
 
     override suspend fun getEpisode(episodeId: String): EpisodeDetailDto = api.getEpisode(episodeId)
 
+    // Toggling played changes which episodes belong in "recent". Marking it stale (clear, don't
+    // patch) means the next revisit cold-loads that one screen rather than seeding a list that
+    // briefly flashes the just-played episode back before the background refresh removes it.
     override suspend fun markPlayed(episodeId: String) {
         api.markPlayed(episodeId)
+        recentCache.clear()
     }
 
     override suspend fun markUnplayed(episodeId: String) {
         api.markUnplayed(episodeId)
+        recentCache.clear()
     }
 }
