@@ -2,8 +2,10 @@ package cast.android.service
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -267,6 +269,27 @@ class PlaybackService : MediaLibraryService() {
             val episode = lastUnfinishedEpisode()
                 ?: throw UnsupportedOperationException("No previous episode to resume")
             MediaSession.MediaItemsWithStartPosition(listOf(playableItem(episode)), 0, episode.progressMs)
+        }
+
+        // KEYCODE_MEDIA_PREVIOUS from headphones defaults to seekToPrevious() which jumps to
+        // position 0. Reroute it to seekBack() to match the in-app rewind button.
+        override fun onMediaButtonEvent(
+            session: MediaSession,
+            controllerInfo: MediaSession.ControllerInfo,
+            intent: Intent,
+        ): Boolean {
+            val keyEvent: KeyEvent? = if (Build.VERSION.SDK_INT >= 33) {
+                intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
+            }
+            if (keyEvent?.keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS &&
+                keyEvent.action == KeyEvent.ACTION_DOWN) {
+                session.player.seekBack()
+                return true
+            }
+            return super.onMediaButtonEvent(session, controllerInfo, intent)
         }
     }
 
