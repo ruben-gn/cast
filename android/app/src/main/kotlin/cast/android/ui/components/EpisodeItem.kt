@@ -1,6 +1,6 @@
 package cast.android.ui.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,10 +13,13 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Podcasts
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,6 +39,7 @@ import cast.android.util.relativeTime
 import cast.api.EpisodeDetailDto
 import coil3.compose.AsyncImage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EpisodeItem(
     episode: EpisodeDetailDto,
@@ -42,6 +47,7 @@ fun EpisodeItem(
     onTogglePlayed: ((Boolean) -> Unit)? = null,
     onAddToQueue: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
+    onGoToPodcast: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val playerVm = LocalPlayerViewModel.current
@@ -55,6 +61,9 @@ fun EpisodeItem(
     val isCurrent = currentMediaItem?.mediaId == episode.id
 
     var played by remember(episode.id, episode.played) { mutableStateOf(episode.played) }
+    var showSheet by remember(episode.id) { mutableStateOf(false) }
+
+    val hasSheetActions = onTogglePlayed != null || onAddToQueue != null || onGoToPodcast != null
 
     val savedProgress: Float? = when {
         played -> null
@@ -77,10 +86,13 @@ fun EpisodeItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .combinedClickable(
+                    onClick = { onClick?.invoke() },
+                    onLongClick = { if (hasSheetActions) showSheet = true },
+                )
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             episode.podcastImage?.let { url ->
                 AsyncImage(
@@ -110,40 +122,12 @@ fun EpisodeItem(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (onTogglePlayed != null) {
-                        IconButton(onClick = {
-                            val newPlayed = !played
-                            played = newPlayed
-                            onTogglePlayed(newPlayed)
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = if (played) "Mark as unplayed" else "Mark as played",
-                                tint = if (played) MaterialTheme.colorScheme.primary
-                                       else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                            )
-                        }
-                    }
-                    if (onAddToQueue != null) {
-                        ConfirmIconButton(
-                            icon = Icons.Default.PlaylistAdd,
-                            contentDescription = "Add to queue",
-                            onClick = onAddToQueue,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    IconButton(onClick = onPlay) {
-                        Icon(
-                            imageVector = if (isCurrent && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
-                        )
-                    }
-                }
+            }
+            IconButton(onClick = onPlay) {
+                Icon(
+                    imageVector = if (isCurrent && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
+                )
             }
         }
         when {
@@ -160,5 +144,75 @@ fun EpisodeItem(
                 drawStopIndicator = {},
             )
         }
+    }
+
+    if (showSheet) {
+        EpisodeActionsSheet(
+            episodeTitle = episode.title,
+            played = played,
+            onAddToQueue = onAddToQueue,
+            onTogglePlayed = onTogglePlayed?.let {
+                {
+                    val newPlayed = !played
+                    played = newPlayed
+                    it(newPlayed)
+                }
+            },
+            onGoToPodcast = onGoToPodcast,
+            onDismiss = { showSheet = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EpisodeActionsSheet(
+    episodeTitle: String,
+    played: Boolean,
+    onAddToQueue: (() -> Unit)?,
+    onTogglePlayed: (() -> Unit)?,
+    onGoToPodcast: (() -> Unit)?,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            text = episodeTitle,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+        )
+        if (onAddToQueue != null) {
+            SheetAction(Icons.Default.PlaylistAdd, "Add to queue") {
+                onAddToQueue(); onDismiss()
+            }
+        }
+        if (onTogglePlayed != null) {
+            SheetAction(
+                Icons.Default.CheckCircle,
+                if (played) "Mark as unplayed" else "Mark as played",
+            ) { onTogglePlayed(); onDismiss() }
+        }
+        if (onGoToPodcast != null) {
+            SheetAction(Icons.Default.Podcasts, "Go to podcast") {
+                onGoToPodcast(); onDismiss()
+            }
+        }
+    }
+}
+
+@Composable
+private fun SheetAction(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = MaterialTheme.typography.bodyLarge)
     }
 }
