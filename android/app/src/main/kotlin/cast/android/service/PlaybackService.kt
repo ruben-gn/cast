@@ -15,7 +15,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
@@ -54,6 +56,7 @@ class PlaybackService : MediaLibraryService() {
     @Inject lateinit var podcastRepository: PodcastRepository
     @Inject lateinit var episodeRepository: EpisodeRepository
     @Inject lateinit var dataStore: DataStore<Preferences>
+    @Inject lateinit var cacheDataSourceFactory: CacheDataSource.Factory
 
     private var mediaSession: MediaLibrarySession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -80,6 +83,7 @@ class PlaybackService : MediaLibraryService() {
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
             .build()
             .also { it.addListener(PlayerListener()) }
 
@@ -309,6 +313,7 @@ class PlaybackService : MediaLibraryService() {
         return MediaItem.Builder()
             .setMediaId(episode.id)
             .setUri(episode.audioUrl)
+            .setCustomCacheKey(episode.id)
             .setMediaMetadata(metadata)
             .build()
     }
