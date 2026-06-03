@@ -97,6 +97,7 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
             var active = p === '/' ? path === '/' : path === p || path.startsWith(p + '/');
             el.classList.toggle('is-active', active);
           });
+          document.body.classList.toggle('now-playing-active', path === '/now-playing');
         }
         document.addEventListener('DOMContentLoaded', updateNavActive);
         document.addEventListener('htmx:pushUrl', function() { setTimeout(updateNavActive, 0); });

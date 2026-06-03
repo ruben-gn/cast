@@ -1145,3 +1145,36 @@ body.now-playing-active #player-bar { display: none; }
         gap: 4px;
     }
 }
+
+/* Now Playing view */
+.now-playing-view { max-width: 480px; margin: 0 auto; }
+
+.np-empty { display: none; text-align: center; color: var(--text-muted); margin-top: 80px; font-size: 15px; }
+
+.np-body { display: flex; flex-direction: column; align-items: center; gap: 20px; padding-top: 8px; }
+
+.np-artwork {
+    width: 280px; max-width: 80vw; aspect-ratio: 1; object-fit: cover;
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+}
+
+.np-meta { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; width: 100%; }
+.np-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.np-podcast { font-size: 13px; color: var(--text-muted); }
+
+.np-scrubber { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+.np-times { display: flex; justify-content: space-between; width: 100%; font-size: 11px; color: var(--text-muted); }
+
+.np-controls { display: flex; align-items: center; gap: 28px; margin-top: 8px; }
+
+.np-controls .player-ctrl-btn { color: var(--text-muted); }
+.np-controls .player-ctrl-btn:hover { color: var(--text); }
+
+.np-playpause {
+    width: 72px; height: 72px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--accent); color: white;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(27,153,139,0.4); transition: transform 0.1s;
+}
+.np-playpause:active { transform: scale(0.94); }

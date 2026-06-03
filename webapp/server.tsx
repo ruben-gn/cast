@@ -6,6 +6,7 @@ import {PodcastDetail} from './components/PodcastDetail'
 import {QueuePage, QueueList} from './components/QueuePage'
 import {RecentPage} from './components/RecentPage'
 import {SettingsPage} from './components/SettingsPage'
+import {NowPlaying} from './components/NowPlaying'
 import type {Podcast, PodcastDetail as PodcastDetailType, Episode} from './types'
 
 const KOTLIN_API = process.env.KOTLIN_API ?? 'http://localhost:8100'
@@ -104,6 +105,19 @@ app.post('/podcasts/import', async (c) => {
         )
     }
     return c.redirect('/podcasts')
+})
+
+app.get('/now-playing', async (c) => {
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    const content = <NowPlaying/>
+    if (isHtmx) {
+        return c.html(
+            <div id="content-container">
+                <div class="page-content">{content}</div>
+            </div>
+        )
+    }
+    return c.html(<Layout title="Now Playing — Cast">{content}</Layout>)
 })
 
 app.get('/queue', async (c) => {
