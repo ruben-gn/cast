@@ -19,7 +19,9 @@ class QueueViewModel @Inject constructor(
     private val queueRepository: QueueRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<UiState<List<EpisodeDetailDto>>>(UiState.Loading)
+    private val _uiState = MutableStateFlow<UiState<List<EpisodeDetailDto>>>(
+        queueRepository.cachedQueue()?.let { UiState.Success(it) } ?: UiState.Loading
+    )
     val uiState: StateFlow<UiState<List<EpisodeDetailDto>>> = _uiState.asStateFlow()
 
     private var pendingReorderJob: Job? = null
@@ -28,11 +30,13 @@ class QueueViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
+            if (_uiState.value !is UiState.Success) _uiState.value = UiState.Loading
             _uiState.value = try {
                 UiState.Success(queueRepository.getQueue())
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Failed to load queue")
+                // Keep showing cached data on refresh failure; only surface Error on cold start.
+                if (_uiState.value is UiState.Success) _uiState.value
+                else UiState.Error(e.message ?: "Failed to load queue")
             }
         }
     }

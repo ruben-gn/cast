@@ -19,18 +19,22 @@ class RecentViewModel @Inject constructor(
     private val queueRepository: QueueRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<UiState<List<EpisodeDetailDto>>>(UiState.Loading)
+    private val _uiState = MutableStateFlow<UiState<List<EpisodeDetailDto>>>(
+        episodeRepository.cachedRecentEpisodes()?.let { UiState.Success(it) } ?: UiState.Loading
+    )
     val uiState: StateFlow<UiState<List<EpisodeDetailDto>>> = _uiState.asStateFlow()
 
     init { load() }
 
     fun load() {
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
+            if (_uiState.value !is UiState.Success) _uiState.value = UiState.Loading
             _uiState.value = try {
                 UiState.Success(episodeRepository.getRecentEpisodes())
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Failed to load episodes")
+                // Keep showing cached data on refresh failure; only surface Error on cold start.
+                if (_uiState.value is UiState.Success) _uiState.value
+                else UiState.Error(e.message ?: "Failed to load episodes")
             }
         }
     }
