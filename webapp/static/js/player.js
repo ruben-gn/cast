@@ -71,7 +71,8 @@ function episodeBtn(id) {
 function isPlayed(id) {
     if (!id) return false;
     var btn = episodeBtn(id);
-    return btn ? btn.closest('.episode-item').classList.contains('is-played') : false;
+    var item = btn ? btn.closest('.episode-item') : null;
+    return item ? item.classList.contains('is-played') : false;
 }
 
 function markPlayed(id) {
