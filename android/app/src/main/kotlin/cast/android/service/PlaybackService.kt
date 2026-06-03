@@ -8,6 +8,7 @@ import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -380,6 +381,7 @@ class PlaybackService : MediaLibraryService() {
             } else {
                 // Flush exact position on intentional pause so server is never stale
                 val progressMs = mediaSession?.player?.currentPosition ?: 0L
+                cacheProgress(episodeId, progressMs)
                 sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""")
                 stopProgressSync()
             }
@@ -393,7 +395,10 @@ class PlaybackService : MediaLibraryService() {
         override fun onPlaybackStateChanged(state: Int) {
             Log.d(TAG, "onPlaybackStateChanged: state=$state")
             if (state == Player.STATE_ENDED) {
-                currentEpisodeId?.let { sendWs("""{"type":"ended","episodeId":"$it"}""") }
+                currentEpisodeId?.let {
+                    sendWs("""{"type":"ended","episodeId":"$it"}""")
+                    clearCachedProgress(it)
+                }
                 stopProgressSync()
                 playNextInQueue()
             }
@@ -423,6 +428,7 @@ class PlaybackService : MediaLibraryService() {
             while (isActive) {
                 delay(10_000)
                 val progressMs = mediaSession?.player?.currentPosition ?: break
+                cacheProgress(episodeId, progressMs)
                 sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""")
             }
         }
@@ -431,6 +437,19 @@ class PlaybackService : MediaLibraryService() {
     private fun stopProgressSync() {
         progressJob?.cancel()
         progressJob = null
+    }
+
+    private fun progressKey(episodeId: String) = longPreferencesKey("progress_$episodeId")
+
+    private fun cacheProgress(episodeId: String, progressMs: Long) {
+        if (progressMs <= 0L) return
+        libraryScope.launch {
+            runCatching { dataStore.edit { it[progressKey(episodeId)] = progressMs } }
+        }
+    }
+
+    private fun clearCachedProgress(episodeId: String) {
+        libraryScope.launch { runCatching { dataStore.edit { it.remove(progressKey(episodeId)) } } }
     }
 
     private fun sendWs(message: String) {
