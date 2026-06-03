@@ -1202,3 +1202,10 @@ body.now-playing-active #player-bar { display: none; }
     font-size: 14px; line-height: 1.7; color: var(--text); word-wrap: break-word;
 }
 .episode-detail-description a { color: var(--accent); }
+
+.queue-drag-handle {
+    display: flex; align-items: center; color: var(--text-muted);
+    cursor: grab; flex-shrink: 0; touch-action: none;
+}
+.queue-drag-handle:active { cursor: grabbing; }
+.queue-row.dragging { opacity: 0.5; box-shadow: var(--shadow-md); }

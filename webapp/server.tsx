@@ -181,6 +181,19 @@ app.get('/api/queue', async (c) => {
     })
 })
 
+app.put('/api/queue', async (c) => {
+    const body = await c.req.text()
+    const res = await fetch(`${KOTLIN_API}/api/queue`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body,
+    })
+    return new Response(res.body, {
+        status: res.status,
+        headers: {'Content-Type': res.headers.get('content-type') ?? 'application/json'},
+    })
+})
+
 app.post('/api/podcasts/:id/played', async (c) => {
     const id = encodeURIComponent(c.req.param('id'))
     const res = await fetch(`${KOTLIN_API}/api/podcasts/${id}/played`, {method: 'POST'})

@@ -371,3 +371,63 @@ document.addEventListener('change', function (e) {
 });
 
 document.addEventListener('htmx:afterSettle', syncNowPlaying);
+
+function getDragAfterElement(container, y) {
+    var rows = Array.prototype.slice.call(container.querySelectorAll('.queue-row:not(.dragging)'));
+    var closest = {offset: -Infinity, element: null};
+    for (var i = 0; i < rows.length; i++) {
+        var box = rows[i].getBoundingClientRect();
+        var offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) closest = {offset: offset, element: rows[i]};
+    }
+    return closest.element;
+}
+
+document.addEventListener('dragstart', function (e) {
+    var row = e.target.closest ? e.target.closest('.queue-row') : null;
+    if (!row) return;
+    row.classList.add('dragging');
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+});
+
+document.addEventListener('dragover', function (e) {
+    var list = document.getElementById('queue-list');
+    if (!list) return;
+    var dragging = list.querySelector('.queue-row.dragging');
+    if (!dragging) return;
+    e.preventDefault();
+    var after = getDragAfterElement(list, e.clientY);
+    if (after == null) list.appendChild(dragging);
+    else list.insertBefore(dragging, after);
+});
+
+document.addEventListener('dragend', function (e) {
+    var row = e.target.closest ? e.target.closest('.queue-row') : null;
+    if (!row) return;
+    row.classList.remove('dragging');
+    var list = document.getElementById('queue-list');
+    if (!list) return;
+    var rows = Array.prototype.slice.call(list.querySelectorAll('.queue-row'));
+    rows.forEach(function (r, i) {
+        var pos = r.querySelector('.queue-position');
+        if (pos) pos.textContent = i + 1;
+    });
+    var ids = rows.map(function (r) { return r.dataset.id; });
+    fetch('/api/queue', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({episodeIds: ids}),
+    }).then(function (r) {
+        if (!r.ok) reloadQueue();
+    }).catch(function () { reloadQueue(); });
+});
+
+function reloadQueue() {
+    fetch('/queue', {headers: {'HX-Request': 'true'}})
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            var el = document.getElementById('content-container');
+            if (el) { el.outerHTML = html; htmx.process(document.getElementById('content-container')); }
+        })
+        .catch(function () {});
+}
