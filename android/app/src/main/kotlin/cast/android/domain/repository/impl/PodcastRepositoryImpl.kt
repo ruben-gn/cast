@@ -3,6 +3,7 @@ package cast.android.domain.repository.impl
 import cast.android.domain.cache.LatestCache
 import cast.android.domain.repository.PodcastRepository
 import cast.android.network.CastApiService
+import cast.android.network.orThrow
 import cast.api.AddPodcastRequest
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
@@ -24,14 +25,19 @@ class PodcastRepositoryImpl @Inject constructor(
 
     override suspend fun getPodcast(id: String): PodcastDetailDto = api.getPodcast(id)
 
+    // Both addPodcast and importOpml grow the subscription list, so drop the cached summaries to
+    // force a fresh load rather than briefly showing a list missing the just-added podcast(s).
+    // markAllPlayed is not invalidated: PodcastSummaryDto carries no played state, so the cached
+    // summaries stay correct and a reload would be wasted work.
     override suspend fun addPodcast(feedUrl: String): PodcastDetailDto =
-        api.addPodcast(AddPodcastRequest(feedUrl))
+        api.addPodcast(AddPodcastRequest(feedUrl)).also { podcastsCache.clear() }
 
     override suspend fun markAllPlayed(podcastId: String) {
-        api.markAllPodcastPlayed(podcastId)
+        api.markAllPodcastPlayed(podcastId).orThrow()
     }
 
     override suspend fun importOpml(file: MultipartBody.Part) {
-        api.importOpml(file)
+        api.importOpml(file).orThrow()
+        podcastsCache.clear()
     }
 }

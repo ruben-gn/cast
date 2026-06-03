@@ -1,7 +1,6 @@
 package cast.android.ui.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import cast.android.domain.repository.EpisodeRepository
@@ -11,9 +10,6 @@ import cast.android.ui.UiState
 import cast.android.ui.nav.PodcastDetail
 import cast.api.PodcastDetailDto
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,25 +19,13 @@ class PodcastDetailViewModel @Inject constructor(
     private val episodeRepository: EpisodeRepository,
     private val queueRepository: QueueRepository,
     savedStateHandle: SavedStateHandle,
-) : ViewModel() {
+) : LoadableViewModel<PodcastDetailDto>(UiState.Loading) {
 
     private val podcastId: String = savedStateHandle.toRoute<PodcastDetail>().podcastId
 
-    private val _uiState = MutableStateFlow<UiState<PodcastDetailDto>>(UiState.Loading)
-    val uiState: StateFlow<UiState<PodcastDetailDto>> = _uiState.asStateFlow()
-
     init { load() }
 
-    fun load() {
-        viewModelScope.launch {
-            _uiState.value = UiState.Loading
-            _uiState.value = try {
-                UiState.Success(podcastRepository.getPodcast(podcastId))
-            } catch (e: Exception) {
-                UiState.Error(e.message ?: "Failed to load podcast")
-            }
-        }
-    }
+    fun load() = load("Failed to load podcast") { podcastRepository.getPodcast(podcastId) }
 
     fun addToQueue(episodeId: String) {
         viewModelScope.launch {
@@ -61,8 +45,7 @@ class PodcastDetailViewModel @Inject constructor(
     fun togglePlayed(episodeId: String, newPlayed: Boolean) {
         viewModelScope.launch {
             try {
-                if (newPlayed) episodeRepository.markPlayed(episodeId)
-                else episodeRepository.markUnplayed(episodeId)
+                episodeRepository.setPlayed(episodeId, newPlayed)
                 val current = (_uiState.value as? UiState.Success)?.data ?: return@launch
                 _uiState.value = UiState.Success(
                     current.copy(

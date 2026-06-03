@@ -23,18 +23,18 @@ class EpisodeRepositoryImplTest {
     }
 
     @Test
-    fun `markPlayed clears the recent cache`() = runTest {
+    fun `marking played clears the recent cache`() = runTest {
         val repo = EpisodeRepositoryImpl(FakeCastApiService(recent = listOf(episode("1"))))
         repo.getRecentEpisodes()
-        repo.markPlayed("1")
+        repo.setPlayed("1", played = true)
         assertNull(repo.cachedRecentEpisodes())
     }
 
     @Test
-    fun `markUnplayed clears the recent cache`() = runTest {
+    fun `marking unplayed clears the recent cache`() = runTest {
         val repo = EpisodeRepositoryImpl(FakeCastApiService(recent = listOf(episode("1"))))
         repo.getRecentEpisodes()
-        repo.markUnplayed("1")
+        repo.setPlayed("1", played = false)
         assertNull(repo.cachedRecentEpisodes())
     }
 }

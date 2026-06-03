@@ -11,8 +11,7 @@ class FakeEpisodeRepository(
     override fun cachedRecentEpisodes(): List<EpisodeDetailDto>? = cachedRecent
     override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> = cachedRecent ?: emptyList()
     override suspend fun getEpisode(episodeId: String): EpisodeDetailDto = TODO()
-    override suspend fun markPlayed(episodeId: String) {}
-    override suspend fun markUnplayed(episodeId: String) {}
+    override suspend fun setPlayed(episodeId: String, played: Boolean) {}
 }
 
 /** Minimal [QueueRepository] fake for ViewModel seeding tests. */

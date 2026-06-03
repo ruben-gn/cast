@@ -438,13 +438,17 @@ class PlaybackService : MediaLibraryService() {
 
     private fun playNextInQueue() {
         serviceScope.launch {
-            val queue = try { queueRepository.getQueue() } catch (_: Exception) { return@launch }
-            val next = queue.firstOrNull() ?: run {
-                // Nothing left to play: don't let resumption replay the finished episode.
+            // The finished episode must leave the player regardless of connectivity, so a failed queue
+            // fetch (offline / Pi down) collapses to the same "nothing next" path as an empty queue.
+            val next = runCatching { queueRepository.getQueue() }.getOrNull()?.firstOrNull()
+            if (next == null) {
+                // Clear the finished episode from the player (which also clears the player bar and widget
+                // via onMediaItemTransition) and don't let resumption replay it.
+                mediaSession?.player?.clearMediaItems()
                 runCatching { dataStore.edit { it.remove(LAST_EPISODE_ID) } }
                 return@launch
             }
-            try { queueRepository.removeFromQueue(next.id) } catch (_: Exception) {}
+            runCatching { queueRepository.removeFromQueue(next.id) }
             mediaSession?.player?.let { player ->
                 player.setMediaItem(playableItem(next))
                 player.prepare()
