@@ -434,7 +434,7 @@ class PlaybackService : MediaLibraryService() {
         progressJob?.cancel()
         progressJob = serviceScope.launch {
             while (isActive) {
-                delay(10_000)
+                delay(1_000)
                 val progressMs = mediaSession?.player?.currentPosition ?: break
                 cacheProgress(episodeId, progressMs)
                 sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""")
