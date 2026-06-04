@@ -74,6 +74,7 @@ class PlaybackService : MediaLibraryService() {
     private var progressJob: Job? = null
     private var currentEpisodeId: String? = null
     private var episodeStarted = false
+    private var resuming = false
 
     override fun onCreate() {
         super.onCreate()
@@ -136,8 +137,15 @@ class PlaybackService : MediaLibraryService() {
         Log.d(TAG, "onStartCommand: action=${intent?.action} playerNull=${player == null} isPlaying=${player?.isPlaying} state=${player?.playbackState} itemCount=${player?.mediaItemCount}")
         when (intent?.action) {
             ACTION_PLAY_PAUSE -> player?.let {
-                if (it.isPlaying) it.pause()
-                else { if (it.playbackState == Player.STATE_IDLE) it.prepare(); it.play() }
+                when {
+                    it.isPlaying -> it.pause()
+                    // Cold start after the app was fully closed: the player is empty and the custom
+                    // widget intent never reaches Media3's onPlaybackResumption, so a bare play() just
+                    // no-ops. Explicitly load the last-played episode; the WS `get` (onMediaItemTransition)
+                    // then re-seeks to the server's position.
+                    it.mediaItemCount == 0 -> resumeLastEpisode()
+                    else -> { if (it.playbackState == Player.STATE_IDLE) it.prepare(); it.play() }
+                }
             }
             ACTION_SEEK_BACK -> player?.seekBack()
             ACTION_SEEK_FORWARD -> player?.seekForward()
@@ -311,6 +319,28 @@ class PlaybackService : MediaLibraryService() {
             .getOrNull()
         Log.d(TAG, "lastUnfinishedEpisode: id=$id fetched=${episode != null} played=${episode?.played}")
         return episode?.takeIf { !it.played }
+    }
+
+    /**
+     * Resume the last-played episode into an empty player (widget Play after a full app close).
+     * Guarded so repeated taps during the Pi fetch don't stack multiple loads; once [setMediaItem]
+     * runs the player is non-empty and further taps fall through to plain play/pause.
+     */
+    private fun resumeLastEpisode() {
+        if (resuming) return
+        resuming = true
+        serviceScope.launch {
+            try {
+                val episode = lastUnfinishedEpisode() ?: return@launch
+                mediaSession?.player?.let { player ->
+                    player.setMediaItem(playableItem(episode))
+                    player.prepare()
+                    player.play()
+                }
+            } finally {
+                resuming = false
+            }
+        }
     }
 
     private fun browsableItem(id: String, title: String): MediaItem {
