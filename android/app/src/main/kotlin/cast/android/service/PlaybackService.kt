@@ -134,7 +134,6 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val player = mediaSession?.player
-        Log.d(TAG, "onStartCommand: action=${intent?.action} playerNull=${player == null} isPlaying=${player?.isPlaying} state=${player?.playbackState} itemCount=${player?.mediaItemCount}")
         when (intent?.action) {
             ACTION_PLAY_PAUSE -> player?.let {
                 when {
