@@ -133,6 +133,7 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val player = mediaSession?.player
+        Log.d(TAG, "onStartCommand: action=${intent?.action} playerNull=${player == null} isPlaying=${player?.isPlaying} state=${player?.playbackState} itemCount=${player?.mediaItemCount}")
         when (intent?.action) {
             ACTION_PLAY_PAUSE -> player?.let {
                 if (it.isPlaying) it.pause()
@@ -266,8 +267,10 @@ class PlaybackService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             isForPlayback: Boolean,
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = libraryScope.future {
+            Log.d(TAG, "onPlaybackResumption: called isForPlayback=$isForPlayback")
             val episode = lastUnfinishedEpisode()
                 ?: throw UnsupportedOperationException("No previous episode to resume")
+            Log.d(TAG, "onPlaybackResumption: resuming id=${episode.id} progressMs=${episode.progressMs}")
             MediaSession.MediaItemsWithStartPosition(listOf(playableItem(episode)), 0, episode.progressMs)
         }
 
@@ -299,8 +302,15 @@ class PlaybackService : MediaLibraryService() {
      * from [LibraryCallback.onGetLibraryRoot], whose future blocks Auto's main thread.
      */
     private suspend fun lastUnfinishedEpisode(): EpisodeDetailDto? {
-        val id = dataStore.data.first()[LAST_EPISODE_ID] ?: return null
-        return runCatching { episodeRepository.getEpisode(id) }.getOrNull()?.takeIf { !it.played }
+        val id = dataStore.data.first()[LAST_EPISODE_ID] ?: run {
+            Log.d(TAG, "lastUnfinishedEpisode: LAST_EPISODE_ID is null")
+            return null
+        }
+        val episode = runCatching { episodeRepository.getEpisode(id) }
+            .onFailure { Log.w(TAG, "lastUnfinishedEpisode: getEpisode($id) failed", it) }
+            .getOrNull()
+        Log.d(TAG, "lastUnfinishedEpisode: id=$id fetched=${episode != null} played=${episode?.played}")
+        return episode?.takeIf { !it.played }
     }
 
     private fun browsableItem(id: String, title: String): MediaItem {
