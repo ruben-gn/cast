@@ -115,6 +115,12 @@ class NowPlayingWidget : GlanceAppWidget() {
                             description = if (isPlaying) "Pause" else "Play",
                             action = PlaybackService.ACTION_PLAY_PAUSE,
                             tint = accent,
+                            // After a long app-close the process is dead and the app is in the background,
+                            // where startService() is forbidden (Android 8+/12+) — a plain background start
+                            // is silently dropped, which is why widget Play "does nothing". Interacting with
+                            // a widget is an explicit exemption for startForegroundService(), so route Play
+                            // through that so the service can come up and resume the last episode.
+                            isForegroundService = true,
                         )
                         ControlButton(
                             iconRes = R.drawable.ic_widget_fast_forward,
@@ -134,6 +140,10 @@ class NowPlayingWidget : GlanceAppWidget() {
         description: String,
         action: String,
         tint: ColorProvider,
+        // Seek buttons stay a plain background start: they only do anything when the service is already
+        // alive, and FGS-starting a dead/empty player just to no-op a seek would risk the 5s
+        // startForeground() deadline crash for no benefit. Only Play needs the FGS exemption.
+        isForegroundService: Boolean = false,
     ) {
         val context = LocalContext.current
         Image(
@@ -145,7 +155,7 @@ class NowPlayingWidget : GlanceAppWidget() {
                 .clickable(
                     actionStartService(
                         Intent(context, PlaybackService::class.java).also { it.action = action },
-                        isForegroundService = false,
+                        isForegroundService = isForegroundService,
                     )
                 ),
         )

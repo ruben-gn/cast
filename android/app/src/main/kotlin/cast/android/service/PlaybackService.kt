@@ -48,6 +48,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 @OptIn(UnstableApi::class)
@@ -330,7 +331,13 @@ class PlaybackService : MediaLibraryService() {
         resuming = true
         serviceScope.launch {
             try {
-                val episode = lastUnfinishedEpisode() ?: return@launch
+                // We were started via startForegroundService() (widget exemption), so Media3 must reach
+                // startForeground() within ~5s — which only happens once play() runs below. Bound the Pi
+                // fetch so an asleep/unreachable server fails fast instead of hanging. NOTE: if the fetch
+                // still outlasts the deadline, the OS throws ForegroundServiceDidNotStartInTimeException.
+                // If that bites in practice, cache the last episode's metadata so we can setMediaItem()
+                // locally and go foreground without depending on the Pi being awake.
+                val episode = withTimeoutOrNull(4_000) { lastUnfinishedEpisode() } ?: return@launch
                 mediaSession?.player?.let { player ->
                     player.setMediaItem(playableItem(episode))
                     player.prepare()
