@@ -135,6 +135,11 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val player = mediaSession?.player
+        // DIAGNOSTIC: confirms the service actually started on a widget tap. If a widget Play press
+        // after a long app-close produces NO line here, the OS blocked the background startService()
+        // and the fix belongs at the widget/start layer (not inside onStartCommand).
+        Log.d(TAG, "onStartCommand: action=${intent?.action} playerNull=${player == null} " +
+            "isPlaying=${player?.isPlaying} mediaItemCount=${player?.mediaItemCount}")
         when (intent?.action) {
             ACTION_PLAY_PAUSE -> player?.let {
                 when {
