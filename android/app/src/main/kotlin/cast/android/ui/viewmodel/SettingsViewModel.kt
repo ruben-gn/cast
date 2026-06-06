@@ -18,6 +18,10 @@ class SettingsViewModel @Inject constructor(
     val settings = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings())
 
+    init {
+        viewModelScope.launch { runCatching { settingsRepository.refresh() } }
+    }
+
     fun updateSettings(settings: Settings) {
         viewModelScope.launch {
             val url = settings.serverUrl.trim()
