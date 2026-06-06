@@ -8,6 +8,9 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import cast.android.domain.model.Settings
 import cast.android.domain.repository.SettingsRepository
 import cast.android.network.BaseUrlInterceptor
+import cast.android.network.CastApiService
+import cast.android.network.orThrow
+import cast.api.SettingsDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,6 +25,7 @@ import javax.inject.Singleton
 class SettingsRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>,
     private val baseUrlInterceptor: BaseUrlInterceptor,
+    private val api: CastApiService,
 ) : SettingsRepository {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -41,6 +45,12 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[HIDE_PLAYED] = settings.hidePlayed
         }
         baseUrlInterceptor.baseUrl = settings.serverUrl
+        api.updateSettings(SettingsDto(hidePlayed = settings.hidePlayed)).orThrow()
+    }
+
+    override suspend fun refresh() {
+        val remote = api.getSettings()
+        dataStore.edit { prefs -> prefs[HIDE_PLAYED] = remote.hidePlayed }
     }
 
     private suspend fun currentSettings(): Settings = dataStore.data.first().toSettings()

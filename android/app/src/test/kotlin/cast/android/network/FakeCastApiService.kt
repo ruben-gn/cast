@@ -28,6 +28,10 @@ class FakeCastApiService(
     var podcasts: List<PodcastSummaryDto> = emptyList(),
     /** Queue contents the mutation endpoints return; defaults to [queue] if unset. */
     var queueAfterMutation: List<EpisodeDetailDto>? = null,
+    /** Value returned by getSettings(); also what refresh() should pull. */
+    var settings: SettingsDto = SettingsDto(hidePlayed = false),
+    /** Captures the last SettingsDto passed to updateSettings(). */
+    var updatedSettings: SettingsDto? = null,
 ) : CastApiService {
 
     private fun mutatedQueue() = queueAfterMutation ?: queue
@@ -49,6 +53,9 @@ class FakeCastApiService(
     override suspend fun markAllPodcastPlayed(id: String): Response<Unit> = TODO()
     override suspend fun getEpisode(episodeId: String): EpisodeDetailDto = TODO()
     override suspend fun importOpml(file: MultipartBody.Part): Response<Unit> = TODO()
-    override suspend fun getSettings(): SettingsDto = TODO()
-    override suspend fun updateSettings(settings: SettingsDto): Response<Unit> = TODO()
+    override suspend fun getSettings(): SettingsDto = settings
+    override suspend fun updateSettings(settings: SettingsDto): Response<Unit> {
+        updatedSettings = settings
+        return Response.success(Unit)
+    }
 }
