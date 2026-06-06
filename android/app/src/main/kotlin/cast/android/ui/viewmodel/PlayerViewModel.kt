@@ -12,6 +12,9 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import cast.android.domain.repository.EpisodeRepository
 import cast.android.service.PlaybackService
 import cast.api.EpisodeDetailDto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -31,6 +35,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val episodeRepository: EpisodeRepository,
+    private val dataStore: DataStore<Preferences>,
 ) : ViewModel() {
 
     private val _isPlaying = MutableStateFlow(false)
@@ -50,6 +56,12 @@ class PlayerViewModel @Inject constructor(
 
     private val _episodeCompleted = MutableSharedFlow<String>(replay = 0)
     val episodeCompleted: SharedFlow<String> = _episodeCompleted.asSharedFlow()
+
+    // Emitted when the app connects with an empty player and there is no remembered episode to
+    // restore. The Now Playing screen listens so a widget cold-start lands on Recent instead of a
+    // blank "Nothing playing" screen.
+    private val _noEpisodeToRestore = MutableSharedFlow<Unit>(replay = 0)
+    val noEpisodeToRestore: SharedFlow<Unit> = _noEpisodeToRestore.asSharedFlow()
 
     @Volatile private var controller: MediaController? = null
     private var controllerFuture: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
@@ -121,7 +133,30 @@ class PlayerViewModel @Inject constructor(
                 _currentMediaItem.value = ctrl.currentMediaItem
                 _position.value = ctrl.currentPosition
                 _duration.value = ctrl.duration.coerceAtLeast(0L)
+                // App opened with an empty player (e.g. cold-started from a widget tap): restore the
+                // last episode so Now Playing shows what was playing instead of a blank screen.
+                if (ctrl.currentMediaItem == null) restoreLastEpisode(ctrl)
             } catch (_: Exception) {}
+        }
+    }
+
+    /**
+     * Load the remembered episode **paused** so Now Playing reflects it; we deliberately don't call
+     * play(). Setting the item fires the service's onMediaItemTransition, which syncs position from
+     * the server. If nothing is worth restoring, signal so the UI can fall back to Recent.
+     */
+    private fun restoreLastEpisode(ctrl: MediaController) {
+        viewModelScope.launch {
+            val id = dataStore.data.first()[PlaybackService.LAST_EPISODE_ID]
+            val episode = id?.let { runCatching { episodeRepository.getEpisode(it) }.getOrNull() }
+            if (episode == null || episode.played) {
+                _noEpisodeToRestore.emit(Unit)
+                return@launch
+            }
+            // Player may have started playing something between connect and now; don't clobber it.
+            if (ctrl.currentMediaItem != null) return@launch
+            ctrl.setMediaItem(buildMediaItem(episode))
+            ctrl.prepare()
         }
     }
 

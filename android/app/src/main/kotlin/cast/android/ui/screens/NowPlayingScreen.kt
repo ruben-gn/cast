@@ -28,6 +28,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import cast.android.ui.nav.NowPlaying
+import cast.android.ui.nav.Recent
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.util.formatDuration
 import coil3.compose.AsyncImage
@@ -57,6 +60,16 @@ fun NowPlayingScreen(navController: NavController) {
 
     var isDragging by remember { mutableStateOf(false) }
     var scrubPosition by remember { mutableFloatStateOf(0f) }
+
+    // Cold-started here (e.g. widget tap) but nothing was playing and nothing to restore: drop the
+    // blank Now Playing and land on Recent instead.
+    LaunchedEffect(Unit) {
+        vm.noEpisodeToRestore.collect {
+            if (!navController.popBackStack(NowPlaying, inclusive = true)) {
+                navController.navigate(Recent) { launchSingleTop = true }
+            }
+        }
+    }
 
     val sliderValue = when {
         isDragging -> scrubPosition

@@ -549,7 +549,9 @@ class PlaybackService : MediaLibraryService() {
         const val ACTION_SEEK_BACK = "cast.android.widget.SEEK_BACK"
         const val ACTION_SEEK_FORWARD = "cast.android.widget.SEEK_FORWARD"
 
-        private val LAST_EPISODE_ID = stringPreferencesKey("last_episode_id")
+        // Read by PlayerViewModel to restore the remembered episode (paused) when the app opens
+        // with an empty player — e.g. cold-started from a widget tap.
+        internal val LAST_EPISODE_ID = stringPreferencesKey("last_episode_id")
 
         private const val ROOT_ID = "root"
         private const val RECENT_ROOT_ID = "recent_root"
