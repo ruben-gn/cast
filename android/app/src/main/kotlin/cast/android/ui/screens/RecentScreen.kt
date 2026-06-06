@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import cast.android.ui.UiState
@@ -37,6 +39,12 @@ fun RecentScreen(navController: NavHostController) {
     LaunchedEffect(playerVm) {
         playerVm.episodeCompleted.collect { episodeId -> vm.onEpisodeCompleted(episodeId) }
     }
+
+    // The server already drops played episodes from "recent", but the in-the-moment removal above
+    // only fires while this screen is composed. An episode finished from Now Playing or with the app
+    // backgrounded misses it, so refetch whenever the screen resumes (foreground or tab switch).
+    // load() keeps the current list visible while it refetches, so returning here never flashes the skeleton.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.load() }
 
     PullToRefreshBox(
         isRefreshing = uiState is UiState.Loading,
