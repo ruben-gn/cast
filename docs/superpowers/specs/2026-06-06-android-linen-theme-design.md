@@ -83,9 +83,11 @@ treatment (warm near-blacks, not Material's cool defaults).
    server, unlike `updateSettings`). Settings UI uses `SingleChoiceSegmentedButtonRow`.
 8. **`res/values/colors.xml`** — `ic_launcher_background` navy `#1A1A2E` → sienna `#D8512A`;
    added `linen_background` + `ember_background`.
-9. **Widget** (`NowPlayingWidget.kt` + `drawable/widget_background.xml`) — ink/muted text,
-   sienna accent, warm paper gradient background. (Glance widgets don't switch on app theme;
-   kept on the light paper look — a known follow-up if a dark widget is wanted.)
+9. **Widget** (`NowPlayingWidget.kt` + `drawable/widget_background.xml` +
+   `drawable-night/widget_background.xml`) — ink/muted text, accent, and gradient background
+   in both light (Linen/sienna) and dark (Ember) via Glance `ColorProvider(day, night)` and a
+   `-night` drawable. Follows the **system** dark setting (a widget can't read the app's in-app
+   theme override).
 
 ## Open / follow-up
 
