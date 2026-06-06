@@ -106,17 +106,33 @@ class PodcastCoreTests : DescribeSpec({
             val episodes = listEpisodes(podcast.id)
 
             episodes shouldHaveSize 2
-            with(episodes[0]) {
-                title shouldBe "Ep 1"
+            with(episodes.first { it.title == "Ep 1" }) {
                 audioUrl shouldBe "https://cdn/ep1.mp3"
                 publishedAt shouldBe Instant.parse("2026-01-01T00:00:00Z")
                 duration shouldBe 1.hours
             }
-            with(episodes[1]) {
-                title shouldBe "Ep 2"
+            with(episodes.first { it.title == "Ep 2" }) {
                 duration shouldBe 30.minutes
             }
             episodes.map { it.id }.toSet() shouldHaveSize 2
+        }
+
+        it("lists episodes newest first, including ones added by a later feed refresh") {
+            val url = FeedUrl("https://example.com/rss")
+            val old = EpisodeInfo("old", "Old", "Desc", "old.mp3", null, Instant.parse("2024-01-01T00:00:00Z"))
+            val mid = EpisodeInfo("mid", "Mid", "Desc", "mid.mp3", null, Instant.parse("2025-01-01T00:00:00Z"))
+
+            stubFeedProvider = FeedInfoProvider { FeedInfo("Show", url.value, "Desc", "img.png", listOf(mid, old)) }
+            addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
+            val podcast = addFeed(url)
+
+            // A later refresh appends a brand-new episode.
+            val new = EpisodeInfo("new", "New", "Desc", "new.mp3", null, Instant.parse("2026-01-01T00:00:00Z"))
+            stubFeedProvider = FeedInfoProvider { FeedInfo("Show", url.value, "Desc", "img.png", listOf(new, mid, old)) }
+            updateFeed = UpdateFeed(catalog, stubFeedProvider, fixedClock)
+            updateFeed(podcast).getOrThrow()
+
+            listEpisodes(podcast.id).map { it.title } shouldBe listOf("New", "Mid", "Old")
         }
 
         it("updates podcast info and adds new episodes when updating the feed") {
