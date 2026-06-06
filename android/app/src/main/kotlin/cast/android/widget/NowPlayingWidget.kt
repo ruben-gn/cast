@@ -35,7 +35,7 @@ import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
-import androidx.glance.appwidget.unit.ColorProvider as dayNightColorProvider
+import androidx.glance.color.ColorProvider as dayNightColorProvider
 import androidx.glance.unit.ColorProvider
 import cast.android.R
 import cast.android.service.PlaybackService
