@@ -2,5 +2,6 @@
 <resources>
     <!-- Linen Paper brand theme -->
     <color name="linen_background">#FBF8F3</color>
+    <color name="ember_background">#161210</color>
     <color name="ic_launcher_background">#D8512A</color>
 </resources>

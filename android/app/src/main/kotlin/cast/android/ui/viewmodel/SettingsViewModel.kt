@@ -3,6 +3,7 @@ package cast.android.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cast.android.domain.model.Settings
+import cast.android.domain.model.ThemeMode
 import cast.android.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,5 +29,9 @@ class SettingsViewModel @Inject constructor(
             val normalizedUrl = if (url.startsWith("http://") || url.startsWith("https://")) url else "http://$url"
             settingsRepository.updateSettings(settings.copy(serverUrl = normalizedUrl))
         }
+    }
+
+    fun updateThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { settingsRepository.updateThemeMode(mode) }
     }
 }

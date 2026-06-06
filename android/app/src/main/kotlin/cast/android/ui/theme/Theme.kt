@@ -1,6 +1,7 @@
 package cast.android.ui.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
@@ -40,13 +41,49 @@ private val LinenColorScheme = lightColorScheme(
     inversePrimary = SiennaInversePrimary,
 )
 
-// Cast is light-only by design (the "Linen Paper" brand theme). The darkTheme parameter
-// is kept so existing callers and @Preview wiring don't break, but it is intentionally
-// ignored — we always apply the linen scheme regardless of the system setting.
+private val EmberColorScheme = darkColorScheme(
+    primary = EmberPrimary,
+    onPrimary = EmberOnPrimary,
+    primaryContainer = EmberContainer,
+    onPrimaryContainer = EmberOnContainer,
+    secondary = EmberPrimary,
+    onSecondary = EmberOnPrimary,
+    secondaryContainer = EmberContainer,
+    onSecondaryContainer = EmberOnContainer,
+    tertiary = EmberPrimary,
+    onTertiary = EmberOnPrimary,
+    tertiaryContainer = EmberContainer,
+    onTertiaryContainer = EmberOnContainer,
+    background = DarkBackground,
+    onBackground = DarkInk,
+    surface = DarkSurface,
+    onSurface = DarkInk,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkMuted,
+    surfaceTint = EmberPrimary,
+    outline = DarkOutline,
+    outlineVariant = DarkOutlineVariant,
+    surfaceBright = DarkSurfaceBright,
+    surfaceDim = DarkSurfaceDim,
+    surfaceContainerLowest = DarkContainerLowest,
+    surfaceContainerLow = DarkContainerLow,
+    surfaceContainer = DarkContainer,
+    surfaceContainerHigh = DarkContainerHigh,
+    surfaceContainerHighest = DarkContainerHighest,
+    inverseSurface = DarkInk,
+    inverseOnSurface = InkOnSurface,
+    inversePrimary = EmberInversePrimary,
+)
+
+// Cast's brand theme. Light is the "Linen Paper" look; dark is its warm "Ember" counterpart.
+// The caller resolves [darkTheme] from the user's ThemeMode preference (System/Light/Dark).
 @Composable
 fun CastTheme(
-    @Suppress("UNUSED_PARAMETER") darkTheme: Boolean = false,
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(colorScheme = LinenColorScheme, content = content)
+    MaterialTheme(
+        colorScheme = if (darkTheme) EmberColorScheme else LinenColorScheme,
+        content = content,
+    )
 }

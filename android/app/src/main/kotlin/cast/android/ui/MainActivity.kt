@@ -1,23 +1,28 @@
 package cast.android.ui
 
-import android.graphics.Color as AndroidColor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import cast.android.domain.model.Settings
+import cast.android.domain.model.ThemeMode
+import cast.android.domain.repository.SettingsRepository
 import cast.android.network.ConnectivityObserver
 import cast.android.ui.components.OfflineBanner
 import cast.android.ui.components.PlayerBar
@@ -36,16 +41,28 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var connectivityObserver: ConnectivityObserver
 
+    @Inject lateinit var settingsRepository: SettingsRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Cast is light-only, so force dark system-bar icons over the transparent bars even
-        // when the device itself is in dark mode (SystemBarStyle.light = dark icons).
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(AndroidColor.TRANSPARENT, AndroidColor.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(AndroidColor.TRANSPARENT, AndroidColor.TRANSPARENT),
-        )
+        enableEdgeToEdge()
         setContent {
-            CastTheme {
+            val settings by settingsRepository.settings.collectAsStateWithLifecycle(Settings())
+            val darkTheme = when (settings.themeMode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            // System-bar icons must match the resolved theme, not the device setting, since the
+            // user can override it (e.g. force Light while the phone is in dark mode). Light bars
+            // (light theme) want dark icons, and vice-versa.
+            val view = LocalView.current
+            SideEffect {
+                val controller = WindowCompat.getInsetsController(window, view)
+                controller.isAppearanceLightStatusBars = !darkTheme
+                controller.isAppearanceLightNavigationBars = !darkTheme
+            }
+            CastTheme(darkTheme = darkTheme) {
                 PaperBackground {
                     CastApp(connectivityObserver)
                 }

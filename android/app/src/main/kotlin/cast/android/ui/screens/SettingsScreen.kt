@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,9 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import cast.android.domain.model.ThemeMode
 import cast.android.ui.components.ConfirmButton
 import cast.android.ui.viewmodel.SettingsViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavHostController) {
     val vm: SettingsViewModel = hiltViewModel()
@@ -80,6 +86,27 @@ fun SettingsScreen(navController: NavHostController) {
                 checked = settings.hidePlayed,
                 onCheckedChange = { vm.updateSettings(settings.copy(hidePlayed = it)) },
             )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text("Theme", style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(8.dp))
+        val themeOptions = listOf(
+            ThemeMode.SYSTEM to "System",
+            ThemeMode.LIGHT to "Light",
+            ThemeMode.DARK to "Dark",
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            themeOptions.forEachIndexed { index, (mode, label) ->
+                SegmentedButton(
+                    selected = settings.themeMode == mode,
+                    onClick = { vm.updateThemeMode(mode) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = themeOptions.size),
+                ) {
+                    Text(label)
+                }
+            }
         }
     }
 }

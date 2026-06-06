@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Cast" parent="android:Theme.DeviceDefault.NoActionBar">
+        <!-- Dark launch background so there is no light flash before Compose draws the Ember
+             theme when the device is in dark mode. (The in-app override can still differ from
+             the system setting; that rare case may flash, which is acceptable.) -->
+        <item name="android:windowBackground">@color/ember_background</item>
+    </style>
+</resources>

@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import cast.android.domain.model.Settings
+import cast.android.domain.model.ThemeMode
 import cast.android.domain.repository.SettingsRepository
 import cast.android.network.BaseUrlInterceptor
 import cast.android.network.CastApiService
@@ -43,9 +44,14 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.edit { prefs ->
             prefs[SERVER_URL] = settings.serverUrl
             prefs[HIDE_PLAYED] = settings.hidePlayed
+            prefs[THEME_MODE] = settings.themeMode.name
         }
         baseUrlInterceptor.baseUrl = settings.serverUrl
         api.updateSettings(SettingsDto(hidePlayed = settings.hidePlayed)).orThrow()
+    }
+
+    override suspend fun updateThemeMode(mode: ThemeMode) {
+        dataStore.edit { prefs -> prefs[THEME_MODE] = mode.name }
     }
 
     override suspend fun refresh() {
@@ -58,10 +64,13 @@ class SettingsRepositoryImpl @Inject constructor(
     private fun Preferences.toSettings() = Settings(
         serverUrl = this[SERVER_URL] ?: Settings.DEFAULT_SERVER_URL,
         hidePlayed = this[HIDE_PLAYED] ?: false,
+        themeMode = this[THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
+            ?: ThemeMode.SYSTEM,
     )
 
     companion object {
         private val SERVER_URL = stringPreferencesKey("server_url")
         private val HIDE_PLAYED = booleanPreferencesKey("hide_played")
+        private val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 }

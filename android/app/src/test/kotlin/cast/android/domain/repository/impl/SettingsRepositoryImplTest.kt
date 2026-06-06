@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import cast.android.domain.model.Settings
+import cast.android.domain.model.ThemeMode
 import cast.android.network.BaseUrlInterceptor
 import cast.android.network.FakeCastApiService
 import cast.api.SettingsDto
@@ -33,6 +34,17 @@ class SettingsRepositoryImplTest {
         repo.updateSettings(Settings(serverUrl = "http://host", hidePlayed = true))
 
         assertEquals(SettingsDto(hidePlayed = true), api.updatedSettings)
+    }
+
+    @Test
+    fun `updateThemeMode persists locally without touching the server`() = runTest {
+        val api = FakeCastApiService()
+        val repo = SettingsRepositoryImpl(dataStore(backgroundScope), BaseUrlInterceptor(), api)
+
+        repo.updateThemeMode(ThemeMode.DARK)
+
+        assertEquals(ThemeMode.DARK, repo.settings.first().themeMode)
+        assertEquals(null, api.updatedSettings)
     }
 
     @Test
