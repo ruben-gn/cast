@@ -35,6 +35,7 @@ import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
+import androidx.glance.appwidget.unit.ColorProvider as dayNightColorProvider
 import androidx.glance.unit.ColorProvider
 import cast.android.R
 import cast.android.service.PlaybackService
@@ -58,9 +59,9 @@ class NowPlayingWidget : GlanceAppWidget() {
 
         // Brand theme, following the system dark-mode setting (a widget can't see the app's
         // in-app theme override). Light = Linen ink/sienna; dark = Ember ink/ember.
-        val textPrimary = ColorProvider(day = Color(0xFF2B241E), night = Color(0xFFF4EAE4))
-        val textMuted = ColorProvider(day = Color(0xFF8E8175), night = Color(0xFFB3A398))
-        val accent = ColorProvider(day = Color(0xFFD8512A), night = Color(0xFFE86A45))
+        val textPrimary = dayNightColorProvider(day = Color(0xFF2B241E), night = Color(0xFFF4EAE4))
+        val textMuted = dayNightColorProvider(day = Color(0xFF8E8175), night = Color(0xFFB3A398))
+        val accent = dayNightColorProvider(day = Color(0xFFD8512A), night = Color(0xFFE86A45))
 
         val context = LocalContext.current
         val openApp = actionStartActivity(
