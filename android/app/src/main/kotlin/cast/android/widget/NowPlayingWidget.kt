@@ -56,9 +56,10 @@ class NowPlayingWidget : GlanceAppWidget() {
         val isPlaying = prefs[IS_PLAYING_KEY] ?: false
         val hasEpisode = prefs[HAS_EPISODE_KEY] ?: false
 
-        val textPrimary = ColorProvider(Color(0xFFEBF4F2))
-        val textMuted = ColorProvider(Color(0xFF7DBDB8))
-        val accent = ColorProvider(Color(0xFF3DCFC6))
+        // Linen Paper theme: dark ink on a warm paper background, sienna accent.
+        val textPrimary = ColorProvider(Color(0xFF2B241E))
+        val textMuted = ColorProvider(Color(0xFF8E8175))
+        val accent = ColorProvider(Color(0xFFD8512A))
 
         val context = LocalContext.current
         val openApp = actionStartActivity(

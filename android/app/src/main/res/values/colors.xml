@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1A1A2E</color>
+    <!-- Linen Paper brand theme -->
+    <color name="linen_background">#FBF8F3</color>
+    <color name="ic_launcher_background">#D8512A</color>
 </resources>

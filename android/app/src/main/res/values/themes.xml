@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Cast" parent="android:Theme.DeviceDefault.Light.NoActionBar" />
+    <style name="Theme.Cast" parent="android:Theme.DeviceDefault.Light.NoActionBar">
+        <!-- Paint the launch window with the linen page color so there is no white/dark
+             flash before Compose draws the PaperBackground. -->
+        <item name="android:windowBackground">@color/linen_background</item>
+    </style>
 </resources>
