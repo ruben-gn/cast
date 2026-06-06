@@ -10,12 +10,17 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import cast.android.domain.repository.SettingsRepository
 import cast.android.work.RefreshFeedsWorker
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
+import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
-class CastApplication : Application(), Configuration.Provider {
+class CastApplication : Application(), Configuration.Provider, SingletonImageLoader.Factory {
 
     // Injected so the singleton is constructed at startup, which primes BaseUrlInterceptor from
     // persisted settings (see SettingsRepositoryImpl.init).
@@ -30,6 +35,30 @@ class CastApplication : Application(), Configuration.Provider {
         super.onCreate()
         schedulePeriodicRefresh()
     }
+
+    // Coil's default OkHttp client sends "User-Agent: okhttp/x.y", which some podcast image CDNs
+    // (e.g. buzzsprout storage) reject with a 403 — the art then loads in the browser/webapp but not
+    // here. Send a neutral User-Agent so all AsyncImage loads succeed.
+    override fun newImageLoader(context: PlatformContext): ImageLoader =
+        ImageLoader.Builder(context)
+            .components {
+                add(
+                    OkHttpNetworkFetcherFactory(
+                        callFactory = {
+                            OkHttpClient.Builder()
+                                .addInterceptor { chain ->
+                                    chain.proceed(
+                                        chain.request().newBuilder()
+                                            .header("User-Agent", "CastPodcast/1.0")
+                                            .build(),
+                                    )
+                                }
+                                .build()
+                        },
+                    ),
+                )
+            }
+            .build()
 
     private fun schedulePeriodicRefresh() {
         val request = PeriodicWorkRequestBuilder<RefreshFeedsWorker>(1, TimeUnit.HOURS)
