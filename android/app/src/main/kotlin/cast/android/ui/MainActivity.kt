@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -83,6 +84,10 @@ private fun CastApp(connectivityObserver: ConnectivityObserver) {
             // Transparent so the PaperBackground (linen + grain) shows through; surfaces
             // like cards and bars still paint their own opaque colors on top.
             containerColor = Color.Transparent,
+            // A transparent container makes Scaffold derive no content color (contentColorFor
+            // finds no match → falls back to the root default Color.Black), which is invisible
+            // on the dark Ember background. Set it explicitly so default-colored Text stays readable.
+            contentColor = MaterialTheme.colorScheme.onBackground,
             topBar = { OfflineBanner(visible = !isConnected) },
             bottomBar = {
                 Column {
