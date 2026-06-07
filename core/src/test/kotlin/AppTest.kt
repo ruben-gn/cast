@@ -80,6 +80,48 @@ class AppTest : DescribeSpec({
             }
         }
 
+        it("no longer includes a podcast after it is removed") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.delete("/api/podcasts/${podcast.id}").status shouldBe HttpStatusCode.NoContent
+
+                json.get("/api/podcasts").body<List<PodcastSummaryDto>>().shouldBeEmpty()
+                json.get("/api/podcasts/${podcast.id}").status shouldBe HttpStatusCode.NotFound
+            }
+        }
+
+        it("clears a removed podcast's episodes from the queue and recent feed") {
+            testApp { json, ws ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                json.post("/api/queue/${episodeId.encodeURLPathPart()}")
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"update","episodeId":"$episodeId","progressMs":15000}""")
+                    send("""{"type":"get","episodeId":"$episodeId"}""")
+                    receiveState()
+                }
+
+                json.delete("/api/podcasts/${podcast.id}").status shouldBe HttpStatusCode.NoContent
+
+                json.get("/api/queue").body<List<EpisodeDetailDto>>().shouldBeEmpty()
+                json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>().shouldBeEmpty()
+            }
+        }
+
+        it("returns 404 when removing a podcast that does not exist") {
+            testApp { json, _ ->
+                json.delete("/api/podcasts/nonexistent").status shouldBe HttpStatusCode.NotFound
+            }
+        }
+
         it("includes all feeds after an OPML import") {
             val feed1 = "https://example.com/feed1.xml"
             val feed2 = "https://example.com/feed2.xml"

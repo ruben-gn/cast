@@ -2,6 +2,7 @@ package api
 
 import application.model.EpisodeWithPlayback
 import application.usecase.GetPodcastDetail
+import application.usecase.RemovePodcast
 import cast.api.AddPodcastRequest
 import cast.api.EpisodeDetailDto
 import cast.api.PodcastDetailDto
@@ -32,6 +33,7 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
     val listEpisodes: ListEpisodes by dependencies
     val getPodcastDetail: GetPodcastDetail by dependencies
     val markAllPlayed: MarkAllPlayed by dependencies
+    val removePodcast: RemovePodcast by dependencies
 
     get {
         call.respond(listPodcasts().map(::podcastSummaryDto))
@@ -64,6 +66,12 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         val id = PodcastId(call.parameters["id"]!!)
         val detail = getPodcastDetail(id) ?: return@get call.respond(HttpStatusCode.NotFound)
         call.respond(podcastDetailDto(detail.podcast, detail.episodes))
+    }
+
+    delete("{id}") {
+        val id = PodcastId(call.parameters["id"]!!)
+        val removed = removePodcast(id)
+        call.respond(if (removed) HttpStatusCode.NoContent else HttpStatusCode.NotFound)
     }
 
     post("{id}/played") {
