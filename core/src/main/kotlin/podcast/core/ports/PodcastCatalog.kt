@@ -16,4 +16,5 @@ interface PodcastCatalog {
     suspend fun episodesFor(podcastId: PodcastId): List<Episode>
     suspend fun findEpisodeById(id: EpisodeId): Episode?
     suspend fun findEpisodesPublishedAfter(publishedAfter: Instant): List<Episode>
+    suspend fun setListening(id: PodcastId, listening: Boolean): Boolean
 }

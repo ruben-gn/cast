@@ -56,8 +56,8 @@ class SQLitePodcastCatalogIT : DescribeSpec({
 
         it("should upsert on podcast id conflict") {
             val id = PodcastId("same-id")
-            catalog.save(Podcast(id, FeedUrl("url"), "Old Name", "img", Instant.now(), Instant.now()), emptyList())
-            catalog.save(Podcast(id, FeedUrl("url"), "New Name", "img", Instant.now(), Instant.now()), emptyList())
+            catalog.save(Podcast(id, FeedUrl("url"), "Old Name", "img", true, Instant.now(), Instant.now()), emptyList())
+            catalog.save(Podcast(id, FeedUrl("url"), "New Name", "img", true, Instant.now(), Instant.now()), emptyList())
 
             catalog.findById(id)?.name shouldBe "New Name"
         }
@@ -127,6 +127,7 @@ private fun createPodcast(id: String) = Podcast(
     url = FeedUrl("url-$id"),
     name = "Name $id",
     image = "img",
+    listening = true,
     created = Instant.now(),
     updated = Instant.now()
 )

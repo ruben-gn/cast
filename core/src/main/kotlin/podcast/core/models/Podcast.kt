@@ -7,7 +7,7 @@ data class Podcast(
     val url: FeedUrl,
     val name: String,
     val image: String,
-
+    val listening: Boolean,
     val created: Instant,
     val updated: Instant
 )

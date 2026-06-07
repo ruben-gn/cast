@@ -35,6 +35,7 @@ fun FeedInfo.toPodcast(id: PodcastId, created: Instant, updated: Instant) = Podc
     url = FeedUrl(url),
     name = title,
     image = image,
+    listening = true,
     created = created,
     updated = updated
 )

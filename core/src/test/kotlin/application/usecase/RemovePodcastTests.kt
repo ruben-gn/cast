@@ -51,7 +51,7 @@ class RemovePodcastTests : DescribeSpec({
         queue = FakeQueuePersistence()
         playback = FakePlaybackPersistence()
 
-        val podcast = Podcast(podcastId, FeedUrl("https://example.com/feed"), "Test Show", "", Instant.EPOCH, Instant.EPOCH)
+        val podcast = Podcast(podcastId, FeedUrl("https://example.com/feed"), "Test Show", "", true, Instant.EPOCH, Instant.EPOCH)
         catalog.save(podcast, listOf(episode(ep1), episode(ep2)))
     }
 

@@ -11,6 +11,8 @@ import podcast.core.ports.EpisodeInfo
 import podcast.core.ports.FeedInfo
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.usecase.*
+import podcast.core.usecase.StartListening
+import podcast.core.usecase.StopListening
 import shared.model.EpisodeId
 import podcast.fakes.FakePodcastCatalog
 import java.time.Instant
@@ -201,6 +203,37 @@ class PodcastCoreTests : DescribeSpec({
             listPodcasts().forEach { podcast ->
                 podcast.name shouldBe "New Name ${podcast.url.value}"
             }
+        }
+
+        it("new podcast defaults to listening") {
+            val podcast = addFeed(FeedUrl("https://example.com/rss"))
+            podcast.listening shouldBe true
+        }
+
+        it("lists listening podcasts before non-listening ones") {
+            val url1 = FeedUrl("https://show1.com/rss")
+            val url2 = FeedUrl("https://show2.com/rss")
+            stubFeedProvider = FeedInfoProvider { url -> FeedInfo(title = "Show for ${url.value}", description = "Desc", image = "img.png", url = url.value) }
+            addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
+            val p1 = addFeed(url1)
+            val p2 = addFeed(url2)
+
+            val startListening = StartListening(catalog)
+            val stopListening = StopListening(catalog)
+            stopListening(p1.id)
+            startListening(p2.id)
+
+            val ordered = listPodcasts()
+            ordered.first().id shouldBe p2.id
+            ordered.last().id shouldBe p1.id
+        }
+
+        it("StartListening returns false for unknown podcast") {
+            StartListening(catalog)(PodcastId("nope")) shouldBe false
+        }
+
+        it("StopListening returns false for unknown podcast") {
+            StopListening(catalog)(PodcastId("nope")) shouldBe false
         }
 
         it("continues updating other podcasts when one feed update fails") {

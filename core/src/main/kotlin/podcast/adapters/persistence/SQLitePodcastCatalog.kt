@@ -99,6 +99,8 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
                 }
             }
         }
+
+    override suspend fun setListening(id: PodcastId, listening: Boolean): Boolean = TODO("Implemented in Task 2")
 }
 
 private fun Connection.insertPodcast(podcast: Podcast) {
@@ -138,6 +140,7 @@ private fun ResultSet.toPodcast() = Podcast(
     url = FeedUrl(getString("url")),
     name = getString("name"),
     image = getString("image"),
+    listening = true,  // placeholder — replaced properly in Task 2
     created = Instant.parse(getString("created")),
     updated = Instant.parse(getString("updated"))
 )

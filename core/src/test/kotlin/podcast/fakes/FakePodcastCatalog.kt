@@ -22,7 +22,8 @@ class FakePodcastCatalog : PodcastCatalog {
         episodes.values.removeIf { it.podcastId == id }
     }
 
-    override suspend fun findAll() = podcasts.values.toList()
+    override suspend fun findAll() = podcasts.values
+        .sortedWith(compareByDescending<Podcast> { it.listening }.thenBy { it.created })
 
     override suspend fun findById(id: PodcastId) = podcasts[id]
 
@@ -34,5 +35,11 @@ class FakePodcastCatalog : PodcastCatalog {
     override suspend fun findEpisodeById(id: EpisodeId) = episodes[id]
 
     override suspend fun findEpisodesPublishedAfter(publishedAfter: Instant): List<Episode> =
-        episodes.values.filter { it -> it.publishedAt?.isAfter(publishedAfter) ?: false }.toList()
+        episodes.values.filter { it.publishedAt?.isAfter(publishedAfter) ?: false }.toList()
+
+    override suspend fun setListening(id: PodcastId, listening: Boolean): Boolean {
+        val existing = podcasts[id] ?: return false
+        podcasts[id] = existing.copy(listening = listening)
+        return true
+    }
 }
