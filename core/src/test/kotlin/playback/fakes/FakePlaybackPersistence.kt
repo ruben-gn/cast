@@ -38,4 +38,8 @@ class FakePlaybackPersistence : PlaybackPersistence {
 
     override suspend fun getAll(ids: List<EpisodeId>): Map<EpisodeId, PlaybackState> =
         ids.mapNotNull { id -> storage[id]?.let { id to it } }.toMap()
+
+    override suspend fun removeAll(episodeIds: List<EpisodeId>) {
+        episodeIds.forEach { storage.remove(it) }
+    }
 }

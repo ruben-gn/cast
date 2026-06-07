@@ -121,6 +121,17 @@ class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersiste
         }
     }
 
+    override suspend fun removeAll(episodeIds: List<EpisodeId>) {
+        if (episodeIds.isEmpty()) return
+        db.withConnection { conn ->
+            val placeholders = episodeIds.joinToString(",") { "?" }
+            conn.prepareStatement("DELETE FROM playback_state WHERE episode_id IN ($placeholders)").use { stmt ->
+                episodeIds.forEachIndexed { i, id -> stmt.setString(i + 1, id.value) }
+                stmt.executeUpdate()
+            }
+        }
+    }
+
     private fun ResultSet.toPlaybackState() = PlaybackState(
         episodeId = EpisodeId(getString("episode_id")),
         progressMs = getLong("progress_ms"),

@@ -5,6 +5,7 @@ import io.ktor.server.plugins.di.dependencies
 import queue.adapters.persistence.SQLiteQueuePersistence
 import queue.core.ports.QueuePersistence
 import queue.core.usecase.DequeueEpisode
+import queue.core.usecase.DequeueEpisodes
 import queue.core.usecase.AddEpisodeAt
 import queue.core.usecase.AddEpisodeFirst
 import queue.core.usecase.AddEpisodeLast
@@ -22,6 +23,7 @@ fun Application.installQueueModule(
         provide<AddEpisodeFirst> { AddEpisodeFirst(resolve()) }
         provide<AddEpisodeAt> { AddEpisodeAt(resolve()) }
         provide<DequeueEpisode> { DequeueEpisode(resolve()) }
+        provide<DequeueEpisodes> { DequeueEpisodes(resolve()) }
         provide<ReorderQueue> { ReorderQueue(resolve()) }
     }
 }

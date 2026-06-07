@@ -14,4 +14,5 @@ interface PlaybackPersistence {
     suspend fun markAllPlayed(episodeIds: List<EpisodeId>)
     suspend fun get(episodeId: EpisodeId): PlaybackState?
     suspend fun getAll(ids: List<EpisodeId>): Map<EpisodeId, PlaybackState>
+    suspend fun removeAll(episodeIds: List<EpisodeId>)
 }
