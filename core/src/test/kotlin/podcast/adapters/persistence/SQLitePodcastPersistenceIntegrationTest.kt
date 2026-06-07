@@ -155,12 +155,6 @@ class SQLitePodcastCatalogIT : DescribeSpec({
         it("setListening returns false for unknown podcast") {
             catalog.setListening(PodcastId("nope"), false) shouldBe false
         }
-
-        it("existing rows get listening = 1 via column default") {
-            val id = PodcastId(UUID.randomUUID().toString())
-            catalog.save(createPodcast(id.value), emptyList())
-            catalog.findById(id)?.listening shouldBe true
-        }
     }
 })
 

@@ -17,7 +17,6 @@ fun Application.installDatabase() {
     }
 
     // Add `listening` column to existing databases that pre-date this feature.
-    // SQLite fills existing rows with the DEFAULT (1 = listening) automatically.
     try {
         connection.createStatement().use { stmt ->
             stmt.executeUpdate("ALTER TABLE podcasts ADD COLUMN listening INTEGER NOT NULL DEFAULT 1")
