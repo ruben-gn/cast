@@ -47,7 +47,7 @@ DEFAULT_SERVER_URL=http://your-host:3000
 
 ## Built with Claude Code
 
-The backend was designed and largely written by hand — architecture decisions, domain modelling, SQL schema, test structure. Claude Code acted as a coding assistant throughout: generating boilerplate, suggesting implementations, catching bugs, and explaining trade-offs.
+The backend was designed and largely written by hand — architecture decisions, domain modelling, SQL schema, test structure. Once that baseline was set, Claude Code joined in as a supervised coding assistant: generating boilerplate, suggesting implementations, catching bugs, and explaining trade-offs. Everything it produced was reviewed before it landed.
 
 The webapp and Android app are a different story: both are **fully AI-generated**. The workflow was conversational — describe a feature, review the output, redirect as needed, iterate. No webapp or Android code was written by hand.
 
