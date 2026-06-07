@@ -15,7 +15,7 @@ class SQLiteSettingsPersistence(private val db: ConnectionProvider) : SettingsPe
             while (rs.next()) map[rs.getString("key")] = rs.getString("value")
             Settings(
                 hidePlayed = map["hide_played"] == "true",
-                recentListeningOnly = map["recent_listening_only"]?.let { it == "true" } ?: true,
+                recentListeningOnly = map["recent_listening_only"] != "false",
             )
         }
     }

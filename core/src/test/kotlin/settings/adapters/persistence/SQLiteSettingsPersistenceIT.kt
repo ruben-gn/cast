@@ -27,9 +27,6 @@ class SQLiteSettingsPersistenceIT : DescribeSpec({
             persistence.get() shouldBe Settings(hidePlayed = false)
         }
 
-        it("defaults recentListeningOnly to true") {
-            persistence.get() shouldBe Settings(hidePlayed = false, recentListeningOnly = true)
-        }
     }
 
     describe("update") {
