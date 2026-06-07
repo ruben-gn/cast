@@ -63,6 +63,38 @@ class SQLitePodcastCatalogIT : DescribeSpec({
         }
     }
 
+    describe("delete") {
+        it("should remove the podcast and its episodes") {
+            val id = PodcastId(UUID.randomUUID().toString())
+            catalog.save(createPodcast(id.value), listOf(
+                createEpisode("e1", id.value),
+                createEpisode("e2", id.value)
+            ))
+
+            catalog.delete(id)
+
+            catalog.findById(id) shouldBe null
+            catalog.episodesFor(id).shouldBeEmpty()
+        }
+
+        it("should not affect other podcasts") {
+            val keep = PodcastId(UUID.randomUUID().toString())
+            val remove = PodcastId(UUID.randomUUID().toString())
+            catalog.save(createPodcast(keep.value), listOf(createEpisode("k1", keep.value)))
+            catalog.save(createPodcast(remove.value), listOf(createEpisode("r1", remove.value)))
+
+            catalog.delete(remove)
+
+            catalog.findById(keep) shouldNotBe null
+            catalog.episodesFor(keep) shouldHaveSize 1
+        }
+
+        it("should be a no-op for a missing podcast") {
+            catalog.delete(PodcastId("non-existent"))
+            catalog.findAll().shouldBeEmpty()
+        }
+    }
+
     describe("findAll") {
         it("should return all added podcasts") {
             catalog.findAll().shouldBeEmpty()

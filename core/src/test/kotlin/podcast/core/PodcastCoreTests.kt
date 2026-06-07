@@ -29,6 +29,7 @@ class PodcastCoreTests : DescribeSpec({
         lateinit var updateFeed: UpdateFeed
         lateinit var updateFeeds: UpdateFeeds
         lateinit var addFeed: AddFeed
+        lateinit var deletePodcast: DeletePodcast
         lateinit var listPodcasts: ListPodcasts
         lateinit var getPodcast: GetPodcast
         lateinit var findEpisode: FindEpisode
@@ -41,6 +42,7 @@ class PodcastCoreTests : DescribeSpec({
             updateFeed = UpdateFeed(catalog, stubFeedProvider, fixedClock)
             updateFeeds = UpdateFeeds(catalog, updateFeed)
             addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
+            deletePodcast = DeletePodcast(catalog)
             listPodcasts = ListPodcasts(catalog)
             getPodcast = GetPodcast(catalog)
             findEpisode = FindEpisode(catalog)
@@ -74,6 +76,24 @@ class PodcastCoreTests : DescribeSpec({
 
         it("returns null when retrieving a non-existent podcast") {
             getPodcast(PodcastId("non-existent-id")) shouldBe null
+        }
+
+        it("deletes a podcast and its episodes from the catalog") {
+            val episodeInfo = EpisodeInfo("ep-1", "Ep 1", "Desc", "https://cdn/ep1.mp3", null, fixedInstant)
+            stubFeedProvider = FeedInfoProvider { url -> FeedInfo("Show", url.value, "Desc", "img.png", listOf(episodeInfo)) }
+            addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
+            val podcast = addFeed(FeedUrl("https://example.com/rss"))
+            val episodeId = listEpisodes(podcast.id).first().id
+
+            deletePodcast(podcast.id) shouldBe true
+
+            listPodcasts() shouldHaveSize 0
+            getPodcast(podcast.id) shouldBe null
+            findEpisode(episodeId) shouldBe null
+        }
+
+        it("returns false when deleting a podcast that does not exist") {
+            deletePodcast(PodcastId("non-existent-id")) shouldBe false
         }
 
         it("finds an episode by id") {

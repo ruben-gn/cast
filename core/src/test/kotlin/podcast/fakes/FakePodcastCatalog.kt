@@ -17,6 +17,11 @@ class FakePodcastCatalog : PodcastCatalog {
         episodes.forEach { this.episodes[it.id] = it }
     }
 
+    override suspend fun delete(id: PodcastId) {
+        podcasts.remove(id)
+        episodes.values.removeIf { it.podcastId == id }
+    }
+
     override suspend fun findAll() = podcasts.values.toList()
 
     override suspend fun findById(id: PodcastId) = podcasts[id]

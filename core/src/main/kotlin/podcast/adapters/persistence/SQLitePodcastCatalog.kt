@@ -30,6 +30,27 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
         }
     }
 
+    override suspend fun delete(id: PodcastId) = db.withConnection { conn ->
+        val originalAutoCommit = conn.autoCommit
+        try {
+            conn.autoCommit = false
+            conn.prepareStatement("DELETE FROM episodes WHERE podcast_id = ?").use { stmt ->
+                stmt.setString(1, id.value)
+                stmt.executeUpdate()
+            }
+            conn.prepareStatement("DELETE FROM podcasts WHERE id = ?").use { stmt ->
+                stmt.setString(1, id.value)
+                stmt.executeUpdate()
+            }
+            conn.commit()
+        } catch (e: Exception) {
+            conn.rollback()
+            throw e
+        } finally {
+            conn.autoCommit = originalAutoCommit
+        }
+    }
+
     override suspend fun findAll(): List<Podcast> = db.withConnection { conn ->
         conn.prepareStatement("SELECT * FROM podcasts").use { stmt ->
             val rs = stmt.executeQuery()

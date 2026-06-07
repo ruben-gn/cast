@@ -9,6 +9,7 @@ import java.time.Instant
 
 interface PodcastCatalog {
     suspend fun save(podcast: Podcast, episodes: List<Episode>)
+    suspend fun delete(id: PodcastId)
     suspend fun findAll(): List<Podcast>
     suspend fun findById(id: PodcastId): Podcast?
     suspend fun findByUrl(url: FeedUrl): Podcast?

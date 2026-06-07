@@ -16,6 +16,7 @@ import podcast.core.usecase.FindRecentEpisodes
 import podcast.core.usecase.GetPodcast
 import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListEpisodes
+import podcast.core.usecase.DeletePodcast
 import podcast.core.usecase.ListPodcasts
 import podcast.core.usecase.UpdateFeed
 import podcast.core.usecase.UpdateFeeds
@@ -39,6 +40,7 @@ fun Application.installPodcastModule(
         provide<UpdateFeeds> { UpdateFeeds(resolve(), resolve()) }
 
         provide<AddFeed> { AddFeed(resolve(), resolve(), resolve(), resolve()) }
+        provide<DeletePodcast> { DeletePodcast(resolve()) }
         provide<ImportOpml> { ImportOpml(resolve()) }
     }
 
