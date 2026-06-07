@@ -36,6 +36,13 @@ class PodcastRepositoryImpl @Inject constructor(
         api.markAllPodcastPlayed(podcastId).orThrow()
     }
 
+    // Removal shrinks the subscription list, so drop the cached summaries to avoid
+    // briefly showing the just-removed podcast on the next list load.
+    override suspend fun removePodcast(podcastId: String) {
+        api.removePodcast(podcastId).orThrow()
+        podcastsCache.clear()
+    }
+
     override suspend fun importOpml(file: MultipartBody.Part) {
         api.importOpml(file).orThrow()
         podcastsCache.clear()

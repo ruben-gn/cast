@@ -31,6 +31,9 @@ interface CastApiService {
     @POST("api/podcasts/{id}/played")
     suspend fun markAllPodcastPlayed(@Path("id") id: String): Response<Unit>
 
+    @DELETE("api/podcasts/{id}")
+    suspend fun removePodcast(@Path("id") id: String): Response<Unit>
+
     @GET("api/episodes/recent")
     suspend fun getRecentEpisodes(): List<EpisodeDetailDto>
 

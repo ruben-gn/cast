@@ -47,6 +47,13 @@ class FakeCastApiService(
     override suspend fun markPlayed(episodeId: String): Response<Unit> = Response.success(Unit)
     override suspend fun markUnplayed(episodeId: String): Response<Unit> = Response.success(Unit)
 
+    /** Captures the last id passed to removePodcast(). */
+    var removedPodcastId: String? = null
+    override suspend fun removePodcast(id: String): Response<Unit> {
+        removedPodcastId = id
+        return Response.success(Unit)
+    }
+
     // Unused by the low-hanging-fruit tests.
     override suspend fun getPodcast(id: String): PodcastDetailDto = TODO()
     override suspend fun addPodcast(request: AddPodcastRequest): PodcastDetailDto = TODO()

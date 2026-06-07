@@ -42,6 +42,15 @@ class PodcastDetailViewModel @Inject constructor(
         }
     }
 
+    fun removePodcast(onRemoved: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                podcastRepository.removePodcast(podcastId)
+                onRemoved()
+            } catch (_: Exception) {}
+        }
+    }
+
     fun togglePlayed(episodeId: String, newPlayed: Boolean) {
         viewModelScope.launch {
             try {

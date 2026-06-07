@@ -10,5 +10,6 @@ interface PodcastRepository {
     suspend fun getPodcast(id: String): PodcastDetailDto
     suspend fun addPodcast(feedUrl: String): PodcastDetailDto
     suspend fun markAllPlayed(podcastId: String)
+    suspend fun removePodcast(podcastId: String)
     suspend fun importOpml(file: MultipartBody.Part)
 }
