@@ -11,8 +11,6 @@ import podcast.core.ports.EpisodeInfo
 import podcast.core.ports.FeedInfo
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.usecase.*
-import podcast.core.usecase.StartListening
-import podcast.core.usecase.StopListening
 import shared.model.EpisodeId
 import podcast.fakes.FakePodcastCatalog
 import java.time.Instant
