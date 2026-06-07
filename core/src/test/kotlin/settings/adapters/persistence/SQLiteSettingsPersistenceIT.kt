@@ -26,6 +26,10 @@ class SQLiteSettingsPersistenceIT : DescribeSpec({
         it("returns defaults when no settings have been saved") {
             persistence.get() shouldBe Settings(hidePlayed = false)
         }
+
+        it("defaults recentListeningOnly to true") {
+            persistence.get() shouldBe Settings(hidePlayed = false, recentListeningOnly = true)
+        }
     }
 
     describe("update") {
@@ -47,6 +51,17 @@ class SQLiteSettingsPersistenceIT : DescribeSpec({
             persistence.update(Settings(hidePlayed = true))
 
             persistence.get() shouldBe Settings(hidePlayed = true)
+        }
+
+        it("persists recentListeningOnly = false") {
+            persistence.update(Settings(hidePlayed = false, recentListeningOnly = false))
+            persistence.get().recentListeningOnly shouldBe false
+        }
+
+        it("persists recentListeningOnly = true after false") {
+            persistence.update(Settings(hidePlayed = false, recentListeningOnly = false))
+            persistence.update(Settings(hidePlayed = false, recentListeningOnly = true))
+            persistence.get().recentListeningOnly shouldBe true
         }
     }
 })
