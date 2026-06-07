@@ -16,12 +16,12 @@ fun Route.settingsApi(dependencies: DependencyRegistry) {
 
     get {
         val settings = getSettings()
-        call.respond(SettingsDto(hidePlayed = settings.hidePlayed))
+        call.respond(SettingsDto(hidePlayed = settings.hidePlayed, recentListeningOnly = settings.recentListeningOnly))
     }
 
     put {
         val dto = call.receive<SettingsDto>()
-        updateSettings(Settings(hidePlayed = dto.hidePlayed))
+        updateSettings(Settings(hidePlayed = dto.hidePlayed, recentListeningOnly = dto.recentListeningOnly))
         call.respond(HttpStatusCode.NoContent)
     }
 }

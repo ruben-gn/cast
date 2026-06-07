@@ -23,6 +23,8 @@ import podcast.core.usecase.AddFeed
 import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListEpisodes
 import podcast.core.usecase.ListPodcasts
+import podcast.core.usecase.StartListening
+import podcast.core.usecase.StopListening
 import kotlin.time.Duration
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
@@ -34,6 +36,8 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
     val getPodcastDetail: GetPodcastDetail by dependencies
     val markAllPlayed: MarkAllPlayed by dependencies
     val removePodcast: RemovePodcast by dependencies
+    val startListening: StartListening by dependencies
+    val stopListening: StopListening by dependencies
 
     get {
         call.respond(listPodcasts().map(::podcastSummaryDto))
@@ -80,10 +84,30 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         markAllPlayed(detail.episodes.map { it.episode.id })
         call.respond(HttpStatusCode.NoContent)
     }
+
+    post("{id}/listening") {
+        val id = PodcastId(call.parameters["id"]!!)
+        val found = startListening(id)
+        call.respond(if (found) HttpStatusCode.NoContent else HttpStatusCode.NotFound)
+    }
+
+    delete("{id}/listening") {
+        val id = PodcastId(call.parameters["id"]!!)
+        val found = stopListening(id)
+        call.respond(if (found) HttpStatusCode.NoContent else HttpStatusCode.NotFound)
+    }
 }
 
 private fun podcastSummaryDto(podcast: Podcast) =
-    PodcastSummaryDto(podcast.id.value, podcast.url.value, podcast.name, podcast.image, podcast.created.toString(), podcast.updated.toString())
+    PodcastSummaryDto(
+        id = podcast.id.value,
+        url = podcast.url.value,
+        name = podcast.name,
+        image = podcast.image,
+        listening = podcast.listening,
+        created = podcast.created.toString(),
+        updated = podcast.updated.toString(),
+    )
 
 private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlayback>) =
     PodcastDetailDto(
@@ -91,6 +115,7 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlaybac
         url = podcast.url.value,
         name = podcast.name,
         image = podcast.image,
+        listening = podcast.listening,
         created = podcast.created.toString(),
         updated = podcast.updated.toString(),
         episodes = episodes.map(::episodeDetailDto)

@@ -18,6 +18,8 @@ import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListEpisodes
 import podcast.core.usecase.DeletePodcast
 import podcast.core.usecase.ListPodcasts
+import podcast.core.usecase.StartListening
+import podcast.core.usecase.StopListening
 import podcast.core.usecase.UpdateFeed
 import podcast.core.usecase.UpdateFeeds
 import kotlin.time.Duration.Companion.minutes
@@ -41,6 +43,8 @@ fun Application.installPodcastModule(
 
         provide<AddFeed> { AddFeed(resolve(), resolve(), resolve(), resolve()) }
         provide<DeletePodcast> { DeletePodcast(resolve()) }
+        provide<StartListening> { StartListening(resolve()) }
+        provide<StopListening> { StopListening(resolve()) }
         provide<ImportOpml> { ImportOpml(resolve()) }
     }
 

@@ -8,6 +8,7 @@ data class PodcastSummaryDto(
     val url: String,
     val name: String,
     val image: String,
+    val listening: Boolean,
     val created: String,
     val updated: String,
 )
@@ -34,6 +35,7 @@ data class PodcastDetailDto(
     val url: String,
     val name: String,
     val image: String,
+    val listening: Boolean,
     val created: String,
     val updated: String,
     val episodes: List<EpisodeDetailDto>,

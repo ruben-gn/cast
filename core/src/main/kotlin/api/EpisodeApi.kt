@@ -13,6 +13,7 @@ import playback.core.usecase.MarkUnplayed
 import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.GetPodcast
 import podcast.core.usecase.ListPodcasts
+import settings.core.usecase.GetSettings
 import shared.model.EpisodeId
 
 fun Route.episodeApi(dependencies: DependencyRegistry) {
@@ -21,6 +22,7 @@ fun Route.episodeApi(dependencies: DependencyRegistry) {
     val getPodcast: GetPodcast by dependencies
     val getPlaybackState: GetPlaybackState by dependencies
     val getPlaybackStates: GetPlaybackStates by dependencies
+    val getSettings: GetSettings by dependencies
     val listPodcasts: ListPodcasts by dependencies
     val markPlayed: MarkPlayed by dependencies
     val markUnplayed: MarkUnplayed by dependencies
@@ -41,8 +43,14 @@ fun Route.episodeApi(dependencies: DependencyRegistry) {
     get("recent") {
         val episodes = findRecentUnplayedEpisodes()
         val podcasts = listPodcasts().associateBy { it.id }
-        val states = getPlaybackStates(episodes.map { it.id })
-        call.respond(episodes.map { ep ->
+        val settings = getSettings()
+        val filtered = if (settings.recentListeningOnly) {
+            episodes.filter { podcasts[it.podcastId]?.listening == true }
+        } else {
+            episodes
+        }
+        val states = getPlaybackStates(filtered.map { it.id })
+        call.respond(filtered.map { ep ->
             val podcast = podcasts[ep.podcastId]
             val state = states[ep.id]
             episodeDetailDto(

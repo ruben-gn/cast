@@ -149,6 +149,64 @@ class AppTest : DescribeSpec({
                     .map { it.url }.toSet() shouldBe setOf(feed1, feed2)
             }
         }
+
+        it("new podcast is marked as listening") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                podcast.listening shouldBe true
+                json.get("/api/podcasts").body<List<PodcastSummaryDto>>()
+                    .first().listening shouldBe true
+            }
+        }
+
+        it("can be marked as not listening and back") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.delete("/api/podcasts/${podcast.id}/listening").status shouldBe HttpStatusCode.NoContent
+                json.get("/api/podcasts").body<List<PodcastSummaryDto>>()
+                    .first().listening shouldBe false
+
+                json.post("/api/podcasts/${podcast.id}/listening").status shouldBe HttpStatusCode.NoContent
+                json.get("/api/podcasts").body<List<PodcastSummaryDto>>()
+                    .first().listening shouldBe true
+            }
+        }
+
+        it("returns 404 when toggling listening for a non-existent podcast") {
+            testApp { json, _ ->
+                json.post("/api/podcasts/nope/listening").status shouldBe HttpStatusCode.NotFound
+                json.delete("/api/podcasts/nope/listening").status shouldBe HttpStatusCode.NotFound
+            }
+        }
+
+        it("lists listening podcasts before non-listening ones") {
+            val feed2 = "https://example.com/feed2.xml"
+            val rss2 = "<rss><channel><title>Show 2</title><image><url>img2</url></image></channel></rss>"
+            testApp(rssFeeds = mapOf(feedUrl to rss, feed2 to rss2)) { json, _ ->
+                val p1 = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val p2 = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feed2))
+                }.body<PodcastDetailDto>()
+
+                json.delete("/api/podcasts/${p1.id}/listening")
+
+                val ordered = json.get("/api/podcasts").body<List<PodcastSummaryDto>>()
+                ordered.first().id shouldBe p2.id
+                ordered.last().id shouldBe p1.id
+            }
+        }
     }
 
     describe("the recent feed") {
@@ -441,6 +499,69 @@ class AppTest : DescribeSpec({
 
                 json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
                     .episodes.shouldBeEmpty()
+            }
+        }
+    }
+
+    describe("the recent-listening-only setting") {
+        it("excludes episodes from non-listening podcasts when enabled") {
+            val feed2 = "https://example.com/feed2.xml"
+            val rss2 = """
+                <rss><channel>
+                    <title>Show 2</title><image><url>img2</url></image>
+                    <item><title>Show 2 Ep</title><guid>s2-ep-1</guid><enclosure url="https://cdn/s2ep1.mp3" length="0" type="audio/mpeg"/></item>
+                </channel></rss>
+            """.trimIndent()
+            testApp(rssFeeds = mapOf(feedUrl to rss, feed2 to rss2)) { json, _ ->
+                val p1 = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feed2))
+                }
+
+                json.delete("/api/podcasts/${p1.id}/listening")
+
+                json.put("/api/settings") {
+                    contentType(ContentType.Application.Json)
+                    setBody(SettingsDto(hidePlayed = false, recentListeningOnly = true))
+                }
+
+                val recent = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
+                recent.none { it.podcastId == p1.id } shouldBe true
+                recent.any { it.title == "Show 2 Ep" } shouldBe true
+            }
+        }
+
+        it("includes all podcasts when disabled") {
+            val feed2 = "https://example.com/feed2.xml"
+            val rss2 = """
+                <rss><channel>
+                    <title>Show 2</title><image><url>img2</url></image>
+                    <item><title>Show 2 Ep</title><guid>s2-ep-1</guid><enclosure url="https://cdn/s2ep1.mp3" length="0" type="audio/mpeg"/></item>
+                </channel></rss>
+            """.trimIndent()
+            testApp(rssFeeds = mapOf(feedUrl to rss, feed2 to rss2)) { json, _ ->
+                val p1 = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feed2))
+                }
+
+                json.delete("/api/podcasts/${p1.id}/listening")
+
+                json.put("/api/settings") {
+                    contentType(ContentType.Application.Json)
+                    setBody(SettingsDto(hidePlayed = false, recentListeningOnly = false))
+                }
+
+                val recent = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
+                recent.any { it.podcastId == p1.id } shouldBe true
             }
         }
     }
