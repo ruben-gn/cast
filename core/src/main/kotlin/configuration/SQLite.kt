@@ -16,6 +16,16 @@ fun Application.installDatabase() {
         statement.executeUpdate(CREATE_SETTINGS_TABLE)
     }
 
+    // Add `listening` column to existing databases that pre-date this feature.
+    // SQLite fills existing rows with the DEFAULT (1 = listening) automatically.
+    try {
+        connection.createStatement().use { stmt ->
+            stmt.executeUpdate("ALTER TABLE podcasts ADD COLUMN listening INTEGER NOT NULL DEFAULT 1")
+        }
+    } catch (_: java.sql.SQLException) {
+        // Column already exists — safe to ignore
+    }
+
     monitor.subscribe(ApplicationStopped) { connection.close() }
 
     val db = SingleConnectionProvider(connection)
@@ -31,6 +41,7 @@ val CREATE_PODCASTS_TABLE = """
         url TEXT NOT NULL,
         name TEXT NOT NULL,
         image TEXT NOT NULL,
+        listening INTEGER NOT NULL DEFAULT 1,
         created TEXT NOT NULL,
         updated TEXT NOT NULL
     )

@@ -52,7 +52,7 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
     }
 
     override suspend fun findAll(): List<Podcast> = db.withConnection { conn ->
-        conn.prepareStatement("SELECT * FROM podcasts").use { stmt ->
+        conn.prepareStatement("SELECT * FROM podcasts ORDER BY listening DESC, created ASC").use { stmt ->
             val rs = stmt.executeQuery()
             generateSequence { if (rs.next()) rs.toPodcast() else null }.toList()
         }
@@ -100,7 +100,14 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
             }
         }
 
-    override suspend fun setListening(id: PodcastId, listening: Boolean): Boolean = TODO("Implemented in Task 2")
+    override suspend fun setListening(id: PodcastId, listening: Boolean): Boolean =
+        db.withConnection { conn ->
+            conn.prepareStatement("UPDATE podcasts SET listening = ? WHERE id = ?").use { stmt ->
+                stmt.setInt(1, if (listening) 1 else 0)
+                stmt.setString(2, id.value)
+                stmt.executeUpdate() > 0
+            }
+        }
 }
 
 private fun Connection.insertPodcast(podcast: Podcast) {
@@ -109,8 +116,9 @@ private fun Connection.insertPodcast(podcast: Podcast) {
         stmt.setString(2, podcast.url.value)
         stmt.setString(3, podcast.name)
         stmt.setString(4, podcast.image)
-        stmt.setString(5, podcast.created.toString())
-        stmt.setString(6, podcast.updated.toString())
+        stmt.setInt(5, if (podcast.listening) 1 else 0)
+        stmt.setString(6, podcast.created.toString())
+        stmt.setString(7, podcast.updated.toString())
         stmt.executeUpdate()
     }
 }
@@ -140,7 +148,7 @@ private fun ResultSet.toPodcast() = Podcast(
     url = FeedUrl(getString("url")),
     name = getString("name"),
     image = getString("image"),
-    listening = true,  // placeholder — replaced properly in Task 2
+    listening = getInt("listening") != 0,
     created = Instant.parse(getString("created")),
     updated = Instant.parse(getString("updated"))
 )
@@ -160,8 +168,8 @@ private fun ResultSet.toEpisode(): Episode {
 }
 
 private val INSERT_PODCAST = """
-    INSERT INTO podcasts (id, url, name, image, created, updated)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO podcasts (id, url, name, image, listening, created, updated)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
         url = excluded.url,
         name = excluded.name,

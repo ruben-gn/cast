@@ -120,6 +120,48 @@ class SQLitePodcastCatalogIT : DescribeSpec({
             catalog.episodesFor(id2).shouldBeEmpty()
         }
     }
+
+    describe("listening") {
+        it("new podcast has listening = true by default") {
+            val id = PodcastId(UUID.randomUUID().toString())
+            catalog.save(createPodcast(id.value), emptyList())
+
+            catalog.findById(id)?.listening shouldBe true
+        }
+
+        it("findAll returns listening podcasts before non-listening") {
+            val listening = PodcastId(UUID.randomUUID().toString())
+            val notListening = PodcastId(UUID.randomUUID().toString())
+            catalog.save(createPodcast(listening.value), emptyList())
+            catalog.save(createPodcast(notListening.value), emptyList())
+            catalog.setListening(notListening, false)
+
+            val all = catalog.findAll()
+            all.first().id shouldBe listening
+            all.last().id shouldBe notListening
+        }
+
+        it("setListening returns true when podcast exists") {
+            val id = PodcastId(UUID.randomUUID().toString())
+            catalog.save(createPodcast(id.value), emptyList())
+
+            catalog.setListening(id, false) shouldBe true
+            catalog.findById(id)?.listening shouldBe false
+
+            catalog.setListening(id, true) shouldBe true
+            catalog.findById(id)?.listening shouldBe true
+        }
+
+        it("setListening returns false for unknown podcast") {
+            catalog.setListening(PodcastId("nope"), false) shouldBe false
+        }
+
+        it("existing rows get listening = 1 via column default") {
+            val id = PodcastId(UUID.randomUUID().toString())
+            catalog.save(createPodcast(id.value), emptyList())
+            catalog.findById(id)?.listening shouldBe true
+        }
+    }
 })
 
 private fun createPodcast(id: String) = Podcast(
