@@ -40,6 +40,7 @@ fun PlayerBar(onClick: (() -> Unit)? = null) {
     val vm = LocalPlayerViewModel.current
     val isPlaying by vm.isPlaying.collectAsStateWithLifecycle()
     val currentMediaItem by vm.currentMediaItem.collectAsStateWithLifecycle()
+    val artworkUrl by vm.currentArtworkUrl.collectAsStateWithLifecycle()
     val position by vm.position.collectAsStateWithLifecycle()
     val duration by vm.duration.collectAsStateWithLifecycle()
 
@@ -70,9 +71,9 @@ fun PlayerBar(onClick: (() -> Unit)? = null) {
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                currentMediaItem?.mediaMetadata?.artworkUri?.let { uri ->
+                artworkUrl?.let { url ->
                     AsyncImage(
-                        model = uri,
+                        model = url,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

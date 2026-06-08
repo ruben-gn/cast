@@ -55,6 +55,7 @@ fun NowPlayingScreen(navController: NavController) {
     val vm = LocalPlayerViewModel.current
     val isPlaying by vm.isPlaying.collectAsStateWithLifecycle()
     val currentMediaItem by vm.currentMediaItem.collectAsStateWithLifecycle()
+    val artworkUrl by vm.currentArtworkUrl.collectAsStateWithLifecycle()
     val position by vm.position.collectAsStateWithLifecycle()
     val duration by vm.duration.collectAsStateWithLifecycle()
 
@@ -98,10 +99,9 @@ fun NowPlayingScreen(navController: NavController) {
         ) {
             Spacer(Modifier.weight(1f))
 
-            val artworkUri = currentMediaItem?.mediaMetadata?.artworkUri
-            if (artworkUri != null) {
+            if (artworkUrl != null) {
                 AsyncImage(
-                    model = artworkUri,
+                    model = artworkUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

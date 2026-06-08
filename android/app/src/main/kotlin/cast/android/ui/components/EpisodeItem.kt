@@ -113,8 +113,11 @@ fun EpisodeItem(
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val sub = listOfNotNull(episode.podcastName, relativeTime(episode.publishedAt), episode.duration)
-                    .joinToString(" · ")
+                val sub = listOfNotNull(
+                    episode.podcastName.takeIf { episode.podcastImage == null },
+                    relativeTime(episode.publishedAt),
+                    episode.duration,
+                ).joinToString(" · ")
                 if (sub.isNotEmpty()) {
                     Text(
                         text = sub,

@@ -45,6 +45,9 @@ class PlayerViewModel @Inject constructor(
     private val _currentMediaItem = MutableStateFlow<MediaItem?>(null)
     val currentMediaItem: StateFlow<MediaItem?> = _currentMediaItem.asStateFlow()
 
+    private val _currentArtworkUrl = MutableStateFlow<String?>(null)
+    val currentArtworkUrl: StateFlow<String?> = _currentArtworkUrl.asStateFlow()
+
     private val _position = MutableStateFlow(0L)
     val position: StateFlow<Long> = _position.asStateFlow()
 
@@ -81,6 +84,7 @@ class PlayerViewModel @Inject constructor(
                 _position.value = 0L
             }
             _currentMediaItem.value = mediaItem
+            _currentArtworkUrl.value = mediaItem?.mediaMetadata?.artworkUri?.toString()
         }
         override fun onPlaybackStateChanged(state: Int) {
             if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
@@ -131,6 +135,7 @@ class PlayerViewModel @Inject constructor(
                 controller = ctrl
                 _isPlaying.value = ctrl.isPlaying
                 _currentMediaItem.value = ctrl.currentMediaItem
+                _currentArtworkUrl.value = ctrl.currentMediaItem?.mediaMetadata?.artworkUri?.toString()
                 _position.value = ctrl.currentPosition
                 _duration.value = ctrl.duration.coerceAtLeast(0L)
                 // App opened with an empty player (e.g. cold-started from a widget tap): restore the
@@ -167,6 +172,7 @@ class PlayerViewModel @Inject constructor(
                 if (ctrl.isPlaying) ctrl.pause() else ctrl.play()
                 return
             }
+            _currentArtworkUrl.value = episode.podcastImage
             val mediaItem = buildMediaItem(episode)
             ctrl.setMediaItem(mediaItem)
             ctrl.prepare()
