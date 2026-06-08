@@ -36,6 +36,25 @@ const PodcastCard: FC<{ podcast: Podcast }> = ({podcast}) => (
             <img src={podcast.image} alt={podcast.name} class="podcast-card-img" loading="lazy"/>
             <div class="podcast-card-info">
                 <p class="podcast-card-name">{podcast.name}</p>
+                {podcast.listening ? (
+                    <button
+                        class="listening-badge listening-badge--on"
+                        hx-delete={`/api/podcasts/${podcast.id}/listening`}
+                        hx-target=".podcast-list"
+                        hx-swap="outerHTML"
+                        onclick="event.stopPropagation()"
+                        title="Listening — click to stop"
+                    >Listening</button>
+                ) : (
+                    <button
+                        class="listening-badge listening-badge--off"
+                        hx-post={`/api/podcasts/${podcast.id}/listening`}
+                        hx-target=".podcast-list"
+                        hx-swap="outerHTML"
+                        onclick="event.stopPropagation()"
+                        title="Not listening — click to start"
+                    >Not listening</button>
+                )}
             </div>
         </div>
     </div>

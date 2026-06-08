@@ -200,6 +200,42 @@ app.post('/api/podcasts/:id/played', async (c) => {
     return new Response(null, {status: res.status})
 })
 
+app.post('/api/podcasts/:id/listening', async (c) => {
+    const id = encodeURIComponent(c.req.param('id'))
+    await fetch(`${KOTLIN_API}/api/podcasts/${id}/listening`, {method: 'POST'})
+    const podcasts: Podcast[] = await fetch(`${KOTLIN_API}/api/podcasts`).then(r => r.json())
+    return c.html(<PodcastList podcasts={podcasts}/>)
+})
+
+app.delete('/api/podcasts/:id/listening', async (c) => {
+    const id = encodeURIComponent(c.req.param('id'))
+    await fetch(`${KOTLIN_API}/api/podcasts/${id}/listening`, {method: 'DELETE'})
+    const podcasts: Podcast[] = await fetch(`${KOTLIN_API}/api/podcasts`).then(r => r.json())
+    return c.html(<PodcastList podcasts={podcasts}/>)
+})
+
+app.post('/podcasts/:id/listening', async (c) => {
+    const id = c.req.param('id')
+    await fetch(`${KOTLIN_API}/api/podcasts/${encodeURIComponent(id)}/listening`, {method: 'POST'})
+    const detail: PodcastDetailType = await fetch(`${KOTLIN_API}/api/podcasts/${encodeURIComponent(id)}`).then(r => r.json())
+    return c.html(
+        <div id="content-container">
+            <div class="page-content"><PodcastDetail podcast={detail} episodes={detail.episodes}/></div>
+        </div>
+    )
+})
+
+app.delete('/podcasts/:id/listening', async (c) => {
+    const id = c.req.param('id')
+    await fetch(`${KOTLIN_API}/api/podcasts/${encodeURIComponent(id)}/listening`, {method: 'DELETE'})
+    const detail: PodcastDetailType = await fetch(`${KOTLIN_API}/api/podcasts/${encodeURIComponent(id)}`).then(r => r.json())
+    return c.html(
+        <div id="content-container">
+            <div class="page-content"><PodcastDetail podcast={detail} episodes={detail.episodes}/></div>
+        </div>
+    )
+})
+
 app.post('/api/episodes/:id/played', async (c) => {
     const id = encodeURIComponent(c.req.param('id'))
     const res = await fetch(`${KOTLIN_API}/api/episodes/${id}/played`, {method: 'POST'})
@@ -215,9 +251,9 @@ app.delete('/api/episodes/:id/played', async (c) => {
 app.get('/settings', async (c) => {
     const res = await fetch(`${KOTLIN_API}/api/settings`)
     if (!res.ok) return new Response('', {status: res.status})
-    const settings = await res.json() as {hidePlayed: boolean}
+    const settings = await res.json() as {hidePlayed: boolean, recentListeningOnly: boolean}
     const isHtmx = c.req.header('HX-Request') === 'true'
-    const content = <SettingsPage hidePlayed={settings.hidePlayed}/>
+    const content = <SettingsPage hidePlayed={settings.hidePlayed} recentListeningOnly={settings.recentListeningOnly}/>
 
     if (isHtmx) {
         return c.html(
@@ -234,10 +270,11 @@ app.get('/settings', async (c) => {
 app.post('/settings', async (c) => {
     const body = await c.req.parseBody()
     const hidePlayed = body['hidePlayed'] === 'on'
+    const recentListeningOnly = body['recentListeningOnly'] === 'on'
     await fetch(`${KOTLIN_API}/api/settings`, {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({hidePlayed}),
+        body: JSON.stringify({hidePlayed, recentListeningOnly}),
     })
     return new Response(null, {status: 204})
 })

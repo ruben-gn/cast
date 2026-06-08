@@ -28,6 +28,7 @@ export interface PodcastDetailDto {
   url: string
   name: string
   image: string
+  listening: boolean
   created: string
   updated: string
   episodes: EpisodeDetailDto[]
@@ -37,9 +38,14 @@ export interface PodcastSummaryDto {
   url: string
   name: string
   image: string
+  listening: boolean
   created: string
   updated: string
 }
+export interface ReorderQueueRequest {
+  episodeIds: string[]
+}
 export interface SettingsDto {
   hidePlayed: boolean
+  recentListeningOnly: boolean
 }

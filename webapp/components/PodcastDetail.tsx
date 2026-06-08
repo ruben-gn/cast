@@ -11,15 +11,36 @@ export const PodcastDetail: FC<{ podcast: Podcast; episodes: Episode[] }> = ({po
             <div class="podcast-header-info">
                 <h1 class="podcast-title">{podcast.name}</h1>
                 <p class="podcast-subtitle">{episodes.length} episodes</p>
-                <button
-                    class="podcast-action-btn"
-                    hx-post={`/api/podcasts/${podcast.id}/played`}
-                    hx-swap="none"
-                    {...{"hx-on:htmx:after-request": "if(event.detail.successful) markAllEpisodesPlayed()"}}
-                    title="Mark all as played"
-                >
-                    Mark all as played
-                </button>
+                <div class="podcast-actions">
+                    <button
+                        class="podcast-action-btn"
+                        hx-post={`/api/podcasts/${podcast.id}/played`}
+                        hx-swap="none"
+                        {...{"hx-on:htmx:after-request": "if(event.detail.successful) markAllEpisodesPlayed()"}}
+                        title="Mark all as played"
+                    >
+                        Mark all as played
+                    </button>
+                    {podcast.listening ? (
+                        <button
+                            class="podcast-action-btn"
+                            hx-delete={`/podcasts/${podcast.id}/listening`}
+                            hx-target="#content-container"
+                            hx-swap="outerHTML"
+                        >
+                            Stop listening
+                        </button>
+                    ) : (
+                        <button
+                            class="podcast-action-btn"
+                            hx-post={`/podcasts/${podcast.id}/listening`}
+                            hx-target="#content-container"
+                            hx-swap="outerHTML"
+                        >
+                            Start listening
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
 
