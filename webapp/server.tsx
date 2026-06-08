@@ -215,9 +215,9 @@ app.delete('/api/podcasts/:id/listening', async (c) => {
 })
 
 app.post('/podcasts/:id/listening', async (c) => {
-    const id = c.req.param('id')
-    await fetch(`${KOTLIN_API}/api/podcasts/${encodeURIComponent(id)}/listening`, {method: 'POST'})
-    const detail: PodcastDetailType = await fetch(`${KOTLIN_API}/api/podcasts/${encodeURIComponent(id)}`).then(r => r.json())
+    const id = encodeURIComponent(c.req.param('id'))
+    await fetch(`${KOTLIN_API}/api/podcasts/${id}/listening`, {method: 'POST'})
+    const detail: PodcastDetailType = await fetch(`${KOTLIN_API}/api/podcasts/${id}`).then(r => r.json())
     return c.html(
         <div id="content-container">
             <div class="page-content"><PodcastDetail podcast={detail} episodes={detail.episodes}/></div>
@@ -226,9 +226,9 @@ app.post('/podcasts/:id/listening', async (c) => {
 })
 
 app.delete('/podcasts/:id/listening', async (c) => {
-    const id = c.req.param('id')
-    await fetch(`${KOTLIN_API}/api/podcasts/${encodeURIComponent(id)}/listening`, {method: 'DELETE'})
-    const detail: PodcastDetailType = await fetch(`${KOTLIN_API}/api/podcasts/${encodeURIComponent(id)}`).then(r => r.json())
+    const id = encodeURIComponent(c.req.param('id'))
+    await fetch(`${KOTLIN_API}/api/podcasts/${id}/listening`, {method: 'DELETE'})
+    const detail: PodcastDetailType = await fetch(`${KOTLIN_API}/api/podcasts/${id}`).then(r => r.json())
     return c.html(
         <div id="content-container">
             <div class="page-content"><PodcastDetail podcast={detail} episodes={detail.episodes}/></div>
