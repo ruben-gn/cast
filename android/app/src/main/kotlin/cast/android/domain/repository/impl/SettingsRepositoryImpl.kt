@@ -44,10 +44,11 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.edit { prefs ->
             prefs[SERVER_URL] = settings.serverUrl
             prefs[HIDE_PLAYED] = settings.hidePlayed
+            prefs[RECENT_LISTENING_ONLY] = settings.recentListeningOnly
             prefs[THEME_MODE] = settings.themeMode.name
         }
         baseUrlInterceptor.baseUrl = settings.serverUrl
-        api.updateSettings(SettingsDto(hidePlayed = settings.hidePlayed)).orThrow()
+        api.updateSettings(SettingsDto(hidePlayed = settings.hidePlayed, recentListeningOnly = settings.recentListeningOnly)).orThrow()
     }
 
     override suspend fun updateThemeMode(mode: ThemeMode) {
@@ -56,7 +57,10 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun refresh() {
         val remote = api.getSettings()
-        dataStore.edit { prefs -> prefs[HIDE_PLAYED] = remote.hidePlayed }
+        dataStore.edit { prefs ->
+            prefs[HIDE_PLAYED] = remote.hidePlayed
+            prefs[RECENT_LISTENING_ONLY] = remote.recentListeningOnly
+        }
     }
 
     private suspend fun currentSettings(): Settings = dataStore.data.first().toSettings()
@@ -64,6 +68,7 @@ class SettingsRepositoryImpl @Inject constructor(
     private fun Preferences.toSettings() = Settings(
         serverUrl = this[SERVER_URL] ?: Settings.DEFAULT_SERVER_URL,
         hidePlayed = this[HIDE_PLAYED] ?: false,
+        recentListeningOnly = this[RECENT_LISTENING_ONLY] ?: true,
         themeMode = this[THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
             ?: ThemeMode.SYSTEM,
     )
@@ -71,6 +76,7 @@ class SettingsRepositoryImpl @Inject constructor(
     companion object {
         private val SERVER_URL = stringPreferencesKey("server_url")
         private val HIDE_PLAYED = booleanPreferencesKey("hide_played")
+        private val RECENT_LISTENING_ONLY = booleanPreferencesKey("recent_listening_only")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 }

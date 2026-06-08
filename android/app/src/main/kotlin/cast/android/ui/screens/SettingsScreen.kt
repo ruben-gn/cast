@@ -90,6 +90,20 @@ fun SettingsScreen(navController: NavHostController) {
 
         Spacer(Modifier.height(24.dp))
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Recent shows only from Listening", style = MaterialTheme.typography.bodyLarge)
+            Switch(
+                checked = settings.recentListeningOnly,
+                onCheckedChange = { vm.updateSettings(settings.copy(recentListeningOnly = it)) },
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
         Text("Theme", style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(8.dp))
         val themeOptions = listOf(
