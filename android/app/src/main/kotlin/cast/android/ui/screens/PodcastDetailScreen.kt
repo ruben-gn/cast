@@ -87,6 +87,7 @@ fun PodcastDetailScreen(podcastId: String, navController: NavHostController) {
                 },
                 actions = {
                     if (uiState is UiState.Success) {
+                        val podcast = (uiState as UiState.Success).data
                         IconButton(onClick = { menuExpanded = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = "More")
                         }
@@ -99,6 +100,13 @@ fun PodcastDetailScreen(podcastId: String, navController: NavHostController) {
                                 onClick = {
                                     menuExpanded = false
                                     vm.markAllPlayed()
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(if (podcast.listening) "Stop listening" else "Start listening") },
+                                onClick = {
+                                    menuExpanded = false
+                                    vm.toggleListening(!podcast.listening)
                                 },
                             )
                             DropdownMenuItem(

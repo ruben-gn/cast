@@ -42,6 +42,15 @@ class PodcastDetailViewModel @Inject constructor(
         }
     }
 
+    fun toggleListening(listening: Boolean) {
+        viewModelScope.launch {
+            try {
+                podcastRepository.setListening(podcastId, listening)
+                load()
+            } catch (_: Exception) {}
+        }
+    }
+
     fun removePodcast(onRemoved: () -> Unit) {
         viewModelScope.launch {
             try {

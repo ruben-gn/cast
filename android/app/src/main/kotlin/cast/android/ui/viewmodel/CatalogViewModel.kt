@@ -57,6 +57,15 @@ class CatalogViewModel @Inject constructor(
         }
     }
 
+    fun toggleListening(podcastId: String, listening: Boolean) {
+        viewModelScope.launch {
+            try {
+                podcastRepository.setListening(podcastId, listening)
+                load()
+            } catch (_: Exception) {}
+        }
+    }
+
     fun importOpml(uri: Uri) {
         viewModelScope.launch {
             isAdding = true

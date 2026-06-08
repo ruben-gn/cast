@@ -69,6 +69,7 @@ fun CatalogScreen(navController: NavHostController) {
                     PodcastCard(
                         podcast = podcast,
                         onClick = { navController.navigate(PodcastDetail(podcast.id)) },
+                        onToggleListening = { vm.toggleListening(podcast.id, !podcast.listening) },
                     )
                 }
             }
@@ -87,21 +88,35 @@ fun CatalogScreen(navController: NavHostController) {
 }
 
 @Composable
-private fun PodcastCard(podcast: PodcastSummaryDto, onClick: () -> Unit) {
+private fun PodcastCard(podcast: PodcastSummaryDto, onClick: () -> Unit, onToggleListening: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(8.dp)
             .clickable(onClick = onClick),
     ) {
-        AsyncImage(
-            model = podcast.image,
-            contentDescription = podcast.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(8.dp)),
-        )
+        Box {
+            AsyncImage(
+                model = podcast.image,
+                contentDescription = podcast.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(8.dp)),
+            )
+            if (!podcast.listening) {
+                Text(
+                    text = "Not listening",
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable(onClick = onToggleListening)
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                )
+            }
+        }
         Text(
             text = podcast.name,
             style = MaterialTheme.typography.bodySmall,
