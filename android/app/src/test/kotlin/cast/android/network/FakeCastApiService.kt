@@ -54,6 +54,9 @@ class FakeCastApiService(
         return Response.success(Unit)
     }
 
+    override suspend fun startListening(id: String): Response<Unit> = Response.success(Unit)
+    override suspend fun stopListening(id: String): Response<Unit> = Response.success(Unit)
+
     // Unused by the low-hanging-fruit tests.
     override suspend fun getPodcast(id: String): PodcastDetailDto = TODO()
     override suspend fun addPodcast(request: AddPodcastRequest): PodcastDetailDto = TODO()

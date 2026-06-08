@@ -47,4 +47,13 @@ class PodcastRepositoryImpl @Inject constructor(
         api.importOpml(file).orThrow()
         podcastsCache.clear()
     }
+
+    override suspend fun setListening(podcastId: String, listening: Boolean) {
+        if (listening) {
+            api.startListening(podcastId).orThrow()
+        } else {
+            api.stopListening(podcastId).orThrow()
+        }
+        podcastsCache.clear()
+    }
 }
