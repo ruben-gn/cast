@@ -2,7 +2,6 @@ package cast.android.widget
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -57,7 +56,6 @@ class NowPlayingWidget : GlanceAppWidget() {
         val podcast = prefs[PODCAST_KEY] ?: ""
         val isPlaying = prefs[IS_PLAYING_KEY] ?: false
         val hasEpisode = prefs[HAS_EPISODE_KEY] ?: false
-        val artworkBitmap = prefs[ARTWORK_KEY]?.let { runCatching { BitmapFactory.decodeFile(it) }.getOrNull() }
 
         // Brand theme, following the system dark-mode setting (a widget can't see the app's
         // in-app theme override). Light = Linen ink/sienna; dark = Ember ink/ember.
@@ -89,13 +87,6 @@ class NowPlayingWidget : GlanceAppWidget() {
                     modifier = GlanceModifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (artworkBitmap != null) {
-                        Image(
-                            provider = ImageProvider(artworkBitmap),
-                            contentDescription = null,
-                            modifier = GlanceModifier.size(52.dp).padding(end = 10.dp),
-                        )
-                    }
                     Column(
                         modifier = GlanceModifier.defaultWeight().wrapContentHeight(),
                     ) {
@@ -178,13 +169,11 @@ class NowPlayingWidget : GlanceAppWidget() {
         val PODCAST_KEY = stringPreferencesKey("widget_podcast")
         val IS_PLAYING_KEY = booleanPreferencesKey("widget_is_playing")
         val HAS_EPISODE_KEY = booleanPreferencesKey("widget_has_episode")
-        val ARTWORK_KEY = stringPreferencesKey("widget_artwork")
 
         suspend fun update(
             context: Context,
             title: String,
             podcast: String,
-            artworkPath: String?,
             isPlaying: Boolean,
             hasEpisode: Boolean,
         ) = withContext(Dispatchers.Main) {
@@ -194,7 +183,6 @@ class NowPlayingWidget : GlanceAppWidget() {
                 updateAppWidgetState(context, id) { prefs ->
                     prefs[TITLE_KEY] = title
                     prefs[PODCAST_KEY] = podcast
-                    if (artworkPath != null) prefs[ARTWORK_KEY] = artworkPath else prefs.remove(ARTWORK_KEY)
                     prefs[IS_PLAYING_KEY] = isPlaying
                     prefs[HAS_EPISODE_KEY] = hasEpisode
                 }

@@ -2,17 +2,11 @@ package cast.android.service
 
 import android.app.PendingIntent
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import androidx.core.net.toUri
-import coil3.BitmapImage
-import coil3.imageLoader
-import coil3.request.ImageRequest
-import java.io.File
-import java.io.FileOutputStream
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -424,32 +418,15 @@ class PlaybackService : MediaLibraryService() {
 
     private fun pushWidgetState(isPlaying: Boolean) {
         val item = mediaSession?.player?.currentMediaItem
-        val artworkUrl = item?.mediaMetadata?.artworkUri?.toString()
         serviceScope.launch {
-            val artworkPath = fetchAndCacheArtwork(artworkUrl)
             NowPlayingWidget.update(
                 context = this@PlaybackService,
                 title = item?.mediaMetadata?.title?.toString() ?: "",
                 podcast = item?.mediaMetadata?.artist?.toString() ?: "",
-                artworkPath = artworkPath,
                 isPlaying = isPlaying,
                 hasEpisode = item != null,
             )
         }
-    }
-
-    private suspend fun fetchAndCacheArtwork(url: String?): String? {
-        val file = File(cacheDir, "widget_artwork.png")
-        if (url == null) { file.delete(); return null }
-        return runCatching {
-            val request = ImageRequest.Builder(this).data(url).allowHardware(false).build()
-            val bitmap = (imageLoader.execute(request).image as? BitmapImage)?.bitmap
-                ?: return null
-            kotlinx.coroutines.withContext(Dispatchers.IO) {
-                FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 90, it) }
-            }
-            file.absolutePath
-        }.getOrNull()
     }
 
     private inner class PlayerListener : Player.Listener {
