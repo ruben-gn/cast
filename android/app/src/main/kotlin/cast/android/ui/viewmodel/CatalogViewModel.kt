@@ -19,6 +19,9 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
+enum class ViewMode { Grid, List }
+enum class SortBy { Name, Updated }
+
 @HiltViewModel
 class CatalogViewModel @Inject constructor(
     private val podcastRepository: PodcastRepository,
@@ -33,6 +36,10 @@ class CatalogViewModel @Inject constructor(
         private set
     var addError: String? by mutableStateOf(null)
         private set
+    var viewMode: ViewMode by mutableStateOf(ViewMode.Grid)
+        private set
+    var sortBy: SortBy by mutableStateOf(SortBy.Name)
+        private set
 
     init { load() }
 
@@ -40,6 +47,29 @@ class CatalogViewModel @Inject constructor(
 
     fun openAddSheet() { showAddSheet = true; addError = null }
     fun dismissAddSheet() { showAddSheet = false; addError = null }
+
+    fun toggleViewMode() {
+        viewMode = if (viewMode == ViewMode.Grid) ViewMode.List else ViewMode.Grid
+    }
+
+    fun setSortBy(sort: SortBy) { sortBy = sort }
+
+    val listeningPodcasts: List<PodcastSummaryDto>
+        get() = (uiState.value as? UiState.Success)?.data
+            .orEmpty()
+            .filter { it.listening }
+            .applySortBy()
+
+    val notListeningPodcasts: List<PodcastSummaryDto>
+        get() = (uiState.value as? UiState.Success)?.data
+            .orEmpty()
+            .filter { !it.listening }
+            .applySortBy()
+
+    private fun List<PodcastSummaryDto>.applySortBy() = when (sortBy) {
+        SortBy.Name -> sortedBy { it.name.lowercase() }
+        SortBy.Updated -> sortedByDescending { it.updated }
+    }
 
     fun addPodcast(feedUrl: String) {
         viewModelScope.launch {
