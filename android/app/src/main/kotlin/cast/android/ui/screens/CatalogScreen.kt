@@ -121,17 +121,54 @@ fun CatalogScreen(navController: NavHostController) {
                         .padding(16.dp),
                 )
             }
-            is UiState.Success -> LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                contentPadding = innerPadding,
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                items(state.data, key = { it.id }) { podcast ->
-                    PodcastCard(
-                        podcast = podcast,
-                        onClick = { navController.navigate(PodcastDetail(podcast.id)) },
-                        onToggleListening = { vm.toggleListening(podcast.id, !podcast.listening) },
-                    )
+            is UiState.Success -> if (vm.viewMode == ViewMode.Grid) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    contentPadding = innerPadding,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader("Listening") }
+                    items(vm.listeningPodcasts, key = { it.id }) { podcast ->
+                        PodcastCard(
+                            podcast = podcast,
+                            onClick = { navController.navigate(PodcastDetail(podcast.id)) },
+                            onToggleListening = { vm.toggleListening(podcast.id, !podcast.listening) },
+                        )
+                    }
+                    if (vm.notListeningPodcasts.isNotEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader("Not listening") }
+                        items(vm.notListeningPodcasts, key = { it.id }) { podcast ->
+                            PodcastCard(
+                                podcast = podcast,
+                                onClick = { navController.navigate(PodcastDetail(podcast.id)) },
+                                onToggleListening = { vm.toggleListening(podcast.id, !podcast.listening) },
+                            )
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    contentPadding = innerPadding,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    stickyHeader { SectionHeader("Listening") }
+                    items(vm.listeningPodcasts, key = { it.id }) { podcast ->
+                        PodcastListItem(
+                            podcast = podcast,
+                            onClick = { navController.navigate(PodcastDetail(podcast.id)) },
+                        )
+                        HorizontalDivider()
+                    }
+                    if (vm.notListeningPodcasts.isNotEmpty()) {
+                        stickyHeader { SectionHeader("Not listening") }
+                        items(vm.notListeningPodcasts, key = { it.id }) { podcast ->
+                            PodcastListItem(
+                                podcast = podcast,
+                                onClick = { navController.navigate(PodcastDetail(podcast.id)) },
+                            )
+                            HorizontalDivider()
+                        }
+                    }
                 }
             }
         }
