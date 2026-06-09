@@ -160,7 +160,7 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onDestroy() {
         stopProgressSync()
-        serviceScope.launch { NowPlayingWidget.update(this@PlaybackService, "", "", null, false, false) }
+        serviceScope.launch { NowPlayingWidget.update(this@PlaybackService, "", "", false, false) }
         serviceScope.cancel()
         libraryScope.cancel()
         playbackWebSocketClient.disconnect()
