@@ -52,7 +52,7 @@ class CatalogViewModel @Inject constructor(
         viewMode = if (viewMode == ViewMode.Grid) ViewMode.List else ViewMode.Grid
     }
 
-    fun setSortBy(sort: SortBy) { sortBy = sort }
+    fun selectSortBy(sort: SortBy) { sortBy = sort }
 
     val listeningPodcasts: List<PodcastSummaryDto>
         get() = (uiState.value as? UiState.Success)?.data

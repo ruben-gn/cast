@@ -81,14 +81,14 @@ fun CatalogScreen(navController: NavHostController) {
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Name") },
-                                onClick = { vm.setSortBy(SortBy.Name); sortMenuExpanded = false },
+                                onClick = { vm.selectSortBy(SortBy.Name); sortMenuExpanded = false },
                                 trailingIcon = if (vm.sortBy == SortBy.Name) {
                                     { Icon(Icons.Default.Check, contentDescription = null) }
                                 } else null,
                             )
                             DropdownMenuItem(
                                 text = { Text("Recently updated") },
-                                onClick = { vm.setSortBy(SortBy.Updated); sortMenuExpanded = false },
+                                onClick = { vm.selectSortBy(SortBy.Updated); sortMenuExpanded = false },
                                 trailingIcon = if (vm.sortBy == SortBy.Updated) {
                                     { Icon(Icons.Default.Check, contentDescription = null) }
                                 } else null,
