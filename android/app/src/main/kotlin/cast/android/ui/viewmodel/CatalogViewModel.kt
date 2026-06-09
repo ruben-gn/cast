@@ -68,7 +68,7 @@ class CatalogViewModel @Inject constructor(
 
     private fun List<PodcastSummaryDto>.applySortBy() = when (sortBy) {
         SortBy.Name -> sortedBy { it.name.lowercase() }
-        SortBy.Updated -> sortedByDescending { it.updated }
+        SortBy.Updated -> sortedByDescending { it.latestEpisodeAt }
     }
 
     fun addPodcast(feedUrl: String) {

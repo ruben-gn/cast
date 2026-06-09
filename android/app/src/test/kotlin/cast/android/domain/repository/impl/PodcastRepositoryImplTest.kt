@@ -15,7 +15,7 @@ class PodcastRepositoryImplTest {
         name = "Podcast $id",
         image = "",
         created = "",
-        updated = "",
+        latestEpisodeAt = "",
     )
 
     @Test

@@ -254,7 +254,7 @@ private fun PodcastListItem(podcast: PodcastSummaryDto, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = podcast.updated.take(10),
+                text = podcast.latestEpisodeAt.take(10),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -52,14 +52,14 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
     }
 
     override suspend fun findAll(): List<Podcast> = db.withConnection { conn ->
-        conn.prepareStatement("SELECT * FROM podcasts ORDER BY listening DESC, created ASC").use { stmt ->
+        conn.prepareStatement(FIND_ALL).use { stmt ->
             val rs = stmt.executeQuery()
             generateSequence { if (rs.next()) rs.toPodcast() else null }.toList()
         }
     }
 
     override suspend fun findById(id: PodcastId): Podcast? = db.withConnection { conn ->
-        conn.prepareStatement("SELECT * FROM podcasts WHERE id = ?").use { stmt ->
+        conn.prepareStatement("$PODCAST_WITH_LATEST WHERE p.id = ?").use { stmt ->
             stmt.setString(1, id.value)
             val rs = stmt.executeQuery()
             if (rs.next()) rs.toPodcast() else null
@@ -67,7 +67,7 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
     }
 
     override suspend fun findByUrl(url: FeedUrl): Podcast? = db.withConnection { conn ->
-        conn.prepareStatement("SELECT * FROM podcasts WHERE url = ?").use { stmt ->
+        conn.prepareStatement("$PODCAST_WITH_LATEST WHERE p.url = ?").use { stmt ->
             stmt.setString(1, url.value)
             val rs = stmt.executeQuery()
             if (rs.next()) rs.toPodcast() else null
@@ -150,7 +150,8 @@ private fun ResultSet.toPodcast() = Podcast(
     image = getString("image"),
     listening = getInt("listening") != 0,
     created = Instant.parse(getString("created")),
-    updated = Instant.parse(getString("updated"))
+    updated = Instant.parse(getString("updated")),
+    latestEpisodeAt = Instant.parse(getString("latest_episode_at")),
 )
 
 private fun ResultSet.toEpisode(): Episode {
@@ -166,6 +167,15 @@ private fun ResultSet.toEpisode(): Episode {
         publishedAt = getString("published_at")?.let { Instant.parse(it) }
     )
 }
+
+private const val PODCAST_WITH_LATEST = """
+    SELECT p.*, COALESCE(MAX(e.published_at), p.created) AS latest_episode_at
+    FROM podcasts p
+    LEFT JOIN episodes e ON e.podcast_id = p.id
+    GROUP BY p.id
+"""
+
+private const val FIND_ALL = "$PODCAST_WITH_LATEST ORDER BY p.listening DESC, p.created ASC"
 
 private val INSERT_PODCAST = """
     INSERT INTO podcasts (id, url, name, image, listening, created, updated)

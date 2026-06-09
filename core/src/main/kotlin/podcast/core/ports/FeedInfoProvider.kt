@@ -37,7 +37,8 @@ fun FeedInfo.toPodcast(id: PodcastId, created: Instant, updated: Instant) = Podc
     image = image,
     listening = true,
     created = created,
-    updated = updated
+    updated = updated,
+    latestEpisodeAt = episodes.maxOfOrNull { it.publishedAt } ?: updated,
 )
 
 fun EpisodeInfo.toEpisode(podcastId: PodcastId) = Episode(

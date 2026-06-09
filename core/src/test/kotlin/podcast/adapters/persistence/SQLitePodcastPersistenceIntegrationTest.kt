@@ -165,7 +165,8 @@ private fun createPodcast(id: String) = Podcast(
     image = "img",
     listening = true,
     created = Instant.now(),
-    updated = Instant.now()
+    updated = Instant.now(),
+    latestEpisodeAt = Instant.now(),
 )
 
 private fun createEpisode(id: String, podcastId: String) = Episode(

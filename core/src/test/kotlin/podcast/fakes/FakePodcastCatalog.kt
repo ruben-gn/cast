@@ -24,10 +24,19 @@ class FakePodcastCatalog : PodcastCatalog {
 
     override suspend fun findAll() = podcasts.values
         .sortedWith(compareByDescending<Podcast> { it.listening }.thenBy { it.created })
+        .map { it.withLatestEpisode() }
 
-    override suspend fun findById(id: PodcastId) = podcasts[id]
+    override suspend fun findById(id: PodcastId) = podcasts[id]?.withLatestEpisode()
 
-    override suspend fun findByUrl(url: FeedUrl) = podcasts.values.find { it.url == url }
+    override suspend fun findByUrl(url: FeedUrl) = podcasts.values.find { it.url == url }?.withLatestEpisode()
+
+    private fun Podcast.withLatestEpisode(): Podcast {
+        val latest = episodes.values
+            .filter { it.podcastId == id }
+            .mapNotNull { it.publishedAt }
+            .maxOrNull() ?: created
+        return copy(latestEpisodeAt = latest)
+    }
 
     override suspend fun episodesFor(podcastId: PodcastId) =
         episodes.values.filter { it.podcastId == podcastId }

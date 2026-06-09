@@ -9,7 +9,8 @@ data class Podcast(
     val image: String,
     val listening: Boolean,
     val created: Instant,
-    val updated: Instant
+    val updated: Instant,
+    val latestEpisodeAt: Instant,
 )
 
 @JvmInline

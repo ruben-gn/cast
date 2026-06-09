@@ -10,7 +10,7 @@ data class PodcastSummaryDto(
     val image: String,
     val listening: Boolean,
     val created: String,
-    val updated: String,
+    val latestEpisodeAt: String,
 )
 
 @Serializable
@@ -37,7 +37,6 @@ data class PodcastDetailDto(
     val image: String,
     val listening: Boolean,
     val created: String,
-    val updated: String,
     val episodes: List<EpisodeDetailDto>,
 )
 

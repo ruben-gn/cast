@@ -30,7 +30,6 @@ export interface PodcastDetailDto {
   image: string
   listening: boolean
   created: string
-  updated: string
   episodes: EpisodeDetailDto[]
 }
 export interface PodcastSummaryDto {
@@ -40,7 +39,7 @@ export interface PodcastSummaryDto {
   image: string
   listening: boolean
   created: string
-  updated: string
+  latestEpisodeAt: string
 }
 export interface ReorderQueueRequest {
   episodeIds: string[]

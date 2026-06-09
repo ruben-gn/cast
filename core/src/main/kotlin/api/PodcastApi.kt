@@ -106,7 +106,7 @@ private fun podcastSummaryDto(podcast: Podcast) =
         image = podcast.image,
         listening = podcast.listening,
         created = podcast.created.toString(),
-        updated = podcast.updated.toString(),
+        latestEpisodeAt = podcast.latestEpisodeAt.toString(),
     )
 
 private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlayback>) =
@@ -117,7 +117,6 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlaybac
         image = podcast.image,
         listening = podcast.listening,
         created = podcast.created.toString(),
-        updated = podcast.updated.toString(),
         episodes = episodes.map(::episodeDetailDto)
     )
 
