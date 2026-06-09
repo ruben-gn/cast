@@ -2,7 +2,6 @@ package cast.android.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -61,7 +59,7 @@ fun CatalogScreen(navController: NavHostController) {
                 )
             }
             is UiState.Success -> LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+                columns = GridCells.Fixed(3),
                 contentPadding = innerPadding,
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -89,40 +87,31 @@ fun CatalogScreen(navController: NavHostController) {
 
 @Composable
 private fun PodcastCard(podcast: PodcastSummaryDto, onClick: () -> Unit, onToggleListening: () -> Unit) {
-    Column(
+    Box(
         modifier = Modifier
-            .padding(8.dp)
+            .padding(4.dp)
             .clickable(onClick = onClick),
     ) {
-        Box {
-            AsyncImage(
-                model = podcast.image,
-                contentDescription = podcast.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp)),
-            )
-            if (!podcast.listening) {
-                Text(
-                    text = "Not listening",
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(4.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable(onClick = onToggleListening)
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
-                )
-            }
-        }
-        Text(
-            text = podcast.name,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 4.dp),
+        AsyncImage(
+            model = podcast.image,
+            contentDescription = podcast.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(8.dp)),
         )
+        if (!podcast.listening) {
+            Text(
+                text = "Not listening",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .clickable(onClick = onToggleListening)
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
+            )
+        }
     }
 }

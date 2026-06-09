@@ -69,22 +69,17 @@ fun RecentScreenSkeleton() {
 @Composable
 fun CatalogScreenSkeleton() {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(6) {
-            Column(Modifier.padding(8.dp)) {
-                ShimmerBox(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f),
-                    shape = RoundedCornerShape(8.dp),
-                )
-                Spacer(Modifier.height(6.dp))
-                ShimmerBox(Modifier.fillMaxWidth().height(12.dp))
-                Spacer(Modifier.height(4.dp))
-                ShimmerBox(Modifier.fillMaxWidth(0.7f).height(12.dp))
-            }
+        items(9) {
+            ShimmerBox(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .fillMaxWidth()
+                    .aspectRatio(1f),
+                shape = RoundedCornerShape(8.dp),
+            )
         }
     }
 }
