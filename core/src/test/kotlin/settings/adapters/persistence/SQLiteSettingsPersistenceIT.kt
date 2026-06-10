@@ -3,8 +3,7 @@ package settings.adapters.persistence
 import configuration.CREATE_SETTINGS_TABLE
 import configuration.SingleConnectionProvider
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
-import settings.core.models.Settings
+import settings.core.ports.settingsPersistenceContract
 import java.sql.DriverManager
 
 class SQLiteSettingsPersistenceIT : DescribeSpec({
@@ -22,43 +21,5 @@ class SQLiteSettingsPersistenceIT : DescribeSpec({
 
     afterEach { db.close() }
 
-    describe("get") {
-        it("returns defaults when no settings have been saved") {
-            persistence.get() shouldBe Settings(hidePlayed = false)
-        }
-
-    }
-
-    describe("update") {
-        it("persists hidePlayed = true") {
-            persistence.update(Settings(hidePlayed = true))
-
-            persistence.get() shouldBe Settings(hidePlayed = true)
-        }
-
-        it("persists hidePlayed = false after it was true") {
-            persistence.update(Settings(hidePlayed = true))
-            persistence.update(Settings(hidePlayed = false))
-
-            persistence.get() shouldBe Settings(hidePlayed = false)
-        }
-
-        it("upserts on repeated calls") {
-            persistence.update(Settings(hidePlayed = true))
-            persistence.update(Settings(hidePlayed = true))
-
-            persistence.get() shouldBe Settings(hidePlayed = true)
-        }
-
-        it("persists recentListeningOnly = false") {
-            persistence.update(Settings(hidePlayed = false, recentListeningOnly = false))
-            persistence.get().recentListeningOnly shouldBe false
-        }
-
-        it("persists recentListeningOnly = true after false") {
-            persistence.update(Settings(hidePlayed = false, recentListeningOnly = false))
-            persistence.update(Settings(hidePlayed = false, recentListeningOnly = true))
-            persistence.get().recentListeningOnly shouldBe true
-        }
-    }
+    include(settingsPersistenceContract { persistence })
 })

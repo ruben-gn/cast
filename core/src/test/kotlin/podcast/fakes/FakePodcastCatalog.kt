@@ -10,11 +10,26 @@ import java.time.Instant
 
 class FakePodcastCatalog : PodcastCatalog {
     private val podcasts = mutableMapOf<PodcastId, Podcast>()
-    private val episodes = mutableMapOf<EpisodeId, Episode>()
+
+    // Keyed by feedGuid to mirror SQLite's UNIQUE(guid) upsert, which keeps the original id
+    // and never touches `listening` on the podcast row.
+    private val episodes = mutableMapOf<String, Episode>()
 
     override suspend fun save(podcast: Podcast, episodes: List<Episode>) {
-        podcasts[podcast.id] = podcast
-        episodes.forEach { this.episodes[it.id] = it }
+        val existing = podcasts[podcast.id]
+        podcasts[podcast.id] = if (existing == null) podcast else podcast.copy(listening = existing.listening)
+        episodes.forEach { episode ->
+            val current = this.episodes[episode.feedGuid]
+            this.episodes[episode.feedGuid] =
+                if (current == null) episode
+                else current.copy(
+                    title = episode.title,
+                    description = episode.description,
+                    audioUrl = episode.audioUrl,
+                    duration = episode.duration,
+                    publishedAt = episode.publishedAt,
+                )
+        }
     }
 
     override suspend fun delete(id: PodcastId) {
@@ -41,7 +56,7 @@ class FakePodcastCatalog : PodcastCatalog {
     override suspend fun episodesFor(podcastId: PodcastId) =
         episodes.values.filter { it.podcastId == podcastId }
 
-    override suspend fun findEpisodeById(id: EpisodeId) = episodes[id]
+    override suspend fun findEpisodeById(id: EpisodeId) = episodes.values.find { it.id == id }
 
     override suspend fun findEpisodesPublishedAfter(publishedAfter: Instant): List<Episode> =
         episodes.values.filter { it.publishedAt?.isAfter(publishedAfter) ?: false }.toList()
