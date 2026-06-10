@@ -45,7 +45,7 @@ class FindRecentUnplayedEpisodesTests : DescribeSpec({
         catalog = FakePodcastCatalog()
         playback = FakePlaybackPersistence()
 
-        val podcast = Podcast(PodcastId("pod-1"), FeedUrl("https://example.com/feed"), "Show", "", true, Instant.EPOCH, Instant.EPOCH)
+        val podcast = Podcast(PodcastId("pod-1"), FeedUrl("https://example.com/feed"), "Show", "", true, Instant.EPOCH, Instant.EPOCH, Instant.EPOCH)
         catalog.save(podcast, emptyList())
     }
 

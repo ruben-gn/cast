@@ -59,7 +59,7 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
     }
 
     override suspend fun findById(id: PodcastId): Podcast? = db.withConnection { conn ->
-        conn.prepareStatement("$PODCAST_WITH_LATEST WHERE p.id = ?").use { stmt ->
+        conn.prepareStatement(podcastWithLatest("WHERE p.id = ?")).use { stmt ->
             stmt.setString(1, id.value)
             val rs = stmt.executeQuery()
             if (rs.next()) rs.toPodcast() else null
@@ -67,7 +67,7 @@ class SQLitePodcastCatalog(private val db: ConnectionProvider) : PodcastCatalog 
     }
 
     override suspend fun findByUrl(url: FeedUrl): Podcast? = db.withConnection { conn ->
-        conn.prepareStatement("$PODCAST_WITH_LATEST WHERE p.url = ?").use { stmt ->
+        conn.prepareStatement(podcastWithLatest("WHERE p.url = ?")).use { stmt ->
             stmt.setString(1, url.value)
             val rs = stmt.executeQuery()
             if (rs.next()) rs.toPodcast() else null
@@ -168,14 +168,15 @@ private fun ResultSet.toEpisode(): Episode {
     )
 }
 
-private const val PODCAST_WITH_LATEST = """
+private fun podcastWithLatest(where: String = "") = """
     SELECT p.*, COALESCE(MAX(e.published_at), p.created) AS latest_episode_at
     FROM podcasts p
     LEFT JOIN episodes e ON e.podcast_id = p.id
+    $where
     GROUP BY p.id
 """
 
-private const val FIND_ALL = "$PODCAST_WITH_LATEST ORDER BY p.listening DESC, p.created ASC"
+private val FIND_ALL = podcastWithLatest() + " ORDER BY p.listening DESC, p.created ASC"
 
 private val INSERT_PODCAST = """
     INSERT INTO podcasts (id, url, name, image, listening, created, updated)

@@ -51,7 +51,7 @@ class GetPodcastDetailTests : DescribeSpec({
         playback = FakePlaybackPersistence()
         settingsPersistence = FakeSettingsPersistence()
 
-        val podcast = Podcast(podcastId, FeedUrl("https://example.com/feed"), "Test Show", "", true, Instant.EPOCH, Instant.EPOCH)
+        val podcast = Podcast(podcastId, FeedUrl("https://example.com/feed"), "Test Show", "", true, Instant.EPOCH, Instant.EPOCH, Instant.EPOCH)
         catalog.save(podcast, listOf(episode(ep1), episode(ep2)))
     }
 
