@@ -3,5 +3,6 @@
     <!-- Linen Paper brand theme -->
     <color name="linen_background">#FBF8F3</color>
     <color name="ember_background">#161210</color>
-    <color name="ic_launcher_background">#D8512A</color>
+    <!-- Brand-mark deep navy, shared by the adaptive icon background and the v31+ splash. -->
+    <color name="ic_launcher_background">#0D1530</color>
 </resources>

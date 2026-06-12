@@ -9,6 +9,7 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" />
       <link rel="stylesheet" href="/static/css/style.css" />
+      <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
       <script src="https://unpkg.com/htmx.org@1.9.10"></script>
       <title>{title}</title>
     </head>
