@@ -24,7 +24,9 @@ fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier)
             val dest: PodcastDetail = it.toRoute()
             PodcastDetailScreen(dest.podcastId, navController)
         }
-        composable<EpisodeDetail> { EpisodeDetailScreen(navController) }
+        composable<EpisodeDetail>(
+            deepLinks = listOf(navDeepLink<EpisodeDetail>(basePath = "cast://episode")),
+        ) { EpisodeDetailScreen(navController) }
         composable<Queue> { QueueScreen(navController) }
         composable<Settings> { SettingsScreen(navController) }
         composable<NowPlaying>(

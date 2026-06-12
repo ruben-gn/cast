@@ -1,9 +1,13 @@
 package cast.android.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -44,9 +48,13 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var settingsRepository: SettingsRepository
 
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        askNotificationPermission()
         setContent {
             val settings by settingsRepository.settings.collectAsStateWithLifecycle(Settings())
             val darkTheme = when (settings.themeMode) {
@@ -69,6 +77,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // New-episode notifications need the runtime grant on 13+. Denial is respected: the system
+    // only re-prompts a limited number of times, and the worker keeps running without posting.
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 }
 

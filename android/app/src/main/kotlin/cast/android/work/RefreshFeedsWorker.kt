@@ -6,6 +6,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import cast.android.domain.repository.EpisodeRepository
 import cast.android.domain.repository.PodcastRepository
+import cast.android.notifications.NewEpisodeNotifier
+import cast.android.notifications.NewEpisodeTracker
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -15,11 +17,15 @@ class RefreshFeedsWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val podcastRepository: PodcastRepository,
     private val episodeRepository: EpisodeRepository,
+    private val tracker: NewEpisodeTracker,
+    private val notifier: NewEpisodeNotifier,
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result = runCatching {
-        podcastRepository.listPodcasts()
-        episodeRepository.getRecentEpisodes()
+        val podcasts = podcastRepository.listPodcasts()
+        val episodes = episodeRepository.getRecentEpisodes()
+        notifier.notify(tracker.newEpisodes(podcasts, episodes))
+        tracker.advance(episodes)
     }.fold(
         onSuccess = { Result.success() },
         onFailure = { Result.retry() },

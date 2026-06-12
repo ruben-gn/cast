@@ -61,12 +61,13 @@ class CastApplication : Application(), Configuration.Provider, SingletonImageLoa
             .build()
 
     private fun schedulePeriodicRefresh() {
-        val request = PeriodicWorkRequestBuilder<RefreshFeedsWorker>(1, TimeUnit.HOURS)
+        val request = PeriodicWorkRequestBuilder<RefreshFeedsWorker>(20, TimeUnit.MINUTES)
             .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
             .build()
+        // UPDATE (not KEEP) so interval changes take effect on already-installed apps.
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             RefreshFeedsWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.UPDATE,
             request,
         )
     }
