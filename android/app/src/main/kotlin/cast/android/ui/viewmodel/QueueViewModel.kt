@@ -19,7 +19,15 @@ class QueueViewModel @Inject constructor(
 
     private var pendingReorderJob: Job? = null
 
-    init { load() }
+    init {
+        load()
+        viewModelScope.launch {
+            queueRepository.queueIds.collect { _ ->
+                val cached = queueRepository.cachedQueue()
+                if (cached != null) _uiState.value = UiState.Success(cached)
+            }
+        }
+    }
 
     fun load() = load("Failed to load queue") { queueRepository.getQueue() }
 
