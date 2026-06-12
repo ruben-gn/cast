@@ -1,6 +1,6 @@
 package cast.android.ui.screens
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,14 +21,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,41 +80,21 @@ fun QueueScreen(navController: NavHostController) {
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                     items(episodes, key = { it.id }) { episode ->
                         ReorderableItem(reorderState, key = episode.id) { _ ->
-                            val dismissState = rememberSwipeToDismissBoxState(
-                                confirmValueChange = { value ->
-                                    if (value == SwipeToDismissBoxValue.EndToStart) {
-                                        vm.removeFromQueue(episode.id)
-                                        true
-                                    } else false
-                                },
+                            var showSheet by remember(episode.id) { mutableStateOf(false) }
+                            QueueEpisodeRow(
+                                episode = episode,
+                                onLongClick = { showSheet = true },
+                                dragHandleModifier = Modifier.draggableHandle(),
                             )
-                            SwipeToDismissBox(
-                                state = dismissState,
-                                enableDismissFromStartToEnd = false,
-                                backgroundContent = {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(MaterialTheme.colorScheme.errorContainer)
-                                            .padding(end = 24.dp),
-                                        contentAlignment = Alignment.CenterEnd,
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Delete,
-                                            contentDescription = "Remove from queue",
-                                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                                        )
-                                    }
-                                },
-                            ) {
-                                QueueEpisodeRow(
-                                    episode = episode,
+                            HorizontalDivider()
+                            if (showSheet) {
+                                QueueEpisodeActionsSheet(
+                                    episodeTitle = episode.title,
                                     onPlay = { playerVm.playEpisode(episode) },
-                                    // draggableHandle() is a ReorderableItemScope extension — called here in scope
-                                    dragHandleModifier = Modifier.draggableHandle(),
+                                    onRemove = { vm.removeFromQueue(episode.id) },
+                                    onDismiss = { showSheet = false },
                                 )
                             }
-                            HorizontalDivider()
                         }
                     }
                 }
@@ -126,14 +106,15 @@ fun QueueScreen(navController: NavHostController) {
 @Composable
 private fun QueueEpisodeRow(
     episode: EpisodeDetailDto,
-    onPlay: () -> Unit,
+    onLongClick: () -> Unit,
     dragHandleModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface),
+            .combinedClickable(onClick = {}, onLongClick = onLongClick)
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(0.dp),
     ) {
@@ -170,11 +151,49 @@ private fun QueueEpisodeRow(
                 )
             }
         }
-        IconButton(onClick = onPlay) {
-            Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-        }
-        IconButton(modifier = dragHandleModifier, onClick = {}) {
+        androidx.compose.material3.IconButton(modifier = dragHandleModifier, onClick = {}) {
             Icon(Icons.Default.DragHandle, contentDescription = "Drag to reorder")
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun QueueEpisodeActionsSheet(
+    episodeTitle: String,
+    onPlay: () -> Unit,
+    onRemove: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            text = episodeTitle,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+        )
+        QueueSheetAction(Icons.Default.PlayArrow, "Play now") { onPlay(); onDismiss() }
+        QueueSheetAction(Icons.Default.Delete, "Remove from queue") { onRemove(); onDismiss() }
+    }
+}
+
+@Composable
+private fun QueueSheetAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = MaterialTheme.typography.bodyLarge)
     }
 }
