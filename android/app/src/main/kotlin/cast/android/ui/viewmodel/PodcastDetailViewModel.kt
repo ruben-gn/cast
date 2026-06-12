@@ -10,6 +10,7 @@ import cast.android.ui.UiState
 import cast.android.ui.nav.PodcastDetail
 import cast.api.PodcastDetailDto
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,6 +23,7 @@ class PodcastDetailViewModel @Inject constructor(
 ) : LoadableViewModel<PodcastDetailDto>(UiState.Loading) {
 
     private val podcastId: String = savedStateHandle.toRoute<PodcastDetail>().podcastId
+    val queueIds: StateFlow<List<String>> = queueRepository.queueIds
 
     init { load() }
 

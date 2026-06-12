@@ -35,6 +35,7 @@ fun RecentScreen(navController: NavHostController) {
     val vm: RecentViewModel = hiltViewModel()
     val playerVm = LocalPlayerViewModel.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val queueIds by vm.queueIds.collectAsStateWithLifecycle()
 
     LaunchedEffect(playerVm) {
         playerVm.episodeCompleted.collect { episodeId -> vm.onEpisodeCompleted(episodeId) }
@@ -73,6 +74,7 @@ fun RecentScreen(navController: NavHostController) {
                         onGoToPodcast = episode.podcastId?.let { id ->
                             { navController.navigate(PodcastDetail(id)) }
                         },
+                        queuePosition = queueIds.indexOf(episode.id).takeIf { it >= 0 }?.plus(1),
                     )
                     HorizontalDivider()
                 }

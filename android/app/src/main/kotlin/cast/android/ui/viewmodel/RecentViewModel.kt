@@ -6,6 +6,7 @@ import cast.android.domain.repository.QueueRepository
 import cast.android.ui.UiState
 import cast.api.EpisodeDetailDto
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,6 +17,8 @@ class RecentViewModel @Inject constructor(
 ) : LoadableViewModel<List<EpisodeDetailDto>>(
     episodeRepository.cachedRecentEpisodes()?.let { UiState.Success(it) } ?: UiState.Loading
 ) {
+
+    val queueIds: StateFlow<List<String>> = queueRepository.queueIds
 
     init { load() }
 

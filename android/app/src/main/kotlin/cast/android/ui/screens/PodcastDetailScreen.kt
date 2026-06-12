@@ -52,6 +52,7 @@ fun PodcastDetailScreen(podcastId: String, navController: NavHostController) {
     val vm: PodcastDetailViewModel = hiltViewModel()
     val playerVm = LocalPlayerViewModel.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val queueIds by vm.queueIds.collectAsStateWithLifecycle()
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showRemoveDialog by remember { mutableStateOf(false) }
@@ -181,6 +182,7 @@ fun PodcastDetailScreen(podcastId: String, navController: NavHostController) {
                             onTogglePlayed = { newPlayed -> vm.togglePlayed(episode.id, newPlayed) },
                             onAddToQueue = { vm.addToQueue(episode.id) },
                             onClick = { navController.navigate(EpisodeDetail(episode.id)) },
+                            queuePosition = queueIds.indexOf(episode.id).takeIf { it >= 0 }?.plus(1),
                         )
                         HorizontalDivider()
                     }

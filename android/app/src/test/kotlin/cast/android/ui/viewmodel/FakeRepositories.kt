@@ -3,6 +3,8 @@ package cast.android.ui.viewmodel
 import cast.android.domain.repository.EpisodeRepository
 import cast.android.domain.repository.QueueRepository
 import cast.api.EpisodeDetailDto
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /** Minimal [EpisodeRepository] fake for ViewModel seeding tests. */
 class FakeEpisodeRepository(
@@ -19,6 +21,7 @@ class FakeQueueRepository(
     private val cached: List<EpisodeDetailDto>? = null,
 ) : QueueRepository {
     override fun cachedQueue(): List<EpisodeDetailDto>? = cached
+    override val queueIds: StateFlow<List<String>> = MutableStateFlow(cached?.map { it.id } ?: emptyList())
     override suspend fun getQueue(): List<EpisodeDetailDto> = cached ?: emptyList()
     override suspend fun addToQueue(episodeId: String): List<EpisodeDetailDto> = cached ?: emptyList()
     override suspend fun removeFromQueue(episodeId: String): List<EpisodeDetailDto> = cached ?: emptyList()
