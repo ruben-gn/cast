@@ -1,5 +1,6 @@
 package api
 
+import application.model.EpisodeInContext
 import application.model.EpisodeWithPlayback
 import application.usecase.GetPodcastDetail
 import application.usecase.RemovePodcast
@@ -138,6 +139,21 @@ internal fun episodeDetailDto(
     podcastId = podcastId,
     podcastName = podcastName,
     podcastImage = podcastImage,
+)
+
+internal fun episodeDetailDto(ep: EpisodeInContext) = EpisodeDetailDto(
+    id = ep.episode.id.value,
+    title = ep.episode.title,
+    description = ep.episode.description,
+    audioUrl = ep.episode.audioUrl,
+    duration = ep.episode.duration?.formatted(),
+    durationMs = ep.episode.duration?.inWholeMilliseconds,
+    publishedAt = ep.episode.publishedAt?.toString(),
+    played = ep.played,
+    progressMs = ep.progressMs,
+    podcastId = ep.episode.podcastId.value,
+    podcastName = ep.podcastName,
+    podcastImage = ep.podcastImage,
 )
 
 internal fun Duration.formatted(): String =

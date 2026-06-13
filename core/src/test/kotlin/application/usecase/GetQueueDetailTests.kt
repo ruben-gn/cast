@@ -11,6 +11,7 @@ import podcast.core.models.FeedUrl
 import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
 import podcast.core.usecase.FindEpisode
+import podcast.core.usecase.ListPodcasts
 import podcast.fakes.FakePodcastCatalog
 import queue.core.model.Queue
 import queue.core.usecase.GetQueue
@@ -36,6 +37,7 @@ class GetQueueDetailTests : DescribeSpec({
         findEpisode = FindEpisode(catalog),
         getPlaybackStates = GetPlaybackStates(playback),
         getSettings = GetSettings(settingsPersistence),
+        listPodcasts = ListPodcasts(catalog),
     )
 
     fun episode(id: EpisodeId) = Episode(
@@ -106,6 +108,14 @@ class GetQueueDetailTests : DescribeSpec({
             result.first { it.episode.id == ep1 }.played shouldBe true
             result.first { it.episode.id == ep2 }.played shouldBe false
         }
+    }
+
+    it("populates podcast name and image on each episode") {
+        queue.save(Queue(listOf(ep1)))
+
+        val result = useCase()()
+        result[0].podcastName shouldBe "Test Show"
+        result[0].podcastImage shouldBe ""
     }
 
     describe("hidePlayed = true") {

@@ -1,13 +1,13 @@
 package api
 
 import application.usecase.GetQueueDetail
+import cast.api.EpisodeDetailDto
 import cast.api.ReorderQueueRequest
 import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
-import podcast.core.usecase.ListPodcasts
 import queue.core.usecase.AddEpisodeLast
 import queue.core.usecase.DequeueEpisode
 import queue.core.usecase.ReorderQueue
@@ -19,16 +19,9 @@ fun Route.queueApi(dependencies: DependencyRegistry) {
     val dequeueEpisode: DequeueEpisode by dependencies
     val addEpisodeLast: AddEpisodeLast by dependencies
     val reorderQueue: ReorderQueue by dependencies
-    val listPodcasts: ListPodcasts by dependencies
 
-    suspend fun queueResponse(): List<cast.api.EpisodeDetailDto> {
-        val episodes = getQueueDetail()
-        val podcasts = listPodcasts().associateBy { it.id }
-        return episodes.map { ep ->
-            val podcast = podcasts[ep.episode.podcastId]
-            episodeDetailDto(ep, podcastId = ep.episode.podcastId.value, podcastName = podcast?.name, podcastImage = podcast?.image)
-        }
-    }
+    suspend fun queueResponse(): List<EpisodeDetailDto> =
+        getQueueDetail().map(::episodeDetailDto)
 
     get {
         call.respond(queueResponse())
