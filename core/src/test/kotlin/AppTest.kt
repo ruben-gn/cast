@@ -80,6 +80,18 @@ class AppTest : DescribeSpec({
             }
         }
 
+        it("includes the podcast name in its episodes") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
+                    .episodes.first().podcastName shouldBe "Test Show"
+            }
+        }
+
         it("no longer includes a podcast after it is removed") {
             testApp { json, _ ->
                 val podcast = json.post("/api/podcasts") {
@@ -425,6 +437,21 @@ class AppTest : DescribeSpec({
     }
 
     describe("the queue") {
+        it("includes the podcast name") {
+            testApp { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(feedUrl))
+                }.body<PodcastDetailDto>()
+                val episodeId = podcast.episodes.first().id
+
+                json.post("/api/queue/${episodeId.encodeURLPathPart()}")
+
+                json.get("/api/queue").body<List<EpisodeDetailDto>>()
+                    .first().podcastName shouldBe "Test Show"
+            }
+        }
+
         it("preserves insertion order") {
             testApp { json, _ ->
                 val podcast = json.post("/api/podcasts") {
