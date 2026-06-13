@@ -1,7 +1,5 @@
 package cast.android.ui.screens
 
-import android.text.method.LinkMovementMethod
-import android.widget.TextView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,17 +37,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.text.HtmlCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import cast.android.ui.UiState
 import cast.android.ui.components.ConfirmIconButton
+import cast.android.ui.components.EpisodeDescription
 import cast.android.ui.viewmodel.EpisodeDetailViewModel
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.util.relativeTime
@@ -205,20 +201,3 @@ private fun EpisodeDetailContent(
     }
 }
 
-@Composable
-private fun EpisodeDescription(html: String) {
-    val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
-    val linkColor = MaterialTheme.colorScheme.primary.toArgb()
-    AndroidView(
-        factory = { context ->
-            TextView(context).apply {
-                movementMethod = LinkMovementMethod.getInstance()
-                setTextColor(textColor)
-                setLinkTextColor(linkColor)
-            }
-        },
-        update = { tv ->
-            tv.text = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_COMPACT)
-        },
-    )
-}

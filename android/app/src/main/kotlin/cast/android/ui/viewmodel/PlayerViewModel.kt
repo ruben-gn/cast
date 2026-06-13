@@ -48,6 +48,9 @@ class PlayerViewModel @Inject constructor(
     private val _currentArtworkUrl = MutableStateFlow<String?>(null)
     val currentArtworkUrl: StateFlow<String?> = _currentArtworkUrl.asStateFlow()
 
+    private val _currentDescription = MutableStateFlow<String?>(null)
+    val currentDescription: StateFlow<String?> = _currentDescription.asStateFlow()
+
     private val _position = MutableStateFlow(0L)
     val position: StateFlow<Long> = _position.asStateFlow()
 
@@ -160,6 +163,7 @@ class PlayerViewModel @Inject constructor(
             }
             // Player may have started playing something between connect and now; don't clobber it.
             if (ctrl.currentMediaItem != null) return@launch
+            _currentDescription.value = episode.description.ifBlank { null }
             ctrl.setMediaItem(buildMediaItem(episode))
             ctrl.prepare()
         }
@@ -173,6 +177,7 @@ class PlayerViewModel @Inject constructor(
                 return
             }
             _currentArtworkUrl.value = episode.podcastImage
+            _currentDescription.value = episode.description.ifBlank { null }
             val mediaItem = buildMediaItem(episode)
             ctrl.setMediaItem(mediaItem)
             ctrl.prepare()

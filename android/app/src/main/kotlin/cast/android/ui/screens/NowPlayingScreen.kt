@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FastForward
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import cast.android.ui.components.EpisodeDescription
 import cast.android.ui.nav.NowPlaying
 import cast.android.ui.nav.Recent
 import cast.android.ui.viewmodel.LocalPlayerViewModel
@@ -56,6 +60,7 @@ fun NowPlayingScreen(navController: NavController) {
     val isPlaying by vm.isPlaying.collectAsStateWithLifecycle()
     val currentMediaItem by vm.currentMediaItem.collectAsStateWithLifecycle()
     val artworkUrl by vm.currentArtworkUrl.collectAsStateWithLifecycle()
+    val currentDescription by vm.currentDescription.collectAsStateWithLifecycle()
     val position by vm.position.collectAsStateWithLifecycle()
     val duration by vm.duration.collectAsStateWithLifecycle()
 
@@ -93,11 +98,12 @@ fun NowPlayingScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(horizontal = 32.dp, vertical = 24.dp),
+                .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.size(32.dp))
 
             if (artworkUrl != null) {
                 AsyncImage(
@@ -125,7 +131,7 @@ fun NowPlayingScreen(navController: NavController) {
                 }
             }
 
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.size(28.dp))
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -217,7 +223,15 @@ fun NowPlayingScreen(navController: NavController) {
                 }
             }
 
-            Spacer(Modifier.weight(1f))
+            if (currentDescription != null) {
+                Spacer(Modifier.size(28.dp))
+                HorizontalDivider()
+                Spacer(Modifier.size(16.dp))
+                EpisodeDescription(html = currentDescription!!)
+                Spacer(Modifier.size(24.dp))
+            } else {
+                Spacer(Modifier.size(32.dp))
+            }
         }
     }
 }
