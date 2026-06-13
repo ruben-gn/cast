@@ -123,9 +123,9 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlaybac
 
 internal fun episodeDetailDto(
     ep: EpisodeWithPlayback,
-    podcastId: String? = null,
-    podcastName: String? = null,
-    podcastImage: String? = null,
+    podcastId: String,
+    podcastName: String,
+    podcastImage: String,
 ) = EpisodeDetailDto(
     id = ep.episode.id.value,
     title = ep.episode.title,

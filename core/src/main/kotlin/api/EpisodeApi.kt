@@ -1,37 +1,27 @@
 package api
 
-import application.model.EpisodeWithPlayback
 import application.usecase.FindRecentUnplayedEpisodes
+import application.usecase.GetEpisodeDetail
 import io.ktor.http.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.MarkPlayed
 import playback.core.usecase.MarkUnplayed
 import podcast.core.usecase.FindEpisode
-import podcast.core.usecase.GetPodcast
 import shared.model.EpisodeId
 
 fun Route.episodeApi(dependencies: DependencyRegistry) {
     val findEpisode: FindEpisode by dependencies
     val findRecentUnplayedEpisodes: FindRecentUnplayedEpisodes by dependencies
-    val getPodcast: GetPodcast by dependencies
-    val getPlaybackState: GetPlaybackState by dependencies
+    val getEpisodeDetail: GetEpisodeDetail by dependencies
     val markPlayed: MarkPlayed by dependencies
     val markUnplayed: MarkUnplayed by dependencies
 
     get("{episodeId}") {
         val episodeId = EpisodeId(call.parameters["episodeId"]!!)
-        val episode = findEpisode(episodeId) ?: return@get call.respond(HttpStatusCode.NotFound)
-        val playback = getPlaybackState(episodeId)
-        val podcast = getPodcast(episode.podcastId)
-        call.respond(episodeDetailDto(
-            EpisodeWithPlayback(episode, playback.progressMs, playback.played),
-            podcastId = episode.podcastId.value,
-            podcastName = podcast?.name,
-            podcastImage = podcast?.image,
-        ))
+        val episode = getEpisodeDetail(episodeId) ?: return@get call.respond(HttpStatusCode.NotFound)
+        call.respond(episodeDetailDto(episode))
     }
 
     get("recent") {
