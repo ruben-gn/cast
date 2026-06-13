@@ -117,7 +117,7 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlaybac
         image = podcast.image,
         listening = podcast.listening,
         created = podcast.created.toString(),
-        episodes = episodes.map(::episodeDetailDto)
+        episodes = episodes.map { episodeDetailDto(it, podcastId = podcast.id.value, podcastName = podcast.name, podcastImage = podcast.image) }
     )
 
 internal fun episodeDetailDto(
