@@ -7,13 +7,10 @@ import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import playback.core.usecase.GetPlaybackState
-import playback.core.usecase.GetPlaybackStates
 import playback.core.usecase.MarkPlayed
 import playback.core.usecase.MarkUnplayed
 import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.GetPodcast
-import podcast.core.usecase.ListPodcasts
-import settings.core.usecase.GetSettings
 import shared.model.EpisodeId
 
 fun Route.episodeApi(dependencies: DependencyRegistry) {
@@ -21,9 +18,6 @@ fun Route.episodeApi(dependencies: DependencyRegistry) {
     val findRecentUnplayedEpisodes: FindRecentUnplayedEpisodes by dependencies
     val getPodcast: GetPodcast by dependencies
     val getPlaybackState: GetPlaybackState by dependencies
-    val getPlaybackStates: GetPlaybackStates by dependencies
-    val getSettings: GetSettings by dependencies
-    val listPodcasts: ListPodcasts by dependencies
     val markPlayed: MarkPlayed by dependencies
     val markUnplayed: MarkUnplayed by dependencies
 
@@ -41,25 +35,7 @@ fun Route.episodeApi(dependencies: DependencyRegistry) {
     }
 
     get("recent") {
-        val episodes = findRecentUnplayedEpisodes()
-        val podcasts = listPodcasts().associateBy { it.id }
-        val settings = getSettings()
-        val filtered = if (settings.recentListeningOnly) {
-            episodes.filter { podcasts[it.podcastId]?.listening == true }
-        } else {
-            episodes
-        }
-        val states = getPlaybackStates(filtered.map { it.id })
-        call.respond(filtered.map { ep ->
-            val podcast = podcasts[ep.podcastId]
-            val state = states[ep.id]
-            episodeDetailDto(
-                EpisodeWithPlayback(ep, state?.progressMs ?: 0, state?.played ?: false),
-                podcastId = ep.podcastId.value,
-                podcastName = podcast?.name,
-                podcastImage = podcast?.image,
-            )
-        })
+        call.respond(findRecentUnplayedEpisodes().map(::episodeDetailDto))
     }
 
     post("{episodeId}/played") {
