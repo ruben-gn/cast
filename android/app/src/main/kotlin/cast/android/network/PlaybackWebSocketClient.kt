@@ -3,9 +3,13 @@ package cast.android.network
 import android.os.Handler
 import android.os.Looper
 import cast.api.PlaybackStateResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -19,6 +23,7 @@ import javax.inject.Singleton
 class PlaybackWebSocketClient @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val baseUrlInterceptor: BaseUrlInterceptor,
+    connectivityObserver: ConnectivityObserver,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -28,8 +33,23 @@ class PlaybackWebSocketClient @Inject constructor(
     @Volatile private var webSocket: WebSocket? = null
     @Volatile private var connected = false
     @Volatile private var active = false
-    private val pending = ArrayDeque<String>()
+    private val pending = ArrayDeque<PendingMessage>()
     private val reconnectHandler = Handler(Looper.getMainLooper())
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    private data class PendingMessage(val coalesceKey: String?, val message: String)
+
+    init {
+        // Network came back: reconnect right away instead of waiting out the retry timer.
+        scope.launch {
+            connectivityObserver.isConnected.collect { online ->
+                if (online && active && webSocket == null) {
+                    reconnectHandler.removeCallbacksAndMessages(null)
+                    openWebSocket()
+                }
+            }
+        }
+    }
 
     fun connect() {
         reconnectHandler.removeCallbacksAndMessages(null)
@@ -38,6 +58,8 @@ class PlaybackWebSocketClient @Inject constructor(
     }
 
     private fun openWebSocket() {
+        // An in-flight socket we've given up on would otherwise linger until its own timeout.
+        webSocket?.cancel()
         val wsUrl = baseUrlInterceptor.baseUrl
             .replace("http://", "ws://")
             .replace("https://", "wss://")
@@ -49,7 +71,7 @@ class PlaybackWebSocketClient @Inject constructor(
                     if (webSocket !== ws) return
                     connected = true
                     synchronized(pending) {
-                        for (msg in pending) ws.send(msg)
+                        for (msg in pending) ws.send(msg.message)
                         pending.clear()
                     }
                 }
@@ -84,10 +106,18 @@ class PlaybackWebSocketClient @Inject constructor(
         webSocket = null
     }
 
-    fun send(message: String) {
+    /**
+     * Sends now, or queues for the next (re)connect. A non-null [coalesceKey] keeps only the
+     * newest queued message per key, so an offline stretch of 1 Hz progress updates flushes as a
+     * single message instead of a burst of stale ones.
+     */
+    fun send(message: String, coalesceKey: String? = null) {
         val ws = webSocket
         if (connected && ws != null && ws.send(message)) return
-        synchronized(pending) { pending.add(message) }
+        synchronized(pending) {
+            if (coalesceKey != null) pending.removeAll { it.coalesceKey == coalesceKey }
+            pending.add(PendingMessage(coalesceKey, message))
+        }
     }
 
     companion object {

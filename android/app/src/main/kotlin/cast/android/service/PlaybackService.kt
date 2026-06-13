@@ -89,6 +89,8 @@ class PlaybackService : MediaLibraryService() {
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
+            .setSeekBackIncrementMs(SEEK_BACK_MS)
+            .setSeekForwardIncrementMs(SEEK_FORWARD_MS)
             .build()
             .also { it.addListener(PlayerListener()) }
 
@@ -100,13 +102,14 @@ class PlaybackService : MediaLibraryService() {
 
         // Android Auto shows skip-to-prev/next by default, which do nothing during single-episode
         // playback. Put rewind/fast-forward in those slots instead. Using player commands (not custom
-        // session commands) wires the seek automatically; icons match ExoPlayer's 5s/15s defaults.
-        val rewindButton = CommandButton.Builder(CommandButton.ICON_SKIP_BACK_5)
+        // session commands) wires the seek automatically. There is no 20s forward icon, so the
+        // forward slot uses the generic skip-forward glyph.
+        val rewindButton = CommandButton.Builder(CommandButton.ICON_SKIP_BACK_15)
             .setDisplayName("Rewind")
             .setPlayerCommand(Player.COMMAND_SEEK_BACK)
             .setSlots(CommandButton.SLOT_BACK)
             .build()
-        val fastForwardButton = CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_15)
+        val fastForwardButton = CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD)
             .setDisplayName("Fast forward")
             .setPlayerCommand(Player.COMMAND_SEEK_FORWARD)
             .setSlots(CommandButton.SLOT_FORWARD)
@@ -464,7 +467,7 @@ class PlaybackService : MediaLibraryService() {
                 // Flush exact position on intentional pause so server is never stale
                 val progressMs = mediaSession?.player?.currentPosition ?: 0L
                 cacheProgress(episodeId, progressMs)
-                sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""")
+                sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""", coalesceKey = episodeId)
                 stopProgressSync()
             }
         }
@@ -515,7 +518,7 @@ class PlaybackService : MediaLibraryService() {
                 delay(1_000)
                 val progressMs = mediaSession?.player?.currentPosition ?: break
                 cacheProgress(episodeId, progressMs)
-                sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""")
+                sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""", coalesceKey = episodeId)
             }
         }
     }
@@ -538,13 +541,15 @@ class PlaybackService : MediaLibraryService() {
         libraryScope.launch { runCatching { dataStore.edit { it.remove(progressKey(episodeId)) } } }
     }
 
-    private fun sendWs(message: String) {
+    private fun sendWs(message: String, coalesceKey: String? = null) {
         Log.d(TAG, "sendWs: $message")
-        playbackWebSocketClient.send(message)
+        playbackWebSocketClient.send(message, coalesceKey)
     }
 
     companion object {
         private const val TAG = "Cast/Playback"
+        private const val SEEK_BACK_MS = 15_000L
+        private const val SEEK_FORWARD_MS = 20_000L
         const val ACTION_PLAY_PAUSE = "cast.android.widget.PLAY_PAUSE"
         const val ACTION_SEEK_BACK = "cast.android.widget.SEEK_BACK"
         const val ACTION_SEEK_FORWARD = "cast.android.widget.SEEK_FORWARD"

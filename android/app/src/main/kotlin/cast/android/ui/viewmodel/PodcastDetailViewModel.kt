@@ -10,7 +10,10 @@ import cast.android.ui.UiState
 import cast.android.ui.nav.PodcastDetail
 import cast.api.PodcastDetailDto
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,6 +27,9 @@ class PodcastDetailViewModel @Inject constructor(
 
     private val podcastId: String = savedStateHandle.toRoute<PodcastDetail>().podcastId
     val queueIds: StateFlow<List<String>> = queueRepository.queueIds
+
+    private val _actionError = MutableSharedFlow<String>()
+    val actionError: SharedFlow<String> = _actionError.asSharedFlow()
 
     init { load() }
 
@@ -40,7 +46,9 @@ class PodcastDetailViewModel @Inject constructor(
             try {
                 podcastRepository.markAllPlayed(podcastId)
                 load()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+                _actionError.emit("Couldn't mark all played")
+            }
         }
     }
 
