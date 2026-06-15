@@ -2,21 +2,19 @@ package api
 
 import application.usecase.FindRecentUnplayedEpisodes
 import application.usecase.GetEpisodeDetail
+import application.usecase.MarkEpisodePlayed
+import application.usecase.MarkEpisodeUnplayed
 import io.ktor.http.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import playback.core.usecase.MarkPlayed
-import playback.core.usecase.MarkUnplayed
-import podcast.core.usecase.FindEpisode
 import shared.model.EpisodeId
 
 fun Route.episodeApi(dependencies: DependencyRegistry) {
-    val findEpisode: FindEpisode by dependencies
     val findRecentUnplayedEpisodes: FindRecentUnplayedEpisodes by dependencies
     val getEpisodeDetail: GetEpisodeDetail by dependencies
-    val markPlayed: MarkPlayed by dependencies
-    val markUnplayed: MarkUnplayed by dependencies
+    val markEpisodePlayed: MarkEpisodePlayed by dependencies
+    val markEpisodeUnplayed: MarkEpisodeUnplayed by dependencies
 
     get("{episodeId}") {
         val episodeId = EpisodeId(call.parameters["episodeId"]!!)
@@ -30,15 +28,13 @@ fun Route.episodeApi(dependencies: DependencyRegistry) {
 
     post("{episodeId}/played") {
         val episodeId = EpisodeId(call.parameters["episodeId"]!!)
-        findEpisode(episodeId) ?: return@post call.respond(HttpStatusCode.NotFound)
-        markPlayed(episodeId)
-        call.respond(HttpStatusCode.NoContent)
+        val found = markEpisodePlayed(episodeId)
+        call.respond(if (found) HttpStatusCode.NoContent else HttpStatusCode.NotFound)
     }
 
     delete("{episodeId}/played") {
         val episodeId = EpisodeId(call.parameters["episodeId"]!!)
-        findEpisode(episodeId) ?: return@delete call.respond(HttpStatusCode.NotFound)
-        markUnplayed(episodeId)
-        call.respond(HttpStatusCode.NoContent)
+        val found = markEpisodeUnplayed(episodeId)
+        call.respond(if (found) HttpStatusCode.NoContent else HttpStatusCode.NotFound)
     }
 }

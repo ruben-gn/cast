@@ -22,7 +22,6 @@ import podcast.core.models.Podcast
 import podcast.core.models.PodcastId
 import podcast.core.usecase.AddFeed
 import podcast.core.usecase.ImportOpml
-import podcast.core.usecase.ListEpisodes
 import podcast.core.usecase.ListPodcasts
 import podcast.core.usecase.StartListening
 import podcast.core.usecase.StopListening
@@ -33,7 +32,6 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
     val addFeed: AddFeed by dependencies
     val importOpml: ImportOpml by dependencies
     val listPodcasts: ListPodcasts by dependencies
-    val listEpisodes: ListEpisodes by dependencies
     val getPodcastDetail: GetPodcastDetail by dependencies
     val markAllPlayed: MarkAllPlayed by dependencies
     val removePodcast: RemovePodcast by dependencies
@@ -48,8 +46,8 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         val request = call.receive<AddPodcastRequest>()
         try {
             val podcast = addFeed(url = FeedUrl(request.feed))
-            val episodes = listEpisodes(podcast.id)
-            call.respond(podcastDetailDto(podcast, episodes.map { EpisodeWithPlayback(it, 0, false) }))
+            val detail = getPodcastDetail(podcast.id)!!
+            call.respond(podcastDetailDto(detail.podcast, detail.episodes))
         } catch (e: PodcastException.FeedFetchFailed) {
             call.respond(HttpStatusCode.BadGateway, mapOf("error" to (e.message ?: "Failed to fetch feed")))
         }
