@@ -1,4 +1,31 @@
+# syntax=docker/dockerfile:1
+
+# Build the fat jar from source — no host-side gradle step needed.
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /src
+COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts gradle.properties ./
+COPY gradle ./gradle
+COPY core ./core
+COPY shared-models ./shared-models
+COPY src ./src
+# Cache mount keeps Gradle deps + the distribution across builds, so rebuilds
+# only recompile changed code instead of re-downloading everything.
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew --no-daemon --console=plain buildFatJar
+
 FROM eclipse-temurin:21-jre
+RUN groupadd -r app && useradd -r -g app app
 WORKDIR /app
-COPY build/libs/Cast-all.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+COPY --from=build /src/build/libs/Cast-all.jar app.jar
+RUN mkdir -p /app/data && chown -R app:app /app
+USER app
+
+# RAM tuning for small hosts:
+#   MaxRAMPercentage   size the heap to the container memory limit, not host RAM
+#   UseSerialGC        single-threaded GC — lowest footprint for small heaps
+#   MaxMetaspaceSize   cap class-metadata growth
+#   Xss512k            smaller thread stacks (Netty spins up many threads)
+#   ExitOnOutOfMemory  let the orchestrator restart a wedged process
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m -Xss512k -XX:+ExitOnOutOfMemoryError"
+EXPOSE 8100
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

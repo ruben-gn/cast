@@ -87,7 +87,7 @@ docker compose up          # start api (:8100 internal) + webapp (:3000 exposed)
 docker compose up --build  # rebuild images first
 ```
 
-`Dockerfile.api` wraps the fat jar (`./gradlew buildFatJar` on dev machine, copy to Pi).
+`Dockerfile.api` builds the fat jar inside the image (multi-stage) and runs it as a non-root user.
 `webapp/Dockerfile` installs deps with `bun install` and runs `server.tsx` directly — no compilation.
 
 ### Testing conventions

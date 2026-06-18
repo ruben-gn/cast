@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
+    image: cast:latest
     restart: unless-stopped
     ports:
       - "8100:8100"
@@ -23,6 +24,7 @@ services:
     build:
       context: ./webapp
       dockerfile: Dockerfile
+    image: cast-webapp:latest
     restart: unless-stopped
     ports:
       - "3000:3000"
