@@ -14,6 +14,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -85,7 +86,7 @@ class PlaybackService : MediaLibraryService() {
             .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
             .build()
 
-        val player = ExoPlayer.Builder(this)
+        val exoPlayer = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
@@ -93,6 +94,10 @@ class PlaybackService : MediaLibraryService() {
             .setSeekForwardIncrementMs(SEEK_FORWARD_MS)
             .build()
             .also { it.addListener(PlayerListener()) }
+        // Wrap so controllers (Android Auto, notification, headphones) never see skip-to-next/prev:
+        // the queue is a playlist that auto-advances internally, but only rewind/fast-forward are
+        // exposed. Auto-advance is internal to ExoPlayer and unaffected by hiding these commands.
+        val player = NoSkipPlayer(exoPlayer)
 
         val sessionActivity = PendingIntent.getActivity(
             this, 0,
@@ -131,6 +136,12 @@ class PlaybackService : MediaLibraryService() {
                 sendWs("""{"type":"start","episodeId":"${state.episodeId}","startPositionMs":$seekMs}""")
                 episodeStarted = true
             }
+        }
+
+        // Backend queue is the source of truth: mirror it into the player's playlist tail whenever
+        // it changes (add/remove/reorder from any screen).
+        serviceScope.launch {
+            queueRepository.queueIds.collect { reconcileQueueTail() }
         }
     }
 
@@ -290,8 +301,10 @@ class PlaybackService : MediaLibraryService() {
             MediaSession.MediaItemsWithStartPosition(listOf(playableItem(episode)), 0, episode.progressMs)
         }
 
-        // KEYCODE_MEDIA_PREVIOUS from headphones defaults to seekToPrevious() which jumps to
-        // position 0. Reroute it to seekBack() to match the in-app rewind button.
+        // Prev/next media keys (headphones, Android Auto, steering wheel) default to
+        // seekToPrevious()/seekToNext(). During single-episode playback there is no adjacent
+        // item, so those no-op. Reroute them to seekBack()/seekForward() to match the in-app
+        // rewind/fast-forward buttons.
         override fun onMediaButtonEvent(
             session: MediaSession,
             controllerInfo: MediaSession.ControllerInfo,
@@ -303,10 +316,11 @@ class PlaybackService : MediaLibraryService() {
                 @Suppress("DEPRECATION")
                 intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
             }
-            if (keyEvent?.keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS &&
-                keyEvent.action == KeyEvent.ACTION_DOWN) {
-                session.player.seekBack()
-                return true
+            if (keyEvent?.action == KeyEvent.ACTION_DOWN) {
+                when (keyEvent.keyCode) {
+                    KeyEvent.KEYCODE_MEDIA_PREVIOUS -> { session.player.seekBack(); return true }
+                    KeyEvent.KEYCODE_MEDIA_NEXT -> { session.player.seekForward(); return true }
+                }
             }
             return super.onMediaButtonEvent(session, controllerInfo, intent)
         }
@@ -355,6 +369,24 @@ class PlaybackService : MediaLibraryService() {
                 resuming = false
             }
         }
+    }
+
+    /**
+     * Mirror the backend queue into the player's playlist tail: keep the now-playing item (and
+     * anything before it) untouched and replace everything after it with the backend queue, minus
+     * the current item. Touching only the tail never interrupts playback and fires no transition,
+     * so this is loop-safe against the queueIds collector. Main-thread only (player access).
+     */
+    private fun reconcileQueueTail() {
+        val player = mediaSession?.player ?: return
+        if (player.mediaItemCount == 0) return
+        val currentIndex = player.currentMediaItemIndex
+        val currentId = player.currentMediaItem?.mediaId
+        val tail = (queueRepository.cachedQueue() ?: emptyList()).filter { it.id != currentId }
+        if (player.mediaItemCount > currentIndex + 1)
+            player.removeMediaItems(currentIndex + 1, player.mediaItemCount)
+        if (tail.isNotEmpty())
+            player.addMediaItems(tail.map { playableItem(it) })
     }
 
     private fun browsableItem(id: String, title: String): MediaItem {
@@ -436,9 +468,28 @@ class PlaybackService : MediaLibraryService() {
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             Log.d(TAG, "onMediaItemTransition: mediaId=${mediaItem?.mediaId} reason=$reason")
+            val finishedId = currentEpisodeId
             currentEpisodeId = mediaItem?.mediaId
             episodeStarted = false
             pushWidgetState(mediaSession?.player?.isPlaying ?: false)
+
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
+                // The previous item ran to its natural end: mark it played and drop it locally.
+                if (finishedId != null) {
+                    sendWs("""{"type":"ended","episodeId":"$finishedId"}""")
+                    clearCachedProgress(finishedId)
+                }
+                // The new current item has been consumed from up-next: remove it from the backend
+                // queue (which re-emits queueIds → reconcileQueueTail, a no-op since it's now current).
+                mediaItem?.mediaId?.let { id ->
+                    libraryScope.launch { runCatching { queueRepository.removeFromQueue(id) } }
+                }
+            } else {
+                // User-initiated/new now-playing: refresh the queue cache so the tail is populated
+                // even if the Queue screen was never opened.
+                libraryScope.launch { runCatching { queueRepository.getQueue() } }
+            }
+
             val episodeId = currentEpisodeId ?: return
             // Head-start seek from local cache so playback doesn't jump while we fetch the server position.
             // Does NOT set episodeStarted: the WS `get` reconcile (states.collect) still re-seeks to the
@@ -451,6 +502,9 @@ class PlaybackService : MediaLibraryService() {
             // Remember it so Auto/Bluetooth can resume after the service is killed (onPlaybackResumption).
             libraryScope.launch { runCatching { dataStore.edit { it[LAST_EPISODE_ID] = episodeId } } }
             sendWs("""{"type":"get","episodeId":"$episodeId"}""")
+
+            // Append the backend queue behind the new now-playing item.
+            reconcileQueueTail()
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
@@ -480,33 +534,17 @@ class PlaybackService : MediaLibraryService() {
         override fun onPlaybackStateChanged(state: Int) {
             Log.d(TAG, "onPlaybackStateChanged: state=$state")
             if (state == Player.STATE_ENDED) {
+                // Fires only when the last playlist item finishes (queue exhausted). Mid-queue
+                // completion is handled in onMediaItemTransition(REASON_AUTO).
                 currentEpisodeId?.let {
                     sendWs("""{"type":"ended","episodeId":"$it"}""")
                     clearCachedProgress(it)
                 }
                 stopProgressSync()
-                playNextInQueue()
-            }
-        }
-    }
-
-    private fun playNextInQueue() {
-        serviceScope.launch {
-            // The finished episode must leave the player regardless of connectivity, so a failed queue
-            // fetch (offline / Pi down) collapses to the same "nothing next" path as an empty queue.
-            val next = runCatching { queueRepository.getQueue() }.getOrNull()?.firstOrNull()
-            if (next == null) {
-                // Clear the finished episode from the player (which also clears the player bar and widget
+                // Clear the finished episode from the player (also clears the player bar and widget
                 // via onMediaItemTransition) and don't let resumption replay it.
                 mediaSession?.player?.clearMediaItems()
-                runCatching { dataStore.edit { it.remove(LAST_EPISODE_ID) } }
-                return@launch
-            }
-            runCatching { queueRepository.removeFromQueue(next.id) }
-            mediaSession?.player?.let { player ->
-                player.setMediaItem(playableItem(next))
-                player.prepare()
-                player.play()
+                libraryScope.launch { runCatching { dataStore.edit { it.remove(LAST_EPISODE_ID) } } }
             }
         }
     }
@@ -544,6 +582,29 @@ class PlaybackService : MediaLibraryService() {
     private fun sendWs(message: String, coalesceKey: String? = null) {
         Log.d(TAG, "sendWs: $message")
         playbackWebSocketClient.send(message, coalesceKey)
+    }
+
+    /**
+     * Forwarding player that hides skip-to-next/previous from all controllers (Android Auto,
+     * notification, headphones), leaving only rewind/fast-forward. The underlying ExoPlayer still
+     * auto-advances through the playlist at end-of-item — that is internal to playback and not
+     * gated by these (controller-facing) commands.
+     */
+    private class NoSkipPlayer(player: Player) : ForwardingPlayer(player) {
+        override fun getAvailableCommands(): Player.Commands =
+            super.getAvailableCommands().buildUpon()
+                .remove(Player.COMMAND_SEEK_TO_NEXT)
+                .remove(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
+                .remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                .build()
+
+        override fun isCommandAvailable(command: Int): Boolean =
+            command != Player.COMMAND_SEEK_TO_NEXT &&
+            command != Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM &&
+            command != Player.COMMAND_SEEK_TO_PREVIOUS &&
+            command != Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM &&
+            super.isCommandAvailable(command)
     }
 
     companion object {
