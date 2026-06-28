@@ -14,6 +14,7 @@ class PodcastRepositoryImplTest {
         url = "https://example.test/$id.xml",
         name = "Podcast $id",
         image = "",
+        listening = false,
         created = "",
         latestEpisodeAt = "",
     )

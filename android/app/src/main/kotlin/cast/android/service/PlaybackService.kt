@@ -9,8 +9,6 @@ import android.view.KeyEvent
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -74,9 +72,8 @@ class PlaybackService : MediaLibraryService() {
      */
     private val libraryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var progressJob: Job? = null
-    private var currentEpisodeId: String? = null
-    private var episodeStarted = false
     private var resuming = false
+    private lateinit var progressStore: PlaybackProgressStore
 
     override fun onCreate() {
         super.onCreate()
@@ -93,11 +90,24 @@ class PlaybackService : MediaLibraryService() {
             .setSeekBackIncrementMs(SEEK_BACK_MS)
             .setSeekForwardIncrementMs(SEEK_FORWARD_MS)
             .build()
-            .also { it.addListener(PlayerListener()) }
         // Wrap so controllers (Android Auto, notification, headphones) never see skip-to-next/prev:
         // the queue is a playlist that auto-advances internally, but only rewind/fast-forward are
         // exposed. Auto-advance is internal to ExoPlayer and unaffected by hiding these commands.
         val player = NoSkipPlayer(exoPlayer)
+
+        progressStore = DataStorePlaybackProgressStore(dataStore, libraryScope)
+        val listener = QueuePlaybackListener(
+            player = player,
+            scope = serviceScope,
+            queue = queueRepository,
+            store = progressStore,
+            sendWs = ::sendWs,
+            toMediaItem = { playableItem(it) },
+            onWidgetUpdate = ::pushWidgetState,
+            startProgressSync = ::startProgressSync,
+            stopProgressSync = ::stopProgressSync,
+        )
+        exoPlayer.addListener(listener)
 
         val sessionActivity = PendingIntent.getActivity(
             this, 0,
@@ -128,20 +138,13 @@ class PlaybackService : MediaLibraryService() {
         playbackWebSocketClient.connect()
 
         serviceScope.launch {
-            playbackWebSocketClient.states.collect { state ->
-                Log.d(TAG, "states.collect: episodeId=${state.episodeId} currentEpisodeId=$currentEpisodeId episodeStarted=$episodeStarted progressMs=${state.progressMs} played=${state.played}")
-                if (state.episodeId != currentEpisodeId || episodeStarted) return@collect
-                val seekMs = if (state.played) 0L else state.progressMs
-                mediaSession?.player?.seekTo(seekMs)
-                sendWs("""{"type":"start","episodeId":"${state.episodeId}","startPositionMs":$seekMs}""")
-                episodeStarted = true
-            }
+            playbackWebSocketClient.states.collect { state -> listener.onServerState(state) }
         }
 
         // Backend queue is the source of truth: mirror it into the player's playlist tail whenever
         // it changes (add/remove/reorder from any screen).
         serviceScope.launch {
-            queueRepository.queueIds.collect { reconcileQueueTail() }
+            queueRepository.queueIds.collect { listener.reconcileQueueTail() }
         }
     }
 
@@ -371,24 +374,6 @@ class PlaybackService : MediaLibraryService() {
         }
     }
 
-    /**
-     * Mirror the backend queue into the player's playlist tail: keep the now-playing item (and
-     * anything before it) untouched and replace everything after it with the backend queue, minus
-     * the current item. Touching only the tail never interrupts playback and fires no transition,
-     * so this is loop-safe against the queueIds collector. Main-thread only (player access).
-     */
-    private fun reconcileQueueTail() {
-        val player = mediaSession?.player ?: return
-        if (player.mediaItemCount == 0) return
-        val currentIndex = player.currentMediaItemIndex
-        val currentId = player.currentMediaItem?.mediaId
-        val tail = (queueRepository.cachedQueue() ?: emptyList()).filter { it.id != currentId }
-        if (player.mediaItemCount > currentIndex + 1)
-            player.removeMediaItems(currentIndex + 1, player.mediaItemCount)
-        if (tail.isNotEmpty())
-            player.addMediaItems(tail.map { playableItem(it) })
-    }
-
     private fun browsableItem(id: String, title: String): MediaItem {
         val metadata = MediaMetadata.Builder()
             .setTitle(title)
@@ -464,98 +449,13 @@ class PlaybackService : MediaLibraryService() {
         }
     }
 
-    private inner class PlayerListener : Player.Listener {
-
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            Log.d(TAG, "onMediaItemTransition: mediaId=${mediaItem?.mediaId} reason=$reason")
-            val finishedId = currentEpisodeId
-            currentEpisodeId = mediaItem?.mediaId
-            episodeStarted = false
-            pushWidgetState(mediaSession?.player?.isPlaying ?: false)
-
-            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-                // The previous item ran to its natural end: mark it played and drop it locally.
-                if (finishedId != null) {
-                    sendWs("""{"type":"ended","episodeId":"$finishedId"}""")
-                    clearCachedProgress(finishedId)
-                }
-                // The new current item has been consumed from up-next: remove it from the backend
-                // queue (which re-emits queueIds → reconcileQueueTail, a no-op since it's now current).
-                mediaItem?.mediaId?.let { id ->
-                    libraryScope.launch { runCatching { queueRepository.removeFromQueue(id) } }
-                }
-            } else {
-                // User-initiated/new now-playing: refresh the queue cache so the tail is populated
-                // even if the Queue screen was never opened.
-                libraryScope.launch { runCatching { queueRepository.getQueue() } }
-            }
-
-            val episodeId = currentEpisodeId ?: return
-            // Head-start seek from local cache so playback doesn't jump while we fetch the server position.
-            // Does NOT set episodeStarted: the WS `get` reconcile (states.collect) still re-seeks to the
-            // authoritative server value when it arrives. Server stays the source of truth.
-            serviceScope.launch {
-                val cached = runCatching { dataStore.data.first()[progressKey(episodeId)] }.getOrNull()
-                if (currentEpisodeId != episodeId || episodeStarted) return@launch
-                localResumePositionMs(cached, played = false)?.let { mediaSession?.player?.seekTo(it) }
-            }
-            // Remember it so Auto/Bluetooth can resume after the service is killed (onPlaybackResumption).
-            libraryScope.launch { runCatching { dataStore.edit { it[LAST_EPISODE_ID] = episodeId } } }
-            sendWs("""{"type":"get","episodeId":"$episodeId"}""")
-
-            // Append the backend queue behind the new now-playing item.
-            reconcileQueueTail()
-        }
-
-        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-            Log.d(TAG, "onPlayWhenReadyChanged: playWhenReady=$playWhenReady reason=$reason episodeStarted=$episodeStarted")
-            val episodeId = currentEpisodeId ?: return
-            if (playWhenReady) {
-                if (episodeStarted) {
-                    // Resume after intentional pause: re-sync from server so webapp progress is picked up
-                    episodeStarted = false
-                    sendWs("""{"type":"get","episodeId":"$episodeId"}""")
-                }
-                startProgressSync(episodeId)
-            } else {
-                // Flush exact position on intentional pause so server is never stale
-                val progressMs = mediaSession?.player?.currentPosition ?: 0L
-                cacheProgress(episodeId, progressMs)
-                sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""", coalesceKey = episodeId)
-                stopProgressSync()
-            }
-        }
-
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            Log.d(TAG, "onIsPlayingChanged: isPlaying=$isPlaying")
-            pushWidgetState(isPlaying)
-        }
-
-        override fun onPlaybackStateChanged(state: Int) {
-            Log.d(TAG, "onPlaybackStateChanged: state=$state")
-            if (state == Player.STATE_ENDED) {
-                // Fires only when the last playlist item finishes (queue exhausted). Mid-queue
-                // completion is handled in onMediaItemTransition(REASON_AUTO).
-                currentEpisodeId?.let {
-                    sendWs("""{"type":"ended","episodeId":"$it"}""")
-                    clearCachedProgress(it)
-                }
-                stopProgressSync()
-                // Clear the finished episode from the player (also clears the player bar and widget
-                // via onMediaItemTransition) and don't let resumption replay it.
-                mediaSession?.player?.clearMediaItems()
-                libraryScope.launch { runCatching { dataStore.edit { it.remove(LAST_EPISODE_ID) } } }
-            }
-        }
-    }
-
     private fun startProgressSync(episodeId: String) {
         progressJob?.cancel()
         progressJob = serviceScope.launch {
             while (isActive) {
                 delay(1_000)
                 val progressMs = mediaSession?.player?.currentPosition ?: break
-                cacheProgress(episodeId, progressMs)
+                progressStore.cacheProgress(episodeId, progressMs)
                 sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""", coalesceKey = episodeId)
             }
         }
@@ -564,19 +464,6 @@ class PlaybackService : MediaLibraryService() {
     private fun stopProgressSync() {
         progressJob?.cancel()
         progressJob = null
-    }
-
-    private fun progressKey(episodeId: String) = longPreferencesKey("progress_$episodeId")
-
-    private fun cacheProgress(episodeId: String, progressMs: Long) {
-        if (progressMs <= 0L) return
-        libraryScope.launch {
-            runCatching { dataStore.edit { it[progressKey(episodeId)] = progressMs } }
-        }
-    }
-
-    private fun clearCachedProgress(episodeId: String) {
-        libraryScope.launch { runCatching { dataStore.edit { it.remove(progressKey(episodeId)) } } }
     }
 
     private fun sendWs(message: String, coalesceKey: String? = null) {
