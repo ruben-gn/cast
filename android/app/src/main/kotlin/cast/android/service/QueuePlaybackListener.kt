@@ -47,9 +47,19 @@ class QueuePlaybackListener(
     fun onServerState(state: PlaybackStateResponse) {
         Log.d(TAG, "onServerState: episodeId=${state.episodeId} currentEpisodeId=$currentEpisodeId episodeStarted=$episodeStarted progressMs=${state.progressMs} played=${state.played}")
         if (state.episodeId != currentEpisodeId || episodeStarted) return
-        val seekMs = if (state.played) 0L else state.progressMs
-        player.seekTo(seekMs)
-        sendWs("""{"type":"start","episodeId":"${state.episodeId}","startPositionMs":$seekMs}""", null)
+        val serverMs = if (state.played) 0L else state.progressMs
+        val currentMs = player.currentPosition
+        // Only honor the server position when it's meaningfully ahead of local playback (genuine
+        // cross-device progress) or the episode was played. Otherwise local is the fresher truth:
+        // seeking back to the server's value would rewind by however long the `get` round-trip took,
+        // since playback kept advancing while we waited for the reply.
+        val startMs = if (state.played || serverMs > currentMs + RESUME_TOLERANCE_MS) {
+            player.seekTo(serverMs)
+            serverMs
+        } else {
+            currentMs
+        }
+        sendWs("""{"type":"start","episodeId":"${state.episodeId}","startPositionMs":$startMs}""", null)
         episodeStarted = true
     }
 
@@ -154,5 +164,8 @@ class QueuePlaybackListener(
 
     private companion object {
         const val TAG = "Cast/Playback"
+        // Slack for the `get` round-trip: only a server position further than this beyond the live
+        // position counts as real cross-device progress worth seeking forward to.
+        const val RESUME_TOLERANCE_MS = 3_000L
     }
 }

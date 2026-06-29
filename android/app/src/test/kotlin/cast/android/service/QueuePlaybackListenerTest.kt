@@ -17,11 +17,13 @@ import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
 import androidx.test.core.app.ApplicationProvider
 import cast.android.domain.repository.QueueRepository
 import cast.api.EpisodeDetailDto
+import cast.api.PlaybackStateResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,12 +32,15 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * The regression net for "episodes must be marked played when they finish."
+ * The regression net for the playback brain, driving a *real* ExoPlayer (on Robolectric, fake clock).
  *
- * Drives a *real* ExoPlayer (on Robolectric, fake clock) through a two-item playlist to its natural
- * end and asserts the listener emits `ended` for each episode at the right moment:
- *  - the first item via the auto-advance transition (mid-queue completion), and
- *  - the last item via STATE_ENDED (queue exhausted).
+ * Covers two flows:
+ *  1. "episodes must be marked played when they finish" — runs a two-item playlist to its end and
+ *     asserts `ended` fires for the first item via the auto-advance transition and the last via
+ *     STATE_ENDED.
+ *  2. the server-state reconcile (`onServerState`) must not rewind playback that has already advanced
+ *     past the server's stored position during the `get` round-trip, while still catching up to
+ *     genuine cross-device progress.
  *
  * The up-next item is owned by the backend queue (the listener rebuilds the player's tail from it on
  * every transition via reconcileQueueTail), so the test seeds it through [FakeQueueRepository] rather
@@ -43,7 +48,7 @@ import org.robolectric.annotation.Config
  * the one we set and the one reconcile re-adds from the queue — a playable fake source.
  *
  * This exercises the actual player → listener wiring, so a future change that breaks the
- * transition-reason handling or the end-of-playlist path fails here instead of on a phone.
+ * transition-reason handling, the end-of-playlist path, or the reconcile fails here, not on a phone.
  */
 @OptIn(UnstableApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -52,6 +57,7 @@ import org.robolectric.annotation.Config
 class QueuePlaybackListenerTest {
 
     private lateinit var player: ExoPlayer
+    private lateinit var listener: QueuePlaybackListener
     private val wsMessages = mutableListOf<String>()
     private val queue = FakeQueueRepository(upNext = listOf("ep2"))
 
@@ -59,20 +65,19 @@ class QueuePlaybackListenerTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         player = TestExoPlayerBuilder(context).setMediaSourceFactory(FakeSourceFactory).build()
-        player.addListener(
-            QueuePlaybackListener(
-                player = player,
-                // Unconfined so the listener's queue/store coroutines run inline on the player thread.
-                scope = CoroutineScope(Dispatchers.Unconfined),
-                queue = queue,
-                store = NoopProgressStore,
-                sendWs = { message, _ -> wsMessages += message },
-                toMediaItem = { MediaItem.Builder().setMediaId(it.id).build() },
-                onWidgetUpdate = {},
-                startProgressSync = {},
-                stopProgressSync = {},
-            )
+        listener = QueuePlaybackListener(
+            player = player,
+            // Unconfined so the listener's queue/store coroutines run inline on the player thread.
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            queue = queue,
+            store = NoopProgressStore,
+            sendWs = { message, _ -> wsMessages += message },
+            toMediaItem = { MediaItem.Builder().setMediaId(it.id).build() },
+            onWidgetUpdate = {},
+            startProgressSync = {},
+            stopProgressSync = {},
         )
+        player.addListener(listener)
     }
 
     @After
@@ -96,6 +101,43 @@ class QueuePlaybackListenerTest {
         assertEquals(listOf("ep1", "ep2"), endedEpisodeIds())
     }
 
+    @Test
+    fun `onServerState does not rewind when local playback is already ahead of the server`() {
+        startEpisode("ep1")
+        player.seekTo(5_000) // local playback has advanced past the server's stored position
+        shadowOf(Looper.getMainLooper()).idle()
+
+        listener.onServerState(serverState("ep1", progressMs = 1_000, played = false))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(5_000L, player.currentPosition)
+        assertTrue(
+            "expected `start` to report the live position, not the stale server one; ws=$wsMessages",
+            wsMessages.any { it.contains(""""type":"start"""") && it.contains(""""startPositionMs":5000""") },
+        )
+    }
+
+    @Test
+    fun `onServerState seeks forward to genuine cross-device progress`() {
+        startEpisode("ep1") // local playback is at ~0
+
+        listener.onServerState(serverState("ep1", progressMs = 200_000, played = false))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(200_000L, player.currentPosition)
+    }
+
+    /** Sets [mediaId] as now-playing and waits until READY so the transition has set currentEpisodeId. */
+    private fun startEpisode(mediaId: String) {
+        player.setMediaItems(listOf(MediaItem.Builder().setMediaId(mediaId).build()))
+        player.prepare()
+        TestPlayerRunHelper.runUntilPlaybackState(player, Player.STATE_READY)
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    private fun serverState(episodeId: String, progressMs: Long, played: Boolean) =
+        PlaybackStateResponse(type = "state", episodeId = episodeId, progressMs = progressMs, played = played)
+
     private fun endedEpisodeIds(): List<String> =
         wsMessages
             .filter { it.contains(""""type":"ended"""") }
@@ -108,7 +150,8 @@ class QueuePlaybackListenerTest {
         override fun getSupportedTypes(): IntArray = intArrayOf()
         override fun createMediaSource(mediaItem: MediaItem): MediaSource {
             val window = TimelineWindowDefinition.Builder()
-                .setDurationUs(2 * C.MICROS_PER_SECOND)
+                // Long enough that the resume-reconcile tests can seek to realistic positions.
+                .setDurationUs(600 * C.MICROS_PER_SECOND)
                 .setMediaItem(mediaItem)
                 .build()
             return FakeMediaSource(FakeTimeline(window))
