@@ -12,6 +12,7 @@ import io.ktor.server.websocket.*
 import org.slf4j.event.Level
 import java.time.Clock
 import java.util.UUID
+import kotlin.time.Duration.Companion.seconds
 
 fun Application.installHttpClient(httpClient: HttpClient? = null) {
     val client = httpClient
@@ -42,7 +43,9 @@ fun Application.installCommon(clock: Clock = Clock.systemUTC()) {
     }
 
     install(IgnoreTrailingSlash)
-    install(WebSockets)
+    install(WebSockets) {
+        pingPeriod = 30.seconds
+    }
 
     dependencies {
         provide<Clock> { clock }
