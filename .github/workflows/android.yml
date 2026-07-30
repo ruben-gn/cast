@@ -29,8 +29,6 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          build-root-directory: android
 
       # AGP signs debug builds with ~/.android/debug.keystore. Without a stable one the runner
       # generates a fresh key per run, so each APK would fail to install over the last.

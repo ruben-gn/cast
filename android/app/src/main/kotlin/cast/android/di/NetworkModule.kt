@@ -1,6 +1,5 @@
 package cast.android.di
 
-import cast.android.domain.model.Settings
 import cast.android.network.BaseUrlInterceptor
 import cast.android.network.CastApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -22,6 +21,11 @@ object NetworkModule {
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    // Only a template — BaseUrlInterceptor rewrites scheme/host/port on every request. Retrofit still
+    // demands a well-formed URL, and DEFAULT_SERVER_URL is empty in builds with no configured server
+    // (CI), which made construction throw and took the whole app down at startup.
+    private const val URL_TEMPLATE = "http://localhost/"
+
     @Provides
     @Singleton
     fun provideOkHttpClient(baseUrlInterceptor: BaseUrlInterceptor): OkHttpClient =
@@ -37,7 +41,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =
         Retrofit.Builder()
-            .baseUrl("${Settings.DEFAULT_SERVER_URL}/")
+            .baseUrl(URL_TEMPLATE)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json; charset=UTF8".toMediaType()))
             .build()
