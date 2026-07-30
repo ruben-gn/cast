@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -18,6 +19,13 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * Null when no server is configured yet. OkHttp upgrades an http(s) URL to a WebSocket itself, so
+ * there is no ws:// scheme to build — which also keeps a bare "host:port" working, as elsewhere.
+ */
+internal fun playbackSocketUrl(base: String): HttpUrl? =
+    normalizeBaseUrl(base)?.newBuilder()?.addPathSegments("api/playback")?.build()
 
 @Singleton
 class PlaybackWebSocketClient @Inject constructor(
@@ -60,10 +68,13 @@ class PlaybackWebSocketClient @Inject constructor(
     private fun openWebSocket() {
         // An in-flight socket we've given up on would otherwise linger until its own timeout.
         webSocket?.cancel()
-        val wsUrl = baseUrlInterceptor.baseUrl
-            .replace("http://", "ws://")
-            .replace("https://", "wss://")
-            .trimEnd('/') + "/api/playback"
+        // PlaybackService starts before a server URL exists on a fresh install, and building a
+        // Request from an unparseable URL would throw straight out of onCreate, killing the process.
+        val wsUrl = playbackSocketUrl(baseUrlInterceptor.baseUrl)
+        if (wsUrl == null) {
+            if (active) reconnectHandler.postDelayed(::openWebSocket, RECONNECT_DELAY_MS)
+            return
+        }
         val ws = okHttpClient.newWebSocket(
             Request.Builder().url(wsUrl).build(),
             object : WebSocketListener() {
