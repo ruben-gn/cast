@@ -13,6 +13,10 @@ val localProps = Properties().apply {
     if (f.exists()) load(f.inputStream())
 }
 
+// CI supplies these so every published build is a distinct, ordered update; local builds stay at 1/1.0.
+val ciVersionCode = System.getenv("CAST_VERSION_CODE")?.toInt() ?: 1
+val ciVersionName = System.getenv("CAST_VERSION_NAME") ?: "1.0"
+
 android {
     namespace = "cast.android"
     compileSdk = 36
@@ -21,8 +25,8 @@ android {
         applicationId = "cast.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = ciVersionCode
+        versionName = ciVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "DEFAULT_SERVER_URL", "\"${localProps["cast.serverUrl"] ?: ""}\"")
     }
