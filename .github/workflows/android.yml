@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # versionCode is the commit count; the changelog needs tags
 
       - uses: actions/setup-java@v4
         with:
@@ -33,9 +35,16 @@ jobs:
       # AGP signs debug builds with ~/.android/debug.keystore. Without a stable one the runner
       # generates a fresh key per run, so each APK would fail to install over the last.
       - name: Restore debug keystore
+        env:
+          KEYSTORE: ${{ secrets.CAST_DEBUG_KEYSTORE }}
         run: |
           mkdir -p ~/.android
-          echo "${{ secrets.CAST_DEBUG_KEYSTORE }}" | base64 -d > ~/.android/debug.keystore
+          printf '%s' "$KEYSTORE" | base64 -d > ~/.android/debug.keystore
+
+      - name: Compute version
+        run: |
+          echo "CAST_VERSION_CODE=$(git rev-list --count HEAD)" >> "$GITHUB_ENV"
+          echo "CAST_VERSION_NAME=$(git rev-list --count HEAD)-$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
       - name: Test
         working-directory: android
@@ -43,17 +52,23 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        env:
-          CAST_VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew --no-daemon assembleDebug
+
+      # Each build is tagged, so the previous tag marks exactly what the last installed APK contained.
+      - name: Build changelog
         run: |
-          export CAST_VERSION_NAME="${{ github.run_number }}-${GITHUB_SHA::7}"
-          ./gradlew --no-daemon assembleDebug
+          PREV=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          if [ -n "$PREV" ]; then
+            git log "$PREV..HEAD" --pretty=format:'- %s' > CHANGELOG.md
+          else
+            git log -10 --pretty=format:'- %s' > CHANGELOG.md
+          fi
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp android/app/build/outputs/apk/debug/app-debug.apk cast-debug.apk
-          gh release create "build-${{ github.run_number }}" cast-debug.apk \
-            --title "build ${{ github.run_number }}" \
-            --notes "${{ github.sha }}"
+          gh release create "v$CAST_VERSION_NAME" cast-debug.apk \
+            --title "$CAST_VERSION_NAME" \
+            --notes-file CHANGELOG.md
