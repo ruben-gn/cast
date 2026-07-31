@@ -12,6 +12,7 @@ import playback.core.usecase.MarkPlayed
 import playback.core.usecase.StartPlayback
 import playback.core.usecase.UpdateProgress
 import shared.model.EpisodeId
+import java.time.Instant
 
 private val log = KotlinLogging.logger { }
 private val json = Json
@@ -37,7 +38,8 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
                         }
                         "update" -> {
                             val progressMs = obj["progressMs"]!!.jsonPrimitive.long
-                            updateProgress(episodeId = episodeId, progressMs = progressMs)
+                            val updatedAt = obj["updatedAt"]?.jsonPrimitive?.long?.let(Instant::ofEpochMilli)
+                            updateProgress(episodeId = episodeId, progressMs = progressMs, updatedAt = updatedAt)
                         }
                         "ended" -> markPlayed(episodeId)
                         "get" -> {

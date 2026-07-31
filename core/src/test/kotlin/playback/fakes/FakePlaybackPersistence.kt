@@ -9,9 +9,10 @@ class FakePlaybackPersistence : PlaybackPersistence {
     private val storage = mutableMapOf<EpisodeId, PlaybackState>()
 
     override suspend fun updateProgress(episodeId: EpisodeId, progressMs: Long, updatedAt: Instant) {
-        storage[episodeId] = storage.getOrElse(episodeId) {
-            PlaybackState(episodeId, progressMs, updatedAt, played = false)
-        }.copy(progressMs = progressMs, updatedAt = updatedAt)
+        val existing = storage[episodeId]
+        if (existing != null && !updatedAt.isAfter(existing.updatedAt)) return
+        storage[episodeId] = (existing ?: PlaybackState(episodeId, progressMs, updatedAt, played = false))
+            .copy(progressMs = progressMs, updatedAt = updatedAt)
     }
 
     override suspend fun resetProgress(episodeId: EpisodeId, progressMs: Long, updatedAt: Instant) {

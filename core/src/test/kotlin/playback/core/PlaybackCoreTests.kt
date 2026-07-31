@@ -42,7 +42,7 @@ class PlaybackCoreTests : DescribeSpec({
             val episodeId = EpisodeId("ep-123")
             val progressMs = 5000L
 
-            updateProgress(episodeId, progressMs)
+            updateProgress(episodeId, progressMs, updatedAt = null)
 
             val retrieved = getPlaybackState(episodeId)
             retrieved.episodeId shouldBe episodeId
@@ -62,11 +62,11 @@ class PlaybackCoreTests : DescribeSpec({
         it("overwrites existing state and updates the timestamp on subsequent progress") {
             val episodeId = EpisodeId("ep-123")
 
-            updateProgress(episodeId, 1000L)
+            updateProgress(episodeId, 1000L, updatedAt = null)
 
             clock.tick(1.hours)
 
-            updateProgress(episodeId, 2000L)
+            updateProgress(episodeId, 2000L, updatedAt = null)
 
             val finalState = getPlaybackState(episodeId)
             finalState.progressMs shouldBe 2000L
@@ -76,7 +76,7 @@ class PlaybackCoreTests : DescribeSpec({
         it("marks an episode as played") {
             val episodeId = EpisodeId("ep-123")
 
-            updateProgress(episodeId, 5000L)
+            updateProgress(episodeId, 5000L, updatedAt = null)
             markPlayed(episodeId)
 
             val state = getPlaybackState(episodeId)
@@ -86,7 +86,7 @@ class PlaybackCoreTests : DescribeSpec({
 
         it("marks a played episode as unplayed") {
             val episodeId = EpisodeId("ep-123")
-            updateProgress(episodeId, 5000L)
+            updateProgress(episodeId, 5000L, updatedAt = null)
             markPlayed(episodeId)
 
             markUnplayed(episodeId)
@@ -114,7 +114,7 @@ class PlaybackCoreTests : DescribeSpec({
 
         it("marks all episodes as played") {
             val ids = listOf(EpisodeId("ep-1"), EpisodeId("ep-2"), EpisodeId("ep-3"))
-            ids.forEach { updateProgress(it, 1000L) }
+            ids.forEach { updateProgress(it, 1000L, updatedAt = null) }
 
             markAllPlayed(ids)
 
@@ -134,7 +134,7 @@ class PlaybackCoreTests : DescribeSpec({
 
         it("startPlayback at position 0 resets a played episode") {
             val episodeId = EpisodeId("ep-1")
-            updateProgress(episodeId, 45_000L)
+            updateProgress(episodeId, 45_000L, updatedAt = null)
             markPlayed(episodeId)
 
             startPlayback(episodeId, startPositionMs = 0L)
@@ -146,13 +146,31 @@ class PlaybackCoreTests : DescribeSpec({
 
         it("does not reset played when progress update arrives after markPlayed") {
             val episodeId = EpisodeId("ep-123")
-            updateProgress(episodeId, 5000L)
+            updateProgress(episodeId, 5000L, updatedAt = null)
             markPlayed(episodeId)
-            updateProgress(episodeId, 9000L)
+            clock.tick(1.hours)
+            updateProgress(episodeId, 9000L, updatedAt = null)
 
             val state = getPlaybackState(episodeId)
             state.played shouldBe true
             state.progressMs shouldBe 9000L
+        }
+
+        it("stamps the clock's instant when updatedAt is not provided") {
+            val episodeId = EpisodeId("ep-123")
+
+            updateProgress(episodeId, 5000L, updatedAt = null)
+
+            getPlaybackState(episodeId).updatedAt shouldBe fixedInstant
+        }
+
+        it("uses the caller-provided updatedAt instead of the clock") {
+            val episodeId = EpisodeId("ep-123")
+            val explicit = Instant.parse("2020-01-01T00:00:00Z")
+
+            updateProgress(episodeId, 5000L, updatedAt = explicit)
+
+            getPlaybackState(episodeId).updatedAt shouldBe explicit
         }
     }
 })

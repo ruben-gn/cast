@@ -43,11 +43,45 @@ fun playbackPersistenceContract(persistenceProvider: () -> PlaybackPersistence):
             persistence.updateProgress(episodeId, 1000, Instant.parse("2024-01-15T10:00:00Z"))
             persistence.markPlayed(episodeId)
 
-            persistence.updateProgress(episodeId, 9000, Instant.parse("2024-01-15T10:30:00Z"))
+            // markPlayed stamps its own (real) clock, so the follow-up update must be
+            // safely later than "now" to count as newer under the ordering rule.
+            persistence.updateProgress(episodeId, 9000, Instant.now().plusSeconds(3600))
 
             val state = persistence.get(episodeId)!!
             state.progressMs shouldBe 9000
             state.played shouldBe true
+        }
+
+        it("ignores an update older than the stored state") {
+            val persistence = persistenceProvider()
+            val episodeId = EpisodeId("ep-1")
+            persistence.updateProgress(episodeId, 5000, Instant.parse("2024-01-15T10:30:00Z"))
+
+            persistence.updateProgress(episodeId, 1000, Instant.parse("2024-01-15T10:00:00Z"))
+
+            val state = persistence.get(episodeId)!!
+            state.progressMs shouldBe 5000
+            state.updatedAt shouldBe Instant.parse("2024-01-15T10:30:00Z")
+        }
+
+        it("ignores an update with the same timestamp as the stored state") {
+            val persistence = persistenceProvider()
+            val episodeId = EpisodeId("ep-1")
+            persistence.updateProgress(episodeId, 5000, Instant.parse("2024-01-15T10:30:00Z"))
+
+            persistence.updateProgress(episodeId, 1000, Instant.parse("2024-01-15T10:30:00Z"))
+
+            persistence.get(episodeId)!!.progressMs shouldBe 5000
+        }
+
+        it("applies an update with fractional-second precision newer than a whole-second stored state") {
+            val persistence = persistenceProvider()
+            val episodeId = EpisodeId("ep-1")
+            persistence.updateProgress(episodeId, 5000, Instant.parse("2024-01-15T10:30:00Z"))
+
+            persistence.updateProgress(episodeId, 9000, Instant.parse("2024-01-15T10:30:00.500Z"))
+
+            persistence.get(episodeId)!!.progressMs shouldBe 9000
         }
     }
 

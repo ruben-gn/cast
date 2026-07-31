@@ -17,6 +17,7 @@ class SQLitePlaybackState(private val db: ConnectionProvider) : PlaybackPersiste
                 ON CONFLICT(episode_id) DO UPDATE SET
                     progress_ms = excluded.progress_ms,
                     updated_at = excluded.updated_at
+                WHERE julianday(excluded.updated_at) > julianday(playback_state.updated_at)
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
