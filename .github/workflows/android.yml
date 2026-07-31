@@ -32,15 +32,6 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # AGP signs debug builds with ~/.android/debug.keystore. Without a stable one the runner
-      # generates a fresh key per run, so each APK would fail to install over the last.
-      - name: Restore debug keystore
-        env:
-          KEYSTORE: ${{ secrets.CAST_DEBUG_KEYSTORE }}
-        run: |
-          mkdir -p ~/.android
-          printf '%s' "$KEYSTORE" | base64 -d > ~/.android/debug.keystore
-
       - name: Compute version
         run: |
           echo "CAST_VERSION_CODE=$(git rev-list --count HEAD)" >> "$GITHUB_ENV"

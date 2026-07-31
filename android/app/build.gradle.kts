@@ -31,6 +31,17 @@ android {
         buildConfigField("String", "DEFAULT_SERVER_URL", "\"${localProps["cast.serverUrl"] ?: ""}\"")
     }
 
+    // Committed so every build (local or CI) signs with the same key; debug keys carry no real
+    // trust, so there's nothing sensitive about checking it in.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
