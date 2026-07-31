@@ -38,6 +38,9 @@ class PlaybackWebSocketClient @Inject constructor(
     private val _states = MutableSharedFlow<PlaybackStateResponse>(replay = 1)
     val states: SharedFlow<PlaybackStateResponse> = _states.asSharedFlow()
 
+    private val _opened = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val opened: SharedFlow<Unit> = _opened.asSharedFlow()
+
     @Volatile private var webSocket: WebSocket? = null
     @Volatile private var connected = false
     @Volatile private var active = false
@@ -85,6 +88,7 @@ class PlaybackWebSocketClient @Inject constructor(
                         for (msg in pending) ws.send(msg.message)
                         pending.clear()
                     }
+                    _opened.tryEmit(Unit)
                 }
 
                 override fun onMessage(ws: WebSocket, text: String) {
@@ -120,15 +124,17 @@ class PlaybackWebSocketClient @Inject constructor(
     /**
      * Sends now, or queues for the next (re)connect. A non-null [coalesceKey] keeps only the
      * newest queued message per key, so an offline stretch of 1 Hz progress updates flushes as a
-     * single message instead of a burst of stale ones.
+     * single message instead of a burst of stale ones. Returns whether the message went out on a
+     * live socket now (`true`) or was queued (`false`).
      */
-    fun send(message: String, coalesceKey: String? = null) {
+    fun send(message: String, coalesceKey: String? = null): Boolean {
         val ws = webSocket
-        if (connected && ws != null && ws.send(message)) return
+        if (connected && ws != null && ws.send(message)) return true
         synchronized(pending) {
             if (coalesceKey != null) pending.removeAll { it.coalesceKey == coalesceKey }
             pending.add(PendingMessage(coalesceKey, message))
         }
+        return false
     }
 
     companion object {

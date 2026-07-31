@@ -28,7 +28,7 @@ class QueuePlaybackListener(
     private val scope: CoroutineScope,
     private val queue: QueueRepository,
     private val store: PlaybackProgressStore,
-    private val sendWs: (message: String, coalesceKey: String?) -> Unit,
+    private val sendWs: (message: String, coalesceKey: String?) -> Boolean,
     private val toMediaItem: (EpisodeDetailDto) -> MediaItem,
     private val onWidgetUpdate: (isPlaying: Boolean) -> Unit,
     private val startProgressSync: (episodeId: String) -> Unit,
@@ -90,7 +90,8 @@ class QueuePlaybackListener(
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
             // The previous item ran to its natural end: mark it played and drop it locally.
             if (finishedId != null) {
-                sendWs("""{"type":"ended","episodeId":"$finishedId"}""", null)
+                if (!sendWs("""{"type":"ended","episodeId":"$finishedId"}""", null))
+                    store.markEndedPending(finishedId)
                 store.clearCachedProgress(finishedId)
             }
             // The new current item has been consumed from up-next: remove it from the backend
@@ -134,8 +135,9 @@ class QueuePlaybackListener(
         } else {
             // Flush exact position on intentional pause so server is never stale
             val progressMs = player.currentPosition
-            store.cacheProgress(episodeId, progressMs)
-            sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""", episodeId)
+            val now = System.currentTimeMillis()
+            store.cacheProgress(episodeId, progressMs, now)
+            sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs,"updatedAt":$now}""", episodeId)
             stopProgressSync()
         }
     }
@@ -151,7 +153,8 @@ class QueuePlaybackListener(
             // Fires only when the last playlist item finishes (queue exhausted). Mid-queue
             // completion is handled in onMediaItemTransition(REASON_AUTO).
             currentEpisodeId?.let {
-                sendWs("""{"type":"ended","episodeId":"$it"}""", null)
+                if (!sendWs("""{"type":"ended","episodeId":"$it"}""", null))
+                    store.markEndedPending(it)
                 store.clearCachedProgress(it)
             }
             stopProgressSync()

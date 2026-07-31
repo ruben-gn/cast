@@ -140,8 +140,6 @@ class PlaybackService : MediaLibraryService() {
             .setMediaButtonPreferences(ImmutableList.of(rewindButton, fastForwardButton))
             .build()
 
-        playbackWebSocketClient.connect()
-
         serviceScope.launch {
             playbackWebSocketClient.states.collect { state -> listener.onServerState(state) }
         }
@@ -151,6 +149,16 @@ class PlaybackService : MediaLibraryService() {
         serviceScope.launch {
             queueRepository.queueIds.collect { listener.reconcileQueueTail() }
         }
+
+        // Replay offline progress/mark-played on every (re)connect, including the very first open —
+        // this collector must be running before connect() below for that to hold, since the
+        // SharedFlow has no replay.
+        val flusher = ProgressOutboxFlusher(progressStore, ::sendWs)
+        serviceScope.launch {
+            playbackWebSocketClient.opened.collect { flusher.flush() }
+        }
+
+        playbackWebSocketClient.connect()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
@@ -460,11 +468,15 @@ class PlaybackService : MediaLibraryService() {
             while (isActive) {
                 delay(1_000)
                 val progressMs = mediaSession?.player?.currentPosition ?: break
-                progressStore.cacheProgress(episodeId, progressMs)
+                val now = System.currentTimeMillis()
+                progressStore.cacheProgress(episodeId, progressMs, now)
                 if (downloadRepository.statuses.value[episodeId] == DownloadStatus.DOWNLOADED) {
                     downloadTimestampStore.markPlayed(episodeId)
                 }
-                sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""", coalesceKey = episodeId)
+                sendWs(
+                    """{"type":"update","episodeId":"$episodeId","progressMs":$progressMs,"updatedAt":$now}""",
+                    coalesceKey = episodeId,
+                )
             }
         }
     }
@@ -474,9 +486,9 @@ class PlaybackService : MediaLibraryService() {
         progressJob = null
     }
 
-    private fun sendWs(message: String, coalesceKey: String? = null) {
+    private fun sendWs(message: String, coalesceKey: String? = null): Boolean {
         Log.d(TAG, "sendWs: $message")
-        playbackWebSocketClient.send(message, coalesceKey)
+        return playbackWebSocketClient.send(message, coalesceKey)
     }
 
     /**

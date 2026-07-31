@@ -71,7 +71,7 @@ class QueuePlaybackListenerTest {
             scope = CoroutineScope(Dispatchers.Unconfined),
             queue = queue,
             store = NoopProgressStore,
-            sendWs = { message, _ -> wsMessages += message },
+            sendWs = { message, _ -> wsMessages += message; true },
             toMediaItem = { MediaItem.Builder().setMediaId(it.id).build() },
             onWidgetUpdate = {},
             startProgressSync = {},
@@ -160,8 +160,11 @@ class QueuePlaybackListenerTest {
 
     private object NoopProgressStore : PlaybackProgressStore {
         override suspend fun cachedProgressMs(episodeId: String): Long? = null
-        override fun cacheProgress(episodeId: String, progressMs: Long) {}
+        override fun cacheProgress(episodeId: String, progressMs: Long, atMillis: Long) {}
         override fun clearCachedProgress(episodeId: String) {}
+        override fun markEndedPending(episodeId: String) {}
+        override fun clearEndedPending(episodeId: String) {}
+        override suspend fun pendingSync(): PendingSync = PendingSync(emptyList(), emptyList())
         override fun rememberLastEpisode(episodeId: String) {}
         override fun clearLastEpisode() {}
     }
