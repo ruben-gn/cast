@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.core.content.ContextCompat
@@ -194,9 +195,14 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    // customCacheKey must match PlaybackService.playableItem and the DownloadRequest: the service
+    // passes in-app items through untouched (localConfiguration != null), so without it a playback
+    // started here would look up the caches by URL and miss downloaded episodes.
+    @OptIn(UnstableApi::class)
     private fun buildMediaItem(episode: EpisodeDetailDto) = MediaItem.Builder()
         .setMediaId(episode.id)
         .setUri(episode.audioUrl)
+        .setCustomCacheKey(episode.id)
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(episode.title)

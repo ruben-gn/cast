@@ -15,6 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cast.android.domain.repository.DownloadStatus
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.util.relativeTime
 import cast.api.EpisodeDetailDto
@@ -55,6 +59,8 @@ import coil3.compose.AsyncImage
 fun EpisodeItem(
     episode: EpisodeDetailDto,
     onPlay: () -> Unit,
+    downloadStatus: DownloadStatus?,
+    onDownloadAction: (() -> Unit)?,
     onTogglePlayed: ((Boolean) -> Unit)? = null,
     onAddToQueue: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -75,7 +81,8 @@ fun EpisodeItem(
     var played by remember(episode.id, episode.played) { mutableStateOf(episode.played) }
     var showSheet by remember(episode.id) { mutableStateOf(false) }
 
-    val hasSheetActions = onTogglePlayed != null || onAddToQueue != null || onGoToPodcast != null
+    val hasSheetActions = onTogglePlayed != null || onAddToQueue != null || onGoToPodcast != null ||
+        onDownloadAction != null
 
     val savedProgress: Float? = when {
         played -> null
@@ -193,6 +200,8 @@ fun EpisodeItem(
         EpisodeActionsSheet(
             episodeTitle = episode.title,
             played = played,
+            downloadStatus = downloadStatus,
+            onDownloadAction = onDownloadAction,
             onAddToQueue = onAddToQueue,
             onTogglePlayed = onTogglePlayed?.let {
                 {
@@ -212,6 +221,8 @@ fun EpisodeItem(
 private fun EpisodeActionsSheet(
     episodeTitle: String,
     played: Boolean,
+    downloadStatus: DownloadStatus?,
+    onDownloadAction: (() -> Unit)?,
     onAddToQueue: (() -> Unit)?,
     onTogglePlayed: (() -> Unit)?,
     onGoToPodcast: (() -> Unit)?,
@@ -231,6 +242,10 @@ private fun EpisodeActionsSheet(
                 onAddToQueue(); onDismiss()
             }
         }
+        if (onDownloadAction != null) {
+            val (icon, label) = downloadSheetAction(downloadStatus)
+            SheetAction(icon, label) { onDownloadAction(); onDismiss() }
+        }
         if (onTogglePlayed != null) {
             SheetAction(
                 Icons.Default.CheckCircle,
@@ -243,6 +258,13 @@ private fun EpisodeActionsSheet(
             }
         }
     }
+}
+
+/** Shared by [EpisodeActionsSheet] and the queue's own actions sheet. */
+internal fun downloadSheetAction(status: DownloadStatus?): Pair<ImageVector, String> = when (status) {
+    null -> Icons.Default.Download to "Download"
+    DownloadStatus.DOWNLOADING -> Icons.Default.Close to "Cancel download"
+    DownloadStatus.DOWNLOADED -> Icons.Default.Delete to "Remove download"
 }
 
 @Composable

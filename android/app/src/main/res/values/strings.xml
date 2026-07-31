@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Cast</string>
+    <!-- DownloadService's constructor demands a resource id for the channel name; every other
+         user-facing string in the app is hardcoded in Kotlin. -->
+    <string name="download_notification_channel">Downloads</string>
 </resources>

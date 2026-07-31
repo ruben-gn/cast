@@ -38,7 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import cast.android.domain.repository.DownloadStatus
 import cast.android.ui.UiState
+import cast.android.ui.components.downloadSheetAction
+import cast.android.ui.viewmodel.DownloadsViewModel
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.ui.viewmodel.QueueViewModel
 import cast.api.EpisodeDetailDto
@@ -50,8 +53,10 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @Composable
 fun QueueScreen(navController: NavHostController) {
     val vm: QueueViewModel = hiltViewModel()
+    val downloadsVm: DownloadsViewModel = hiltViewModel()
     val playerVm = LocalPlayerViewModel.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val downloadStatuses by downloadsVm.statuses.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
         is UiState.Loading -> Box(Modifier.fillMaxSize()) {
@@ -90,8 +95,10 @@ fun QueueScreen(navController: NavHostController) {
                             if (showSheet) {
                                 QueueEpisodeActionsSheet(
                                     episodeTitle = episode.title,
+                                    downloadStatus = downloadStatuses[episode.id],
                                     onPlay = { playerVm.playEpisode(episode) },
                                     onRemove = { vm.removeFromQueue(episode.id) },
+                                    onDownloadAction = { downloadsVm.toggle(episode) },
                                     onDismiss = { showSheet = false },
                                 )
                             }
@@ -161,8 +168,10 @@ private fun QueueEpisodeRow(
 @Composable
 private fun QueueEpisodeActionsSheet(
     episodeTitle: String,
+    downloadStatus: DownloadStatus?,
     onPlay: () -> Unit,
     onRemove: () -> Unit,
+    onDownloadAction: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -175,6 +184,8 @@ private fun QueueEpisodeActionsSheet(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
         QueueSheetAction(Icons.Default.PlayArrow, "Play now") { onPlay(); onDismiss() }
+        val (downloadIcon, downloadLabel) = downloadSheetAction(downloadStatus)
+        QueueSheetAction(downloadIcon, downloadLabel) { onDownloadAction(); onDismiss() }
         QueueSheetAction(Icons.Default.Delete, "Remove from queue") { onRemove(); onDismiss() }
     }
 }

@@ -7,5 +7,6 @@ import kotlinx.serialization.Serializable
 @Serializable data class PodcastDetail(val podcastId: String)
 @Serializable data class EpisodeDetail(val episodeId: String)
 @Serializable object Queue
+@Serializable object Downloads
 @Serializable object Settings
 @Serializable object NowPlaying

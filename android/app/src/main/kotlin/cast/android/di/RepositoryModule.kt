@@ -1,9 +1,11 @@
 package cast.android.di
 
+import cast.android.domain.repository.DownloadRepository
 import cast.android.domain.repository.EpisodeRepository
 import cast.android.domain.repository.PodcastRepository
 import cast.android.domain.repository.QueueRepository
 import cast.android.domain.repository.SettingsRepository
+import cast.android.domain.repository.impl.DownloadRepositoryImpl
 import cast.android.domain.repository.impl.EpisodeRepositoryImpl
 import cast.android.domain.repository.impl.PodcastRepositoryImpl
 import cast.android.domain.repository.impl.QueueRepositoryImpl
@@ -29,4 +31,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindQueueRepository(impl: QueueRepositoryImpl): QueueRepository
+
+    @Binds @Singleton
+    abstract fun bindDownloadRepository(impl: DownloadRepositoryImpl): DownloadRepository
 }

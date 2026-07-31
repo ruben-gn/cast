@@ -2,6 +2,7 @@ package cast.android.ui.nav
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Settings
@@ -51,6 +52,12 @@ fun BottomNavBar(navController: NavHostController) {
             onClick = { navigateToTab(Queue) },
             icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Queue") },
             label = { Text("Queue") },
+        )
+        NavigationBarItem(
+            selected = currentDest?.hasRoute(Downloads::class) == true,
+            onClick = { navigateToTab(Downloads) },
+            icon = { Icon(Icons.Default.Download, contentDescription = "Downloads") },
+            label = { Text("Downloads") },
         )
         NavigationBarItem(
             selected = currentDest?.hasRoute(Settings::class) == true,

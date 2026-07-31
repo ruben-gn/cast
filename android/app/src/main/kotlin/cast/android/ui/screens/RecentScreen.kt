@@ -26,6 +26,7 @@ import cast.android.ui.components.EpisodeItem
 import cast.android.ui.components.RecentScreenSkeleton
 import cast.android.ui.nav.EpisodeDetail
 import cast.android.ui.nav.PodcastDetail
+import cast.android.ui.viewmodel.DownloadsViewModel
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.ui.viewmodel.RecentViewModel
 
@@ -33,9 +34,11 @@ import cast.android.ui.viewmodel.RecentViewModel
 @Composable
 fun RecentScreen(navController: NavHostController) {
     val vm: RecentViewModel = hiltViewModel()
+    val downloadsVm: DownloadsViewModel = hiltViewModel()
     val playerVm = LocalPlayerViewModel.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val queueIds by vm.queueIds.collectAsStateWithLifecycle()
+    val downloadStatuses by downloadsVm.statuses.collectAsStateWithLifecycle()
 
     LaunchedEffect(playerVm) {
         playerVm.episodeCompleted.collect { episodeId -> vm.onEpisodeCompleted(episodeId) }
@@ -68,6 +71,8 @@ fun RecentScreen(navController: NavHostController) {
                     EpisodeItem(
                         episode = episode,
                         onPlay = { playerVm.playEpisode(episode) },
+                        downloadStatus = downloadStatuses[episode.id],
+                        onDownloadAction = { downloadsVm.toggle(episode) },
                         onTogglePlayed = { newPlayed -> vm.togglePlayed(episode.id, newPlayed) },
                         onAddToQueue = { vm.addToQueue(episode.id) },
                         onClick = { navController.navigate(EpisodeDetail(episode.id)) },

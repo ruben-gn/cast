@@ -50,4 +50,8 @@ object NetworkModule {
     @Singleton
     fun provideCastApiService(retrofit: Retrofit): CastApiService =
         retrofit.create(CastApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideJson(): Json = json
 }

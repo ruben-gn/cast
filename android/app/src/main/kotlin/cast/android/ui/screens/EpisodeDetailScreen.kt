@@ -4,18 +4,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.DownloadDone
+import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
@@ -43,9 +44,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import cast.android.domain.repository.DownloadStatus
 import cast.android.ui.UiState
 import cast.android.ui.components.ConfirmIconButton
 import cast.android.ui.components.EpisodeDescription
+import cast.android.ui.viewmodel.DownloadsViewModel
 import cast.android.ui.viewmodel.EpisodeDetailViewModel
 import cast.android.ui.viewmodel.LocalPlayerViewModel
 import cast.android.util.relativeTime
@@ -56,7 +59,9 @@ import coil3.compose.AsyncImage
 @Composable
 fun EpisodeDetailScreen(navController: NavController) {
     val vm: EpisodeDetailViewModel = hiltViewModel()
+    val downloadsVm: DownloadsViewModel = hiltViewModel()
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val downloadStatuses by downloadsVm.statuses.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -91,6 +96,8 @@ fun EpisodeDetailScreen(navController: NavController) {
                 modifier = Modifier.padding(innerPadding),
                 onAddToQueue = { vm.addToQueue() },
                 onTogglePlayed = { vm.togglePlayed(it) },
+                downloadStatus = downloadStatuses[state.data.id],
+                onDownloadAction = { downloadsVm.toggle(state.data) },
             )
         }
     }
@@ -102,6 +109,8 @@ private fun EpisodeDetailContent(
     modifier: Modifier = Modifier,
     onAddToQueue: () -> Unit,
     onTogglePlayed: (Boolean) -> Unit,
+    downloadStatus: DownloadStatus?,
+    onDownloadAction: () -> Unit,
 ) {
     val playerVm = LocalPlayerViewModel.current
     val currentMediaItem by playerVm.currentMediaItem.collectAsStateWithLifecycle()
@@ -179,7 +188,25 @@ private fun EpisodeDetailContent(
                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 )
             }
-            Spacer(Modifier.width(0.dp))
+            IconButton(onClick = onDownloadAction) {
+                Icon(
+                    imageVector = when (downloadStatus) {
+                        null -> Icons.Default.Download
+                        DownloadStatus.DOWNLOADING -> Icons.Default.Downloading
+                        DownloadStatus.DOWNLOADED -> Icons.Default.DownloadDone
+                    },
+                    contentDescription = when (downloadStatus) {
+                        null -> "Download"
+                        DownloadStatus.DOWNLOADING -> "Cancel download"
+                        DownloadStatus.DOWNLOADED -> "Remove download"
+                    },
+                    tint = when (downloadStatus) {
+                        null -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        DownloadStatus.DOWNLOADING -> MaterialTheme.colorScheme.onSurfaceVariant
+                        DownloadStatus.DOWNLOADED -> MaterialTheme.colorScheme.primary
+                    },
+                )
+            }
         }
 
         when {
