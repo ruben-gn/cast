@@ -1,6 +1,7 @@
 package cast.android.domain.repository.impl
 
 import cast.android.domain.cache.LatestCache
+import cast.android.domain.repository.DownloadRepository
 import cast.android.domain.repository.EpisodeRepository
 import cast.android.network.CastApiService
 import cast.android.network.orThrow
@@ -11,6 +12,7 @@ import javax.inject.Singleton
 @Singleton
 class EpisodeRepositoryImpl @Inject constructor(
     private val api: CastApiService,
+    private val downloadRepository: DownloadRepository,
 ) : EpisodeRepository {
 
     private val recentCache = LatestCache<List<EpisodeDetailDto>>()
@@ -28,5 +30,6 @@ class EpisodeRepositoryImpl @Inject constructor(
     override suspend fun setPlayed(episodeId: String, played: Boolean) {
         if (played) api.markPlayed(episodeId).orThrow() else api.markUnplayed(episodeId).orThrow()
         recentCache.clear()
+        if (played) downloadRepository.remove(episodeId)
     }
 }

@@ -11,7 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import cast.android.ui.screens.CatalogScreen
-import cast.android.ui.screens.DownloadsScreen
+import cast.android.ui.screens.DownloadedEpisodesScreen
 import cast.android.ui.screens.EpisodeDetailScreen
 import cast.android.ui.screens.NowPlayingScreen
 import cast.android.ui.screens.PodcastDetailScreen
@@ -42,8 +42,8 @@ fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier)
             deepLinks = listOf(navDeepLink<EpisodeDetail>(basePath = "cast://episode")),
         ) { EpisodeDetailScreen(navController) }
         composable<Queue> { QueueScreen(navController) }
-        composable<Downloads> { DownloadsScreen(navController) }
         composable<Settings> { SettingsScreen(navController) }
+        composable<DownloadedEpisodes> { DownloadedEpisodesScreen(navController) }
         composable<NowPlaying>(
             deepLinks = listOf(navDeepLink { uriPattern = "cast://now-playing" }),
         ) { NowPlayingScreen(navController) }

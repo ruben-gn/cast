@@ -62,6 +62,7 @@ fun EpisodeDetailScreen(navController: NavController) {
     val downloadsVm: DownloadsViewModel = hiltViewModel()
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val downloadStatuses by downloadsVm.statuses.collectAsStateWithLifecycle()
+    val downloadProgress by downloadsVm.progress.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -97,6 +98,7 @@ fun EpisodeDetailScreen(navController: NavController) {
                 onAddToQueue = { vm.addToQueue() },
                 onTogglePlayed = { vm.togglePlayed(it) },
                 downloadStatus = downloadStatuses[state.data.id],
+                downloadProgress = downloadProgress[state.data.id] ?: 0f,
                 onDownloadAction = { downloadsVm.toggle(state.data) },
             )
         }
@@ -110,6 +112,7 @@ private fun EpisodeDetailContent(
     onAddToQueue: () -> Unit,
     onTogglePlayed: (Boolean) -> Unit,
     downloadStatus: DownloadStatus?,
+    downloadProgress: Float = 0f,
     onDownloadAction: () -> Unit,
 ) {
     val playerVm = LocalPlayerViewModel.current
@@ -161,15 +164,28 @@ private fun EpisodeDetailContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilledTonalIconButton(
-                onClick = { playerVm.playEpisode(episode) },
-                modifier = Modifier.size(48.dp),
-            ) {
-                Icon(
-                    imageVector = if (isCurrent && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
-                    modifier = Modifier.size(28.dp),
-                )
+            Box(contentAlignment = Alignment.Center) {
+                if (downloadStatus != null) {
+                    CircularProgressIndicator(
+                        progress = { if (downloadStatus == DownloadStatus.DOWNLOADED) 1f else downloadProgress },
+                        modifier = Modifier.size(56.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+                FilledTonalIconButton(
+                    onClick = { playerVm.playEpisode(episode) },
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    Icon(
+                        imageVector = when {
+                            downloadStatus == DownloadStatus.DOWNLOADING -> Icons.Default.Downloading
+                            isCurrent && isPlaying -> Icons.Default.Pause
+                            else -> Icons.Default.PlayArrow
+                        },
+                        contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
             }
             ConfirmIconButton(
                 icon = Icons.Default.PlaylistAdd,

@@ -59,6 +59,7 @@ fun PodcastDetailScreen(podcastId: String, navController: NavHostController) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val queueIds by vm.queueIds.collectAsStateWithLifecycle()
     val downloadStatuses by downloadsVm.statuses.collectAsStateWithLifecycle()
+    val downloadProgress by downloadsVm.progress.collectAsStateWithLifecycle()
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showRemoveDialog by remember { mutableStateOf(false) }
@@ -192,6 +193,7 @@ fun PodcastDetailScreen(podcastId: String, navController: NavHostController) {
                             episode = episode,
                             onPlay = { playerVm.playEpisode(episode) },
                             downloadStatus = downloadStatuses[episode.id],
+                            downloadProgress = downloadProgress[episode.id] ?: 0f,
                             onDownloadAction = { downloadsVm.toggle(episode) },
                             onTogglePlayed = { newPlayed -> vm.togglePlayed(episode.id, newPlayed) },
                             onAddToQueue = { vm.addToQueue(episode.id) },

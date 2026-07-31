@@ -9,6 +9,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import cast.android.domain.repository.SettingsRepository
+import cast.android.work.DownloadCleanupWorker
 import cast.android.work.RefreshFeedsWorker
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -34,6 +35,7 @@ class CastApplication : Application(), Configuration.Provider, SingletonImageLoa
     override fun onCreate() {
         super.onCreate()
         schedulePeriodicRefresh()
+        scheduleDownloadCleanup()
     }
 
     // Coil's default OkHttp client sends "User-Agent: okhttp/x.y", which some podcast image CDNs
@@ -67,6 +69,15 @@ class CastApplication : Application(), Configuration.Provider, SingletonImageLoa
         // UPDATE (not KEEP) so interval changes take effect on already-installed apps.
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             RefreshFeedsWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request,
+        )
+    }
+
+    private fun scheduleDownloadCleanup() {
+        val request = PeriodicWorkRequestBuilder<DownloadCleanupWorker>(1, TimeUnit.DAYS).build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            DownloadCleanupWorker.WORK_NAME,
             ExistingPeriodicWorkPolicy.UPDATE,
             request,
         )

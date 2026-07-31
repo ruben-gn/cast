@@ -39,6 +39,7 @@ fun RecentScreen(navController: NavHostController) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val queueIds by vm.queueIds.collectAsStateWithLifecycle()
     val downloadStatuses by downloadsVm.statuses.collectAsStateWithLifecycle()
+    val downloadProgress by downloadsVm.progress.collectAsStateWithLifecycle()
 
     LaunchedEffect(playerVm) {
         playerVm.episodeCompleted.collect { episodeId -> vm.onEpisodeCompleted(episodeId) }
@@ -72,6 +73,7 @@ fun RecentScreen(navController: NavHostController) {
                         episode = episode,
                         onPlay = { playerVm.playEpisode(episode) },
                         downloadStatus = downloadStatuses[episode.id],
+                        downloadProgress = downloadProgress[episode.id] ?: 0f,
                         onDownloadAction = { downloadsVm.toggle(episode) },
                         onTogglePlayed = { newPlayed -> vm.togglePlayed(episode.id, newPlayed) },
                         onAddToQueue = { vm.addToQueue(episode.id) },

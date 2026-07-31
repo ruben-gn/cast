@@ -27,9 +27,12 @@ import androidx.media3.session.MediaLibraryService.LibraryParams
 import androidx.media3.session.MediaConstants
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
+import cast.android.domain.repository.DownloadRepository
+import cast.android.domain.repository.DownloadStatus
 import cast.android.domain.repository.EpisodeRepository
 import cast.android.domain.repository.PodcastRepository
 import cast.android.domain.repository.QueueRepository
+import cast.android.domain.repository.impl.DownloadTimestampStore
 import cast.android.network.PlaybackWebSocketClient
 import cast.android.ui.MainActivity
 import cast.android.widget.NowPlayingWidget
@@ -58,6 +61,8 @@ class PlaybackService : MediaLibraryService() {
     @Inject lateinit var queueRepository: QueueRepository
     @Inject lateinit var podcastRepository: PodcastRepository
     @Inject lateinit var episodeRepository: EpisodeRepository
+    @Inject lateinit var downloadRepository: DownloadRepository
+    @Inject lateinit var downloadTimestampStore: DownloadTimestampStore
     @Inject lateinit var dataStore: DataStore<Preferences>
     @Inject lateinit var cacheDataSourceFactory: CacheDataSource.Factory
 
@@ -456,6 +461,9 @@ class PlaybackService : MediaLibraryService() {
                 delay(1_000)
                 val progressMs = mediaSession?.player?.currentPosition ?: break
                 progressStore.cacheProgress(episodeId, progressMs)
+                if (downloadRepository.statuses.value[episodeId] == DownloadStatus.DOWNLOADED) {
+                    downloadTimestampStore.markPlayed(episodeId)
+                }
                 sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs}""", coalesceKey = episodeId)
             }
         }

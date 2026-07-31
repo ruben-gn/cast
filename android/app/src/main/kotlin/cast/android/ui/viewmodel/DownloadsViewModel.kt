@@ -16,6 +16,7 @@ class DownloadsViewModel @Inject constructor(
 ) : LoadableViewModel<List<EpisodeDetailDto>>(UiState.Loading) {
 
     val statuses: StateFlow<Map<String, DownloadStatus>> = downloadRepository.statuses
+    val progress: StateFlow<Map<String, Float>> = downloadRepository.progress
 
     init {
         // StateFlow replays the current value, so this also performs the initial load.

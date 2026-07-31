@@ -1,5 +1,7 @@
 package cast.android.ui.viewmodel
 
+import cast.android.domain.repository.DownloadRepository
+import cast.android.domain.repository.DownloadStatus
 import cast.android.domain.repository.EpisodeRepository
 import cast.android.domain.repository.QueueRepository
 import cast.api.EpisodeDetailDto
@@ -14,6 +16,15 @@ class FakeEpisodeRepository(
     override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> = cachedRecent ?: emptyList()
     override suspend fun getEpisode(episodeId: String): EpisodeDetailDto = TODO()
     override suspend fun setPlayed(episodeId: String, played: Boolean) {}
+}
+
+/** Minimal [DownloadRepository] fake for ViewModel/repository seeding tests. */
+class FakeDownloadRepository : DownloadRepository {
+    override val statuses: StateFlow<Map<String, DownloadStatus>> = MutableStateFlow(emptyMap())
+    override val progress: StateFlow<Map<String, Float>> = MutableStateFlow(emptyMap())
+    override suspend fun downloadedEpisodes(): List<EpisodeDetailDto> = emptyList()
+    override fun download(episode: EpisodeDetailDto) {}
+    override fun remove(episodeId: String) {}
 }
 
 /** Minimal [QueueRepository] fake for ViewModel seeding tests. */

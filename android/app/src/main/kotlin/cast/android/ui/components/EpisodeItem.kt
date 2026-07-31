@@ -18,10 +18,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Podcasts
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,6 +62,7 @@ fun EpisodeItem(
     episode: EpisodeDetailDto,
     onPlay: () -> Unit,
     downloadStatus: DownloadStatus?,
+    downloadProgress: Float = 0f,
     onDownloadAction: (() -> Unit)?,
     onTogglePlayed: ((Boolean) -> Unit)? = null,
     onAddToQueue: (() -> Unit)? = null,
@@ -173,11 +176,24 @@ fun EpisodeItem(
                     )
                 }
             }
-            IconButton(onClick = onPlay) {
-                Icon(
-                    imageVector = if (isCurrent && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
-                )
+            Box(contentAlignment = Alignment.Center) {
+                if (downloadStatus != null) {
+                    CircularProgressIndicator(
+                        progress = { if (downloadStatus == DownloadStatus.DOWNLOADED) 1f else downloadProgress },
+                        modifier = Modifier.size(36.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+                IconButton(onClick = onPlay) {
+                    Icon(
+                        imageVector = when {
+                            downloadStatus == DownloadStatus.DOWNLOADING -> Icons.Default.Downloading
+                            isCurrent && isPlaying -> Icons.Default.Pause
+                            else -> Icons.Default.PlayArrow
+                        },
+                        contentDescription = if (isCurrent && isPlaying) "Pause" else "Play",
+                    )
+                }
             }
         }
         when {

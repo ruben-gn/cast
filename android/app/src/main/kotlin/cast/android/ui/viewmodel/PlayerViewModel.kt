@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import cast.android.domain.repository.DownloadRepository
 import cast.android.domain.repository.EpisodeRepository
 import cast.android.service.PlaybackService
 import cast.api.EpisodeDetailDto
@@ -37,6 +38,7 @@ import javax.inject.Inject
 class PlayerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val episodeRepository: EpisodeRepository,
+    private val downloadRepository: DownloadRepository,
     private val dataStore: DataStore<Preferences>,
 ) : ViewModel() {
 
@@ -97,6 +99,7 @@ class PlayerViewModel @Inject constructor(
             if (state == Player.STATE_ENDED) {
                 _currentMediaItem.value?.mediaId?.let { id ->
                     viewModelScope.launch { _episodeCompleted.emit(id) }
+                    downloadRepository.remove(id)
                 }
             }
             if (state == Player.STATE_READY) {

@@ -30,12 +30,16 @@ class DownloadRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val downloadManager: DownloadManager,
     private val json: Json,
+    private val timestampStore: DownloadTimestampStore,
 ) : DownloadRepository {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val _statuses = MutableStateFlow<Map<String, DownloadStatus>>(emptyMap())
     override val statuses: StateFlow<Map<String, DownloadStatus>> = _statuses.asStateFlow()
+
+    private val _progress = MutableStateFlow<Map<String, Float>>(emptyMap())
+    override val progress: StateFlow<Map<String, Float>> = _progress.asStateFlow()
 
     init {
         downloadManager.addListener(object : DownloadManager.Listener {
@@ -79,18 +83,28 @@ class DownloadRepositoryImpl @Inject constructor(
             episodeId,
             /* foreground = */ true,
         )
+        timestampStore.clear(episodeId)
     }
 
     private fun refreshStatuses() {
         scope.launch {
-            _statuses.value = buildMap {
-                downloadManager.downloadIndex.getDownloads().use { cursor ->
-                    while (cursor.moveToNext()) {
-                        val download = cursor.download
-                        downloadStatusOf(download.state)?.let { put(download.request.id, it) }
+            val statuses = mutableMapOf<String, DownloadStatus>()
+            val progress = mutableMapOf<String, Float>()
+            downloadManager.downloadIndex.getDownloads().use { cursor ->
+                while (cursor.moveToNext()) {
+                    val download = cursor.download
+                    val status = downloadStatusOf(download.state)
+                    status?.let { statuses[download.request.id] = it }
+                    progress[download.request.id] =
+                        if (download.state == Download.STATE_COMPLETED) 1f
+                        else (download.percentDownloaded / 100f).coerceIn(0f, 1f)
+                    if (status == DownloadStatus.DOWNLOADED) {
+                        timestampStore.markDownloadedIfAbsent(download.request.id)
                     }
                 }
             }
+            _statuses.value = statuses
+            _progress.value = progress
         }
     }
 }
