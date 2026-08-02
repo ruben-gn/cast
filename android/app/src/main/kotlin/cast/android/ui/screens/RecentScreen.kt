@@ -23,6 +23,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -54,6 +57,7 @@ fun RecentScreen(navController: NavHostController) {
     val expandedSeries by vm.expandedSeries.collectAsStateWithLifecycle()
     val downloadStatuses by downloadsVm.statuses.collectAsStateWithLifecycle()
     val downloadProgress by downloadsVm.progress.collectAsStateWithLifecycle()
+    val railColor = MaterialTheme.colorScheme.outline
 
     var groupTarget by remember { mutableStateOf<EpisodeDetailDto?>(null) }
     var ungroupTarget by remember { mutableStateOf<RecentRow.Series?>(null) }
@@ -122,8 +126,24 @@ fun RecentScreen(navController: NavHostController) {
                                     onToggle = { vm.toggleSeries(row.key) },
                                     onUngroup = { ungroupTarget = row },
                                 )
+                                HorizontalDivider()
                                 if (row.key in expandedSeries) {
-                                    row.episodes.forEach { episode -> episodeRow(episode) }
+                                    Column(
+                                        modifier = Modifier
+                                            .drawBehind {
+                                                val x = 20.dp.toPx()
+                                                drawLine(
+                                                    color = railColor,
+                                                    start = Offset(x, 0f),
+                                                    end = Offset(x, size.height),
+                                                    strokeWidth = 2.dp.toPx(),
+                                                    cap = StrokeCap.Round,
+                                                )
+                                            }
+                                            .padding(start = 18.dp),
+                                    ) {
+                                        row.episodes.forEach { episode -> episodeRow(episode) }
+                                    }
                                 }
                             }
                         }

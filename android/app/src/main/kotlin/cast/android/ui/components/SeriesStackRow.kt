@@ -24,7 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import cast.android.util.relativeTime
 import cast.api.EpisodeDetailDto
@@ -76,7 +80,15 @@ fun SeriesStackRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = "${episodes.size} episodes · ${relativeTime(newest.publishedAt)}",
+                text = buildAnnotatedString {
+                    withStyle(
+                        SpanStyle(
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                    ) { append("Series") }
+                    append(" · ${episodes.size} episodes · ${relativeTime(newest.publishedAt)}")
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,

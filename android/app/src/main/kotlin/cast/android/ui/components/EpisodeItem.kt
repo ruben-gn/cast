@@ -134,8 +134,11 @@ fun EpisodeItem(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .offset(x = 6.dp, y = (-6).dp)
-                                .size(20.dp)
+                                .offset(x = 8.dp, y = (-8).dp)
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.background)
+                                .padding(2.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary),
                         ) {
