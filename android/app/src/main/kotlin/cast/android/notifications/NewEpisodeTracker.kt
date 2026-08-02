@@ -15,6 +15,10 @@ import javax.inject.Singleton
  * Decides which episodes are "new" by comparing publishedAt against a persisted watermark.
  * [newEpisodes] is read-only; callers post notifications first and then [advance] the watermark,
  * so a crash in between re-posts (notification ids are stable) rather than silently drops.
+ *
+ * Both sides consider only podcasts being listened to. If [advance] took the wider set, a podcast
+ * we ignore could drag the watermark past an episode of one we don't — feeds routinely surface
+ * episodes whose publishedAt is hours old — and that episode would never be notified.
  */
 @Singleton
 class NewEpisodeTracker @Inject constructor(
@@ -31,9 +35,7 @@ class NewEpisodeTracker @Inject constructor(
         episodes: List<EpisodeDetailDto>,
     ): List<EpisodeDetailDto> {
         val watermark = watermark() ?: return emptyList()
-        val listening = podcasts.filter { it.listening }.map { it.id }.toSet()
-        return episodes
-            .filter { it.podcastId in listening }
+        return episodes.fromListening(podcasts)
             .mapNotNull { episode -> episode.publishedAtInstant()?.let { episode to it } }
             .filter { (_, publishedAt) -> publishedAt > watermark }
             .sortedBy { (_, publishedAt) -> publishedAt }
@@ -41,12 +43,21 @@ class NewEpisodeTracker @Inject constructor(
     }
 
     /** Moves the watermark up to the newest publishedAt seen. Never moves it backwards. */
-    suspend fun advance(episodes: List<EpisodeDetailDto>) {
-        val newest = episodes.mapNotNull { it.publishedAtInstant() }.maxOrNull() ?: return
+    suspend fun advance(podcasts: List<PodcastSummaryDto>, episodes: List<EpisodeDetailDto>) {
+        val newest = episodes.fromListening(podcasts)
+            .mapNotNull { it.publishedAtInstant() }
+            .maxOrNull() ?: return
         dataStore.edit { prefs ->
             val current = prefs[WATERMARK]?.toInstantOrNull()
             if (current == null || newest > current) prefs[WATERMARK] = newest.toString()
         }
+    }
+
+    private fun List<EpisodeDetailDto>.fromListening(
+        podcasts: List<PodcastSummaryDto>,
+    ): List<EpisodeDetailDto> {
+        val listening = podcasts.filter { it.listening }.map { it.id }.toSet()
+        return filter { it.podcastId in listening }
     }
 
     private suspend fun watermark(): Instant? = dataStore.data.first()[WATERMARK]?.toInstantOrNull()

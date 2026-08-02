@@ -56,7 +56,7 @@ class NewEpisodeTrackerTest {
         val backlog = listOf(episode("e1", "p1", "2026-06-01T10:00:00Z"))
 
         assertEquals(emptyList<EpisodeDetailDto>(), tracker.newEpisodes(podcasts, backlog))
-        tracker.advance(backlog)
+        tracker.advance(podcasts, backlog)
 
         val later = episode("e2", "p1", "2026-06-02T10:00:00Z")
         assertEquals(listOf(later), tracker.newEpisodes(podcasts, backlog + later))
@@ -66,7 +66,7 @@ class NewEpisodeTrackerTest {
     fun `reports episodes published after the watermark oldest first`() = runTest {
         val tracker = tracker(backgroundScope)
         val podcasts = listOf(podcast("p1"))
-        tracker.advance(listOf(episode("e0", "p1", "2026-06-01T00:00:00Z")))
+        tracker.advance(podcasts, listOf(episode("e0", "p1", "2026-06-01T00:00:00Z")))
 
         val second = episode("e2", "p1", "2026-06-03T00:00:00Z")
         val first = episode("e1", "p1", "2026-06-02T00:00:00Z")
@@ -78,7 +78,7 @@ class NewEpisodeTrackerTest {
     fun `ignores episodes from podcasts not being listened to`() = runTest {
         val tracker = tracker(backgroundScope)
         val podcasts = listOf(podcast("heard"), podcast("unheard", listening = false))
-        tracker.advance(listOf(episode("e0", "heard", "2026-06-01T00:00:00Z")))
+        tracker.advance(podcasts, listOf(episode("e0", "heard", "2026-06-01T00:00:00Z")))
 
         val episodes = listOf(
             episode("e1", "heard", "2026-06-02T00:00:00Z"),
@@ -89,10 +89,23 @@ class NewEpisodeTrackerTest {
     }
 
     @Test
+    fun `a podcast not being listened to does not drag the watermark forward`() = runTest {
+        val tracker = tracker(backgroundScope)
+        val podcasts = listOf(podcast("heard"), podcast("unheard", listening = false))
+        tracker.advance(podcasts, listOf(episode("e0", "heard", "2026-06-01T00:00:00Z")))
+
+        tracker.advance(podcasts, listOf(episode("e1", "unheard", "2026-06-05T00:00:00Z")))
+
+        // Published before the ignored podcast's episode, but still unseen by us.
+        val delayed = episode("e2", "heard", "2026-06-03T00:00:00Z")
+        assertEquals(listOf("e2"), tracker.newEpisodes(podcasts, listOf(delayed)).map { it.id })
+    }
+
+    @Test
     fun `ignores episodes published before the watermark`() = runTest {
         val tracker = tracker(backgroundScope)
         val podcasts = listOf(podcast("p1"))
-        tracker.advance(listOf(episode("e0", "p1", "2026-06-05T00:00:00Z")))
+        tracker.advance(podcasts, listOf(episode("e0", "p1", "2026-06-05T00:00:00Z")))
 
         // An old episode reappearing (e.g. marked unplayed again) must not look new.
         val old = episode("e1", "p1", "2026-06-01T00:00:00Z")
@@ -104,9 +117,9 @@ class NewEpisodeTrackerTest {
     fun `advance never moves the watermark backwards`() = runTest {
         val tracker = tracker(backgroundScope)
         val podcasts = listOf(podcast("p1"))
-        tracker.advance(listOf(episode("e0", "p1", "2026-06-05T00:00:00Z")))
+        tracker.advance(podcasts, listOf(episode("e0", "p1", "2026-06-05T00:00:00Z")))
 
-        tracker.advance(listOf(episode("e1", "p1", "2026-06-01T00:00:00Z")))
+        tracker.advance(podcasts, listOf(episode("e1", "p1", "2026-06-01T00:00:00Z")))
 
         val between = episode("e2", "p1", "2026-06-03T00:00:00Z")
         assertEquals(emptyList<EpisodeDetailDto>(), tracker.newEpisodes(podcasts, listOf(between)))
@@ -116,7 +129,7 @@ class NewEpisodeTrackerTest {
     fun `ignores episodes without a publishedAt`() = runTest {
         val tracker = tracker(backgroundScope)
         val podcasts = listOf(podcast("p1"))
-        tracker.advance(listOf(episode("e0", "p1", "2026-06-01T00:00:00Z")))
+        tracker.advance(podcasts, listOf(episode("e0", "p1", "2026-06-01T00:00:00Z")))
 
         val undated = episode("e1", "p1", null)
 

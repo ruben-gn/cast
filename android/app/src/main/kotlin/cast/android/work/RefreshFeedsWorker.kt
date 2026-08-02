@@ -27,7 +27,7 @@ class RefreshFeedsWorker @AssistedInject constructor(
         val episodes = episodeRepository.getRecentEpisodes()
         val newEpisodes = tracker.newEpisodes(podcasts, episodes)
         notifier.notify(newEpisodes)
-        tracker.advance(episodes)
+        tracker.advance(podcasts, episodes)
         newEpisodes.size
     }.fold(
         onSuccess = { count ->

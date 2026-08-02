@@ -122,6 +122,9 @@ dependencies {
     // WorkManager + Hilt integration
     implementation(libs.workmanager)
     implementation(libs.hilt.work)
+    // @HiltWorker is an androidx annotation — Dagger's hilt-compiler ignores it, so without this
+    // processor the workers compile but can never be instantiated at runtime.
+    ksp(libs.hilt.androidx.compiler)
 
     // Coil
     implementation(libs.coil.compose)
