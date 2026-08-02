@@ -58,11 +58,15 @@ fun Application.installPodcastModule(
         provide<ListSeriesRules> { ListSeriesRules(resolve()) }
     }
 
-    launch {
-        val updateFeeds = dependencies.resolve<UpdateFeeds>()
-        while(isActive) {
-            updateFeeds()
-            delay(5.minutes)
+    // Resolving from DI while modules are still loading races the plugin's own
+    // resolution check, which fails the whole startup if a key is still pending.
+    monitor.subscribe(ApplicationStarted) { app ->
+        app.launch {
+            val updateFeeds = app.dependencies.resolve<UpdateFeeds>()
+            while (isActive) {
+                updateFeeds()
+                delay(5.minutes)
+            }
         }
     }
 }
