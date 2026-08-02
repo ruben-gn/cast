@@ -58,13 +58,42 @@ class RecentRowsTest {
     }
 
     @Test
-    fun `guessSeriesName returns the shared prefix stripped of trailing separators and numbers`() {
+    fun `guessSeriesName cuts a title at its season and episode marker without needing siblings`() {
+        assertEquals("B en B Vol Liefde", guessSeriesName("B en B Vol Liefde - S06 E08", emptyList()))
+        assertEquals("B en B Vol Liefde", guessSeriesName("B en B Vol Liefde - S06E08", emptyList()))
+        assertEquals("B en B Vol Liefde", guessSeriesName("B en B Vol Liefde S6 E8 | Nasleep", emptyList()))
+        assertEquals("Wie is de Mol", guessSeriesName("Wie is de Mol 1x08", emptyList()))
+    }
+
+    @Test
+    fun `guessSeriesName returns the shared prefix stripped of trailing separators, numbers and serial words`() {
         val result = guessSeriesName(
             title = "The Divided Dial: Part 3",
             siblingTitles = listOf("The Divided Dial: Part 1"),
         )
 
-        assertEquals("The Divided Dial: Part", result)
+        assertEquals("The Divided Dial", result)
+    }
+
+    @Test
+    fun `guessSeriesName keeps a numeric name instead of trimming it away`() {
+        val result = guessSeriesName(title = "1619: Episode 3", siblingTitles = listOf("1619: Episode 1"))
+
+        assertEquals("1619", result)
+    }
+
+    @Test
+    fun `guessSeriesName backs off to a word boundary when the shared prefix cuts mid-word`() {
+        val result = guessSeriesName(title = "Radiolab: Bugs", siblingTitles = listOf("Radiolab: Boats"))
+
+        assertEquals("Radiolab", result)
+    }
+
+    @Test
+    fun `guessSeriesName falls back to the full title when a marker leaves nothing behind`() {
+        val result = guessSeriesName(title = "S06 E01", siblingTitles = emptyList())
+
+        assertEquals("S06 E01", result)
     }
 
     @Test
