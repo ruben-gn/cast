@@ -1,7 +1,7 @@
 # Cast brand mark: launcher icon + splash screen
 
 Date: 2026-06-12
-Status: approved (iterated visually in browser companion, session `.superpowers/brainstorm/icon-1781288786/`)
+Status: approved (iterated visually in the browser companion)
 
 ## The mark
 
