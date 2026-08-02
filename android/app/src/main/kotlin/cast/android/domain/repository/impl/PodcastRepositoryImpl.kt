@@ -5,6 +5,7 @@ import cast.android.domain.repository.PodcastRepository
 import cast.android.network.CastApiService
 import cast.android.network.orThrow
 import cast.api.AddPodcastRequest
+import cast.api.CreateSeriesRuleRequest
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
 import okhttp3.MultipartBody
@@ -55,5 +56,13 @@ class PodcastRepositoryImpl @Inject constructor(
             api.stopListening(podcastId).orThrow()
         }
         podcastsCache.clear()
+    }
+
+    override suspend fun createSeriesRule(podcastId: String, name: String) {
+        api.createSeriesRule(podcastId, CreateSeriesRuleRequest(name)).orThrow()
+    }
+
+    override suspend fun deleteSeriesRule(podcastId: String, name: String) {
+        api.deleteSeriesRule(podcastId, name).orThrow()
     }
 }

@@ -13,4 +13,6 @@ interface PodcastRepository {
     suspend fun removePodcast(podcastId: String)
     suspend fun importOpml(file: MultipartBody.Part)
     suspend fun setListening(podcastId: String, listening: Boolean)
+    suspend fun createSeriesRule(podcastId: String, name: String)
+    suspend fun deleteSeriesRule(podcastId: String, name: String)
 }

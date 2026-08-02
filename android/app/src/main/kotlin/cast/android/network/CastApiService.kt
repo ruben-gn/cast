@@ -1,6 +1,7 @@
 package cast.android.network
 
 import cast.api.AddPodcastRequest
+import cast.api.CreateSeriesRuleRequest
 import cast.api.EpisodeDetailDto
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
@@ -16,6 +17,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface CastApiService {
 
@@ -39,6 +41,12 @@ interface CastApiService {
 
     @DELETE("api/podcasts/{id}/listening")
     suspend fun stopListening(@Path("id") id: String): Response<Unit>
+
+    @POST("api/podcasts/{id}/series")
+    suspend fun createSeriesRule(@Path("id") id: String, @Body request: CreateSeriesRuleRequest): Response<Unit>
+
+    @DELETE("api/podcasts/{id}/series")
+    suspend fun deleteSeriesRule(@Path("id") id: String, @Query("name") name: String): Response<Unit>
 
     @GET("api/episodes/recent")
     suspend fun getRecentEpisodes(): List<EpisodeDetailDto>
