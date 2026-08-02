@@ -3,10 +3,14 @@ package cast.android.ui.viewmodel
 import cast.android.domain.repository.DownloadRepository
 import cast.android.domain.repository.DownloadStatus
 import cast.android.domain.repository.EpisodeRepository
+import cast.android.domain.repository.PodcastRepository
 import cast.android.domain.repository.QueueRepository
 import cast.api.EpisodeDetailDto
+import cast.api.PodcastDetailDto
+import cast.api.PodcastSummaryDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import okhttp3.MultipartBody
 
 /** Minimal [EpisodeRepository] fake for ViewModel seeding tests. */
 class FakeEpisodeRepository(
@@ -37,4 +41,27 @@ class FakeQueueRepository(
     override suspend fun addToQueue(episodeId: String): List<EpisodeDetailDto> = cached ?: emptyList()
     override suspend fun removeFromQueue(episodeId: String): List<EpisodeDetailDto> = cached ?: emptyList()
     override suspend fun reorderQueue(episodeIds: List<String>): List<EpisodeDetailDto> = cached ?: emptyList()
+}
+
+/** Minimal [PodcastRepository] fake for ViewModel seeding tests; records series rule calls. */
+class FakePodcastRepository : PodcastRepository {
+    var createdSeriesRule: Pair<String, String>? = null
+    var deletedSeriesRule: Pair<String, String>? = null
+
+    override fun cachedPodcasts(): List<PodcastSummaryDto>? = null
+    override suspend fun listPodcasts(): List<PodcastSummaryDto> = emptyList()
+    override suspend fun getPodcast(id: String): PodcastDetailDto = TODO()
+    override suspend fun addPodcast(feedUrl: String): PodcastDetailDto = TODO()
+    override suspend fun markAllPlayed(podcastId: String) {}
+    override suspend fun removePodcast(podcastId: String) {}
+    override suspend fun importOpml(file: MultipartBody.Part) {}
+    override suspend fun setListening(podcastId: String, listening: Boolean) {}
+
+    override suspend fun createSeriesRule(podcastId: String, name: String) {
+        createdSeriesRule = podcastId to name
+    }
+
+    override suspend fun deleteSeriesRule(podcastId: String, name: String) {
+        deletedSeriesRule = podcastId to name
+    }
 }

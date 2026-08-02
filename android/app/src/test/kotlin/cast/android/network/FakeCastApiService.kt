@@ -1,6 +1,7 @@
 package cast.android.network
 
 import cast.api.AddPodcastRequest
+import cast.api.CreateSeriesRuleRequest
 import cast.api.EpisodeDetailDto
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
@@ -56,6 +57,8 @@ class FakeCastApiService(
 
     override suspend fun startListening(id: String): Response<Unit> = Response.success(Unit)
     override suspend fun stopListening(id: String): Response<Unit> = Response.success(Unit)
+    override suspend fun createSeriesRule(id: String, request: CreateSeriesRuleRequest): Response<Unit> = TODO()
+    override suspend fun deleteSeriesRule(id: String, name: String): Response<Unit> = TODO()
 
     // Unused by the low-hanging-fruit tests.
     override suspend fun getPodcast(id: String): PodcastDetailDto = TODO()

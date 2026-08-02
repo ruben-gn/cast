@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Downloading
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
@@ -68,6 +69,7 @@ fun EpisodeItem(
     onAddToQueue: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     onGoToPodcast: (() -> Unit)? = null,
+    onGroupSeries: (() -> Unit)? = null,
     queuePosition: Int? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -85,7 +87,7 @@ fun EpisodeItem(
     var showSheet by remember(episode.id) { mutableStateOf(false) }
 
     val hasSheetActions = onTogglePlayed != null || onAddToQueue != null || onGoToPodcast != null ||
-        onDownloadAction != null
+        onDownloadAction != null || onGroupSeries != null
 
     val savedProgress: Float? = when {
         played -> null
@@ -227,6 +229,7 @@ fun EpisodeItem(
                 }
             },
             onGoToPodcast = onGoToPodcast,
+            onGroupSeries = onGroupSeries,
             onDismiss = { showSheet = false },
         )
     }
@@ -242,6 +245,7 @@ private fun EpisodeActionsSheet(
     onAddToQueue: (() -> Unit)?,
     onTogglePlayed: (() -> Unit)?,
     onGoToPodcast: (() -> Unit)?,
+    onGroupSeries: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -271,6 +275,11 @@ private fun EpisodeActionsSheet(
         if (onGoToPodcast != null) {
             SheetAction(Icons.Default.Podcasts, "Go to podcast") {
                 onGoToPodcast(); onDismiss()
+            }
+        }
+        if (onGroupSeries != null) {
+            SheetAction(Icons.Default.Layers, "Group series…") {
+                onGroupSeries(); onDismiss()
             }
         }
     }
