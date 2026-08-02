@@ -4,8 +4,8 @@ import application.model.EpisodeInContext
 import playback.core.usecase.GetPlaybackStates
 import podcast.core.usecase.FindRecentEpisodes
 import podcast.core.usecase.ListPodcasts
-import series.core.matchSeriesName
-import series.core.usecase.ListSeriesRules
+import podcast.core.matchSeriesName
+import podcast.core.usecase.ListSeriesRules
 import settings.core.usecase.GetSettings
 import java.time.Clock
 import java.time.temporal.ChronoUnit

@@ -1,6 +1,6 @@
-package series.core.ports
+package podcast.core.ports
 
-import series.core.models.SeriesRule
+import podcast.core.models.SeriesRule
 
 interface SeriesRulePersistence {
     suspend fun add(rule: SeriesRule)

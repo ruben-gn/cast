@@ -7,10 +7,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import podcast.adapters.persistence.SQLitePodcastCatalog
+import podcast.adapters.persistence.SQLiteSeriesRulePersistence
 import podcast.adapters.rss.RssFeedInfoProvider
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.ports.PodcastCatalog
+import podcast.core.ports.SeriesRulePersistence
 import podcast.core.usecase.AddFeed
+import podcast.core.usecase.CreateSeriesRule
+import podcast.core.usecase.DeleteSeriesRule
 import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.FindRecentEpisodes
 import podcast.core.usecase.GetPodcast
@@ -18,6 +22,7 @@ import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListEpisodes
 import podcast.core.usecase.DeletePodcast
 import podcast.core.usecase.ListPodcasts
+import podcast.core.usecase.ListSeriesRules
 import podcast.core.usecase.StartListening
 import podcast.core.usecase.StopListening
 import podcast.core.usecase.UpdateFeed
@@ -46,6 +51,11 @@ fun Application.installPodcastModule(
         provide<StartListening> { StartListening(resolve()) }
         provide<StopListening> { StopListening(resolve()) }
         provide<ImportOpml> { ImportOpml(resolve()) }
+
+        provide<SeriesRulePersistence> { SQLiteSeriesRulePersistence(resolve()) }
+        provide<CreateSeriesRule> { CreateSeriesRule(resolve(), resolve()) }
+        provide<DeleteSeriesRule> { DeleteSeriesRule(resolve()) }
+        provide<ListSeriesRules> { ListSeriesRules(resolve()) }
     }
 
     launch {

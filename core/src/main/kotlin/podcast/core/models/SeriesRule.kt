@@ -1,5 +1,3 @@
-package series.core.models
-
-import podcast.core.models.PodcastId
+package podcast.core.models
 
 data class SeriesRule(val podcastId: PodcastId, val name: String)

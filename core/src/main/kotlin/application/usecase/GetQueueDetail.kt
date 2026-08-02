@@ -7,8 +7,8 @@ import playback.core.usecase.GetPlaybackStates
 import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.ListPodcasts
 import queue.core.usecase.GetQueue
-import series.core.matchSeriesName
-import series.core.usecase.ListSeriesRules
+import podcast.core.matchSeriesName
+import podcast.core.usecase.ListSeriesRules
 import settings.core.usecase.GetSettings
 
 class GetQueueDetail(

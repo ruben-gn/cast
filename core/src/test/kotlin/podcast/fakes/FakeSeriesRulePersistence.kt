@@ -1,7 +1,7 @@
-package series.fakes
+package podcast.fakes
 
-import series.core.models.SeriesRule
-import series.core.ports.SeriesRulePersistence
+import podcast.core.models.SeriesRule
+import podcast.core.ports.SeriesRulePersistence
 
 class FakeSeriesRulePersistence : SeriesRulePersistence {
     private val rules = mutableSetOf<SeriesRule>()

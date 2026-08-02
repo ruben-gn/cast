@@ -6,7 +6,6 @@ import io.ktor.server.netty.*
 import playback.installPlaybackModule
 import podcast.installPodcastModule
 import queue.installQueueModule
-import series.installSeriesModule
 import settings.installSettingsModule
 
 fun main(args: Array<String>) {
@@ -23,7 +22,6 @@ fun Application.module() {
     installPlaybackModule()
     installQueueModule()
     installSettingsModule()
-    installSeriesModule()
 
     installApplicationModule()
 

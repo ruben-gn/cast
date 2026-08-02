@@ -1,7 +1,7 @@
-package series.fakes
+package podcast.fakes
 
 import io.kotest.core.spec.style.DescribeSpec
-import series.core.ports.seriesRulePersistenceContract
+import podcast.core.ports.seriesRulePersistenceContract
 
 class FakeSeriesRulePersistenceTest : DescribeSpec({
     lateinit var persistence: FakeSeriesRulePersistence

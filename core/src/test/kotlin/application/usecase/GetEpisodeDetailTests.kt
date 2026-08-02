@@ -11,9 +11,9 @@ import podcast.core.models.PodcastId
 import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.GetPodcast
 import podcast.fakes.FakePodcastCatalog
-import series.core.models.SeriesRule
-import series.core.usecase.ListSeriesRules
-import series.fakes.FakeSeriesRulePersistence
+import podcast.core.models.SeriesRule
+import podcast.core.usecase.ListSeriesRules
+import podcast.fakes.FakeSeriesRulePersistence
 import shared.model.EpisodeId
 import java.time.Clock
 import java.time.Instant

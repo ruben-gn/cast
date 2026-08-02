@@ -16,9 +16,9 @@ import podcast.fakes.FakePodcastCatalog
 import queue.core.model.Queue
 import queue.core.usecase.GetQueue
 import queue.fakes.FakeQueuePersistence
-import series.core.models.SeriesRule
-import series.core.usecase.ListSeriesRules
-import series.fakes.FakeSeriesRulePersistence
+import podcast.core.models.SeriesRule
+import podcast.core.usecase.ListSeriesRules
+import podcast.fakes.FakeSeriesRulePersistence
 import settings.core.models.Settings
 import settings.core.usecase.GetSettings
 import settings.fakes.FakeSettingsPersistence

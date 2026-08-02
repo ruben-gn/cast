@@ -1,9 +1,9 @@
-package series.adapters.persistence
+package podcast.adapters.persistence
 
 import configuration.ConnectionProvider
 import podcast.core.models.PodcastId
-import series.core.models.SeriesRule
-import series.core.ports.SeriesRulePersistence
+import podcast.core.models.SeriesRule
+import podcast.core.ports.SeriesRulePersistence
 
 class SQLiteSeriesRulePersistence(private val db: ConnectionProvider) : SeriesRulePersistence {
 

@@ -4,11 +4,34 @@ import com.lemonappdev.konsist.api.verify.assertTrue
 import com.lemonappdev.konsist.api.verify.assertFalse
 import org.junit.jupiter.api.Test
 
-private val domainPackages = listOf("podcast", "playback", "queue", "settings")
+// Discovered, not hand-listed: a domain is any top-level package that declares ports.
+// A new domain is covered by these rules the moment it exists.
+private val domainPackages: List<String> =
+    Konsist.scopeFromProduction()
+        .files
+        .mapNotNull { it.packagee?.name }
+        .filter { it.contains(".core.ports") }
+        .map { it.substringBefore(".") }
+        .distinct()
+        .sorted()
+
 private val allowedUseCaseImportPrefixes = listOf("java.", "kotlin.", "kotlinx.", "shared.", "io.github.oshai.")
 private val frameworkPackages = listOf("io.ktor.", "org.xerial.")
 
 class ArchitectureTests {
+
+    // Rule 0: every discovered domain is wired into Application.module()
+    @Test
+    fun `every domain is installed by the application`() {
+        check(domainPackages.isNotEmpty()) { "No domain packages discovered — the scan is broken" }
+        val module = Konsist.scopeFromProduction()
+            .functions()
+            .first { it.name == "module" && it.containingFile.name == "Application" }
+        domainPackages.forEach { domain ->
+            val install = "install${domain.replaceFirstChar(Char::uppercaseChar)}Module()"
+            check(module.text.contains(install)) { "Application.module() never calls $install" }
+        }
+    }
 
     // Rule 1: domain use cases only import from their own domain, shared, stdlib, and logging
     @Test

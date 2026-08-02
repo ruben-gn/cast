@@ -4,8 +4,8 @@ import application.model.EpisodeInContext
 import playback.core.usecase.GetPlaybackState
 import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.GetPodcast
-import series.core.matchSeriesName
-import series.core.usecase.ListSeriesRules
+import podcast.core.matchSeriesName
+import podcast.core.usecase.ListSeriesRules
 import shared.model.EpisodeId
 
 class GetEpisodeDetail(

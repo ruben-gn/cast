@@ -1,9 +1,9 @@
-package series.adapters.persistence
+package podcast.adapters.persistence
 
 import configuration.CREATE_SERIES_RULES_TABLE
 import configuration.SingleConnectionProvider
 import io.kotest.core.spec.style.DescribeSpec
-import series.core.ports.seriesRulePersistenceContract
+import podcast.core.ports.seriesRulePersistenceContract
 import java.sql.DriverManager
 
 class SQLiteSeriesRulePersistenceIT : DescribeSpec({

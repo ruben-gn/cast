@@ -14,9 +14,9 @@ import podcast.core.models.PodcastId
 import podcast.core.usecase.FindRecentEpisodes
 import podcast.core.usecase.ListPodcasts
 import podcast.fakes.FakePodcastCatalog
-import series.core.models.SeriesRule
-import series.core.usecase.ListSeriesRules
-import series.fakes.FakeSeriesRulePersistence
+import podcast.core.models.SeriesRule
+import podcast.core.usecase.ListSeriesRules
+import podcast.fakes.FakeSeriesRulePersistence
 import settings.core.models.Settings
 import settings.core.usecase.GetSettings
 import settings.fakes.FakeSettingsPersistence

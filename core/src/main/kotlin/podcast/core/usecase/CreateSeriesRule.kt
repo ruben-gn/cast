@@ -1,8 +1,8 @@
-package series.core.usecase
+package podcast.core.usecase
 
 import podcast.core.ports.PodcastCatalog
-import series.core.models.SeriesRule
-import series.core.ports.SeriesRulePersistence
+import podcast.core.models.SeriesRule
+import podcast.core.ports.SeriesRulePersistence
 
 class CreateSeriesRule(
     private val catalog: PodcastCatalog,

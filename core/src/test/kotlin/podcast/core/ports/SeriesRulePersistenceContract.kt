@@ -1,11 +1,11 @@
-package series.core.ports
+package podcast.core.ports
 
 import io.kotest.core.factory.TestFactory
 import io.kotest.core.spec.style.describeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import podcast.core.models.PodcastId
-import series.core.models.SeriesRule
+import podcast.core.models.SeriesRule
 
 fun seriesRulePersistenceContract(persistenceProvider: () -> SeriesRulePersistence): TestFactory = describeSpec {
 

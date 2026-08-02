@@ -26,9 +26,9 @@ import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListPodcasts
 import podcast.core.usecase.StartListening
 import podcast.core.usecase.StopListening
-import series.core.models.SeriesRule
-import series.core.usecase.CreateSeriesRule
-import series.core.usecase.DeleteSeriesRule
+import podcast.core.models.SeriesRule
+import podcast.core.usecase.CreateSeriesRule
+import podcast.core.usecase.DeleteSeriesRule
 import kotlin.time.Duration
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {

@@ -22,7 +22,6 @@ import kotlinx.serialization.json.*
 import playback.installPlaybackModule
 import podcast.installPodcastModule
 import queue.installQueueModule
-import series.installSeriesModule
 import settings.installSettingsModule
 import java.sql.DriverManager
 import java.time.Clock
@@ -57,7 +56,6 @@ class AppTest : DescribeSpec({
             installPlaybackModule()
             installQueueModule()
             installSettingsModule()
-            installSeriesModule()
             installApplicationModule()
             installRoutes()
         }
