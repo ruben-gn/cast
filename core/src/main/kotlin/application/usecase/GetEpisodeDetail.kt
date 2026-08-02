@@ -21,6 +21,7 @@ class GetEpisodeDetail(
             played = playback.played,
             podcastName = podcast.name,
             podcastImage = podcast.image,
+            seriesName = null,
         )
     }
 }

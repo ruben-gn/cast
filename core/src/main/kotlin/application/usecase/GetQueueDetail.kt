@@ -35,6 +35,7 @@ class GetQueueDetail(
                 played = played,
                 podcastName = podcast.name,
                 podcastImage = podcast.image,
+                seriesName = null,
             )
         }
     }

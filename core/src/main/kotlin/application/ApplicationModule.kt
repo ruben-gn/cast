@@ -15,7 +15,7 @@ fun Application.installApplicationModule() {
         provide<GetEpisodeDetail> { GetEpisodeDetail(resolve(), resolve(), resolve()) }
         provide<GetPodcastDetail> { GetPodcastDetail(resolve(), resolve(), resolve(), resolve()) }
         provide<GetQueueDetail> { GetQueueDetail(resolve(), resolve(), resolve(), resolve(), resolve()) }
-        provide<FindRecentUnplayedEpisodes> { FindRecentUnplayedEpisodes(resolve(), resolve(), resolve(), resolve(), resolve()) }
+        provide<FindRecentUnplayedEpisodes> { FindRecentUnplayedEpisodes(resolve(), resolve(), resolve(), resolve(), resolve(), resolve()) }
         provide<MarkEpisodePlayed> { MarkEpisodePlayed(resolve(), resolve()) }
         provide<MarkEpisodeUnplayed> { MarkEpisodeUnplayed(resolve(), resolve()) }
         provide<RemovePodcast> { RemovePodcast(resolve(), resolve(), resolve(), resolve()) }

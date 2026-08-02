@@ -14,6 +14,9 @@ import podcast.core.models.PodcastId
 import podcast.core.usecase.FindRecentEpisodes
 import podcast.core.usecase.ListPodcasts
 import podcast.fakes.FakePodcastCatalog
+import series.core.models.SeriesRule
+import series.core.usecase.ListSeriesRules
+import series.fakes.FakeSeriesRulePersistence
 import settings.core.models.Settings
 import settings.core.usecase.GetSettings
 import settings.fakes.FakeSettingsPersistence
@@ -30,6 +33,7 @@ class FindRecentUnplayedEpisodesTests : DescribeSpec({
     lateinit var catalog: FakePodcastCatalog
     lateinit var playback: FakePlaybackPersistence
     lateinit var settingsPersistence: FakeSettingsPersistence
+    lateinit var seriesRulePersistence: FakeSeriesRulePersistence
 
     fun useCase() = FindRecentUnplayedEpisodes(
         clock,
@@ -37,6 +41,7 @@ class FindRecentUnplayedEpisodesTests : DescribeSpec({
         GetPlaybackStates(playback),
         ListPodcasts(catalog),
         GetSettings(settingsPersistence),
+        ListSeriesRules(seriesRulePersistence),
     )
 
     fun episode(id: String, publishedAt: Instant) = Episode(
@@ -55,6 +60,7 @@ class FindRecentUnplayedEpisodesTests : DescribeSpec({
         catalog = FakePodcastCatalog()
         playback = FakePlaybackPersistence()
         settingsPersistence = FakeSettingsPersistence()
+        seriesRulePersistence = FakeSeriesRulePersistence()
 
         val podcast = Podcast(PodcastId("pod-1"), FeedUrl("https://example.com/feed"), "Test Show", "https://img/show.png", true, Instant.EPOCH, Instant.EPOCH, Instant.EPOCH)
         catalog.save(podcast, emptyList())
@@ -154,6 +160,63 @@ class FindRecentUnplayedEpisodesTests : DescribeSpec({
             catalog.save(podcast, listOf(episode("ep-1", withinTwoWeeks)))
 
             useCase()() shouldHaveSize 1
+        }
+    }
+
+    describe("series matching") {
+        it("sets the series name on episodes whose title contains the rule name") {
+            val podcast = catalog.findAll().first()
+            catalog.save(podcast, listOf(episode("ep-1", withinTwoWeeks).copy(title = "The Divided Dial: Part 1")))
+            seriesRulePersistence.add(SeriesRule(PodcastId("pod-1"), "The Divided Dial"))
+
+            val result = useCase()()
+            result[0].seriesName shouldBe "The Divided Dial"
+        }
+
+        it("matches case-insensitively") {
+            val podcast = catalog.findAll().first()
+            catalog.save(podcast, listOf(episode("ep-1", withinTwoWeeks).copy(title = "the divided dial: part 1")))
+            seriesRulePersistence.add(SeriesRule(PodcastId("pod-1"), "The Divided Dial"))
+
+            val result = useCase()()
+            result[0].seriesName shouldBe "The Divided Dial"
+        }
+
+        it("leaves episodes without a matching rule unmarked") {
+            val podcast = catalog.findAll().first()
+            catalog.save(podcast, listOf(episode("ep-1", withinTwoWeeks)))
+            seriesRulePersistence.add(SeriesRule(PodcastId("pod-1"), "The Divided Dial"))
+
+            val result = useCase()()
+            result[0].seriesName shouldBe null
+        }
+
+        it("only applies a rule to its own podcast") {
+            val otherPodcast = Podcast(
+                PodcastId("pod-2"), FeedUrl("https://example.com/feed2"),
+                "Other Show", "", true, Instant.EPOCH, Instant.EPOCH, Instant.EPOCH,
+            )
+            val otherEpisode = Episode(
+                id = EpisodeId("ep-other"), feedGuid = "ep-other",
+                podcastId = PodcastId("pod-2"), title = "The Divided Dial: Part 1",
+                description = "", audioUrl = "https://cdn/other.mp3",
+                duration = null, publishedAt = withinTwoWeeks,
+            )
+            catalog.save(otherPodcast, listOf(otherEpisode))
+            seriesRulePersistence.add(SeriesRule(PodcastId("pod-1"), "The Divided Dial"))
+
+            val result = useCase()()
+            result[0].seriesName shouldBe null
+        }
+
+        it("picks the longest matching rule name when two rules match") {
+            val podcast = catalog.findAll().first()
+            catalog.save(podcast, listOf(episode("ep-1", withinTwoWeeks).copy(title = "The Divided Dial: Part 1")))
+            seriesRulePersistence.add(SeriesRule(PodcastId("pod-1"), "The Divided Dial"))
+            seriesRulePersistence.add(SeriesRule(PodcastId("pod-1"), "The Divided Dial: Part"))
+
+            val result = useCase()()
+            result[0].seriesName shouldBe "The Divided Dial: Part"
         }
     }
 })

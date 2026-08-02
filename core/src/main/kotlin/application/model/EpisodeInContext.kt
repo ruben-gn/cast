@@ -8,4 +8,5 @@ data class EpisodeInContext(
     val played: Boolean,
     val podcastName: String,
     val podcastImage: String,
+    val seriesName: String?,
 )
