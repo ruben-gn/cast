@@ -14,6 +14,7 @@ fun Application.installDatabase() {
         statement.executeUpdate(CREATE_PLAYBACK_STATE_TABLE)
         statement.executeUpdate(CREATE_QUEUE_TABLE)
         statement.executeUpdate(CREATE_SETTINGS_TABLE)
+        statement.executeUpdate(CREATE_SERIES_RULES_TABLE)
     }
 
     // Add `listening` column to existing databases that pre-date this feature.
@@ -80,5 +81,13 @@ val CREATE_SETTINGS_TABLE = """
     CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
+    )
+""".trimIndent()
+
+val CREATE_SERIES_RULES_TABLE = """
+    CREATE TABLE IF NOT EXISTS series_rules (
+        podcast_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        PRIMARY KEY (podcast_id, name)
     )
 """.trimIndent()
