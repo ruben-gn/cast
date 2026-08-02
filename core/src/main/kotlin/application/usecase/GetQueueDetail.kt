@@ -7,6 +7,8 @@ import playback.core.usecase.GetPlaybackStates
 import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.ListPodcasts
 import queue.core.usecase.GetQueue
+import series.core.matchSeriesName
+import series.core.usecase.ListSeriesRules
 import settings.core.usecase.GetSettings
 
 class GetQueueDetail(
@@ -15,6 +17,7 @@ class GetQueueDetail(
     private val getPlaybackStates: GetPlaybackStates,
     private val getSettings: GetSettings,
     private val listPodcasts: ListPodcasts,
+    private val listSeriesRules: ListSeriesRules,
 ) {
     suspend operator fun invoke(): List<EpisodeInContext> = coroutineScope {
         val hidePlayed = getSettings().hidePlayed
@@ -24,6 +27,7 @@ class GetQueueDetail(
             .mapNotNull { it.await() }
         val states = getPlaybackStates(episodes.map { it.id })
         val podcasts = listPodcasts().associateBy { it.id }
+        val rules = listSeriesRules()
         episodes.mapNotNull { episode ->
             val state = states[episode.id]
             val played = state?.played ?: false
@@ -35,7 +39,7 @@ class GetQueueDetail(
                 played = played,
                 podcastName = podcast.name,
                 podcastImage = podcast.image,
-                seriesName = null,
+                seriesName = rules.matchSeriesName(episode.podcastId, episode.title),
             )
         }
     }

@@ -16,6 +16,9 @@ import podcast.fakes.FakePodcastCatalog
 import queue.core.model.Queue
 import queue.core.usecase.GetQueue
 import queue.fakes.FakeQueuePersistence
+import series.core.models.SeriesRule
+import series.core.usecase.ListSeriesRules
+import series.fakes.FakeSeriesRulePersistence
 import settings.core.models.Settings
 import settings.core.usecase.GetSettings
 import settings.fakes.FakeSettingsPersistence
@@ -31,6 +34,7 @@ class GetQueueDetailTests : DescribeSpec({
     lateinit var queue: FakeQueuePersistence
     lateinit var playback: FakePlaybackPersistence
     lateinit var settingsPersistence: FakeSettingsPersistence
+    lateinit var seriesRulePersistence: FakeSeriesRulePersistence
 
     fun useCase() = GetQueueDetail(
         getQueue = GetQueue(queue),
@@ -38,6 +42,7 @@ class GetQueueDetailTests : DescribeSpec({
         getPlaybackStates = GetPlaybackStates(playback),
         getSettings = GetSettings(settingsPersistence),
         listPodcasts = ListPodcasts(catalog),
+        listSeriesRules = ListSeriesRules(seriesRulePersistence),
     )
 
     fun episode(id: EpisodeId) = Episode(
@@ -56,6 +61,7 @@ class GetQueueDetailTests : DescribeSpec({
         queue = FakeQueuePersistence()
         playback = FakePlaybackPersistence()
         settingsPersistence = FakeSettingsPersistence()
+        seriesRulePersistence = FakeSeriesRulePersistence()
 
         val podcast = Podcast(podcastId, FeedUrl("https://example.com/feed"), "Test Show", "", true, Instant.EPOCH, Instant.EPOCH, Instant.EPOCH)
         catalog.save(podcast, listOf(episode(ep1), episode(ep2)))
@@ -116,6 +122,17 @@ class GetQueueDetailTests : DescribeSpec({
         val result = useCase()()
         result[0].podcastName shouldBe "Test Show"
         result[0].podcastImage shouldBe ""
+    }
+
+    it("sets the series name when a rule matches the episode title") {
+        val podcast = catalog.findAll().first()
+        catalog.save(podcast, listOf(episode(ep1).copy(title = "The Divided Dial: Part 1"), episode(ep2)))
+        seriesRulePersistence.add(SeriesRule(podcastId, "The Divided Dial"))
+        queue.save(Queue(listOf(ep1, ep2)))
+
+        val result = useCase()()
+        result.first { it.episode.id == ep1 }.seriesName shouldBe "The Divided Dial"
+        result.first { it.episode.id == ep2 }.seriesName shouldBe null
     }
 
     describe("hidePlayed = true") {

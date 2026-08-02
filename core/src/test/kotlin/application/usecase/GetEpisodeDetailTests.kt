@@ -11,6 +11,9 @@ import podcast.core.models.PodcastId
 import podcast.core.usecase.FindEpisode
 import podcast.core.usecase.GetPodcast
 import podcast.fakes.FakePodcastCatalog
+import series.core.models.SeriesRule
+import series.core.usecase.ListSeriesRules
+import series.fakes.FakeSeriesRulePersistence
 import shared.model.EpisodeId
 import java.time.Clock
 import java.time.Instant
@@ -21,11 +24,13 @@ class GetEpisodeDetailTests : DescribeSpec({
 
     lateinit var catalog: FakePodcastCatalog
     lateinit var playback: FakePlaybackPersistence
+    lateinit var seriesRulePersistence: FakeSeriesRulePersistence
 
     fun useCase() = GetEpisodeDetail(
         findEpisode = FindEpisode(catalog),
         getPlaybackState = GetPlaybackState(Clock.systemUTC(), playback),
         getPodcast = GetPodcast(catalog),
+        listSeriesRules = ListSeriesRules(seriesRulePersistence),
     )
 
     val podcast = Podcast(podcastId, FeedUrl("https://example.com/feed"), "Test Show", "https://img/show.png", true, Instant.EPOCH, Instant.EPOCH, Instant.EPOCH)
@@ -39,6 +44,7 @@ class GetEpisodeDetailTests : DescribeSpec({
     beforeEach {
         catalog = FakePodcastCatalog()
         playback = FakePlaybackPersistence()
+        seriesRulePersistence = FakeSeriesRulePersistence()
     }
 
     it("returns null for an unknown episode") {
@@ -72,5 +78,21 @@ class GetEpisodeDetailTests : DescribeSpec({
 
         val result = useCase()(episodeId)!!
         result.played shouldBe true
+    }
+
+    it("sets the series name when a rule matches the episode title") {
+        catalog.save(podcast, listOf(episode.copy(title = "The Divided Dial: Part 1")))
+        seriesRulePersistence.add(SeriesRule(podcastId, "The Divided Dial"))
+
+        val result = useCase()(episodeId)!!
+        result.seriesName shouldBe "The Divided Dial"
+    }
+
+    it("leaves the series name null when no rule matches") {
+        catalog.save(podcast, listOf(episode))
+        seriesRulePersistence.add(SeriesRule(podcastId, "The Divided Dial"))
+
+        val result = useCase()(episodeId)!!
+        result.seriesName shouldBe null
     }
 })

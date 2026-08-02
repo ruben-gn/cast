@@ -4,6 +4,7 @@ import application.model.EpisodeInContext
 import playback.core.usecase.GetPlaybackStates
 import podcast.core.usecase.FindRecentEpisodes
 import podcast.core.usecase.ListPodcasts
+import series.core.matchSeriesName
 import series.core.usecase.ListSeriesRules
 import settings.core.usecase.GetSettings
 import java.time.Clock
@@ -40,10 +41,7 @@ class FindRecentUnplayedEpisodes(
                     played = state?.played ?: false,
                     podcastName = podcast.name,
                     podcastImage = podcast.image,
-                    seriesName = rules
-                        .filter { it.podcastId == episode.podcastId && episode.title.contains(it.name, ignoreCase = true) }
-                        .maxByOrNull { it.name.length }
-                        ?.name,
+                    seriesName = rules.matchSeriesName(episode.podcastId, episode.title),
                 )
             }
     }
