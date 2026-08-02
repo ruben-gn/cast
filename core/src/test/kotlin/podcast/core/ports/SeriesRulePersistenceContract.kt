@@ -71,4 +71,37 @@ fun seriesRulePersistenceContract(persistenceProvider: () -> SeriesRulePersisten
             persistence.findAll() shouldBe listOf(rule)
         }
     }
+
+    describe("removeAllFor") {
+        it("deletes every rule belonging to the podcast") {
+            val persistence = persistenceProvider()
+            persistence.add(SeriesRule(PodcastId("podcast-1"), "The Divided Dial"))
+            persistence.add(SeriesRule(PodcastId("podcast-1"), "Serial"))
+
+            persistence.removeAllFor(PodcastId("podcast-1"))
+
+            persistence.findAll() shouldBe emptyList()
+        }
+
+        it("leaves rules belonging to other podcasts intact") {
+            val persistence = persistenceProvider()
+            val other = SeriesRule(PodcastId("podcast-2"), "The Divided Dial")
+            persistence.add(SeriesRule(PodcastId("podcast-1"), "The Divided Dial"))
+            persistence.add(other)
+
+            persistence.removeAllFor(PodcastId("podcast-1"))
+
+            persistence.findAll() shouldBe listOf(other)
+        }
+
+        it("does nothing for a podcast with no rules") {
+            val persistence = persistenceProvider()
+            val rule = SeriesRule(PodcastId("podcast-1"), "The Divided Dial")
+            persistence.add(rule)
+
+            persistence.removeAllFor(PodcastId("podcast-2"))
+
+            persistence.findAll() shouldBe listOf(rule)
+        }
+    }
 }

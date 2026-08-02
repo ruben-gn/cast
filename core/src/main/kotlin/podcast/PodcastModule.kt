@@ -47,7 +47,7 @@ fun Application.installPodcastModule(
         provide<UpdateFeeds> { UpdateFeeds(resolve(), resolve()) }
 
         provide<AddFeed> { AddFeed(resolve(), resolve(), resolve(), resolve()) }
-        provide<DeletePodcast> { DeletePodcast(resolve()) }
+        provide<DeletePodcast> { DeletePodcast(resolve(), resolve()) }
         provide<StartListening> { StartListening(resolve()) }
         provide<StopListening> { StopListening(resolve()) }
         provide<ImportOpml> { ImportOpml(resolve()) }

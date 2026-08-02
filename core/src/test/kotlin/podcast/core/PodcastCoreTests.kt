@@ -12,7 +12,9 @@ import podcast.core.ports.FeedInfo
 import podcast.core.ports.FeedInfoProvider
 import podcast.core.usecase.*
 import shared.model.EpisodeId
+import podcast.core.models.SeriesRule
 import podcast.fakes.FakePodcastCatalog
+import podcast.fakes.FakeSeriesRulePersistence
 import java.time.Instant
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -24,6 +26,7 @@ class PodcastCoreTests : DescribeSpec({
 
     describe("Podcast Domain Hexagon") {
         lateinit var catalog: FakePodcastCatalog
+        lateinit var seriesRules: FakeSeriesRulePersistence
         lateinit var stubFeedProvider: FeedInfoProvider
 
         lateinit var updateFeed: UpdateFeed
@@ -37,12 +40,13 @@ class PodcastCoreTests : DescribeSpec({
 
         beforeEach {
             catalog = FakePodcastCatalog()
+            seriesRules = FakeSeriesRulePersistence()
             stubFeedProvider = FeedInfoProvider { url -> FeedInfo(title = "Show for ${url.value}", description = "Desc", image = "img.png", url = url.value) }
 
             updateFeed = UpdateFeed(catalog, stubFeedProvider, fixedClock)
             updateFeeds = UpdateFeeds(catalog, updateFeed)
             addFeed = AddFeed(catalog, stubFeedProvider, updateFeed, fixedClock)
-            deletePodcast = DeletePodcast(catalog)
+            deletePodcast = DeletePodcast(catalog, seriesRules)
             listPodcasts = ListPodcasts(catalog)
             getPodcast = GetPodcast(catalog)
             findEpisode = FindEpisode(catalog)
@@ -94,6 +98,26 @@ class PodcastCoreTests : DescribeSpec({
 
         it("returns false when deleting a podcast that does not exist") {
             deletePodcast(PodcastId("non-existent-id")) shouldBe false
+        }
+
+        it("clears the deleted podcast's series rules, leaving other podcasts' rules") {
+            val podcast = addFeed(FeedUrl("https://example.com/rss"))
+            val otherRule = SeriesRule(PodcastId("other-podcast"), "Serial")
+            seriesRules.add(SeriesRule(podcast.id, "The Divided Dial"))
+            seriesRules.add(otherRule)
+
+            deletePodcast(podcast.id) shouldBe true
+
+            seriesRules.findAll() shouldBe listOf(otherRule)
+        }
+
+        it("keeps series rules when the podcast does not exist") {
+            val rule = SeriesRule(PodcastId("non-existent-id"), "The Divided Dial")
+            seriesRules.add(rule)
+
+            deletePodcast(PodcastId("non-existent-id")) shouldBe false
+
+            seriesRules.findAll() shouldBe listOf(rule)
         }
 
         it("finds an episode by id") {

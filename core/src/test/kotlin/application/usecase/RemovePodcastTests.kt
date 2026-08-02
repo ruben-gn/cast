@@ -12,6 +12,7 @@ import podcast.core.models.PodcastId
 import podcast.core.usecase.DeletePodcast
 import podcast.core.usecase.ListEpisodes
 import podcast.fakes.FakePodcastCatalog
+import podcast.fakes.FakeSeriesRulePersistence
 import queue.core.model.Queue
 import queue.core.usecase.DequeueEpisodes
 import queue.fakes.FakeQueuePersistence
@@ -25,12 +26,13 @@ class RemovePodcastTests : DescribeSpec({
     val otherEp = EpisodeId("other-ep")
 
     lateinit var catalog: FakePodcastCatalog
+    lateinit var seriesRules: FakeSeriesRulePersistence
     lateinit var queue: FakeQueuePersistence
     lateinit var playback: FakePlaybackPersistence
 
     fun useCase() = RemovePodcast(
         listEpisodes = ListEpisodes(catalog),
-        deletePodcast = DeletePodcast(catalog),
+        deletePodcast = DeletePodcast(catalog, seriesRules),
         removePlaybackStates = RemovePlaybackStates(playback),
         dequeueEpisodes = DequeueEpisodes(queue),
     )
@@ -48,6 +50,7 @@ class RemovePodcastTests : DescribeSpec({
 
     beforeEach {
         catalog = FakePodcastCatalog()
+        seriesRules = FakeSeriesRulePersistence()
         queue = FakeQueuePersistence()
         playback = FakePlaybackPersistence()
 

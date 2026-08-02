@@ -3,16 +3,21 @@ package podcast.core.usecase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import podcast.core.models.PodcastId
 import podcast.core.ports.PodcastCatalog
+import podcast.core.ports.SeriesRulePersistence
 
 private val log = KotlinLogging.logger { }
 
-class DeletePodcast(private val catalog: PodcastCatalog) {
+class DeletePodcast(
+    private val catalog: PodcastCatalog,
+    private val seriesRules: SeriesRulePersistence,
+) {
     suspend operator fun invoke(id: PodcastId): Boolean {
         val podcast = catalog.findById(id) ?: run {
             log.info { "Cannot delete podcast $id: not found." }
             return false
         }
         catalog.delete(id)
+        seriesRules.removeAllFor(id)
         log.info { "Deleted podcast ${podcast.name} ($id) from catalog." }
         return true
     }

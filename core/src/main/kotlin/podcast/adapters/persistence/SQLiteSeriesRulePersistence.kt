@@ -27,6 +27,14 @@ class SQLiteSeriesRulePersistence(private val db: ConnectionProvider) : SeriesRu
         }
     }
 
+    override suspend fun removeAllFor(podcastId: PodcastId) = db.withConnection { conn ->
+        conn.prepareStatement("DELETE FROM series_rules WHERE podcast_id = ?").use { stmt ->
+            stmt.setString(1, podcastId.value)
+            stmt.executeUpdate()
+        }
+        Unit
+    }
+
     override suspend fun findAll(): List<SeriesRule> = db.withConnection { conn ->
         conn.prepareStatement("SELECT podcast_id, name FROM series_rules").use { stmt ->
             val rs = stmt.executeQuery()

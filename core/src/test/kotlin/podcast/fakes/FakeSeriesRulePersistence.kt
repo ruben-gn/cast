@@ -1,5 +1,6 @@
 package podcast.fakes
 
+import podcast.core.models.PodcastId
 import podcast.core.models.SeriesRule
 import podcast.core.ports.SeriesRulePersistence
 
@@ -11,6 +12,10 @@ class FakeSeriesRulePersistence : SeriesRulePersistence {
     }
 
     override suspend fun remove(rule: SeriesRule): Boolean = rules.remove(rule)
+
+    override suspend fun removeAllFor(podcastId: PodcastId) {
+        rules.removeAll { it.podcastId == podcastId }
+    }
 
     override suspend fun findAll(): List<SeriesRule> = rules.toList()
 }
