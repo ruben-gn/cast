@@ -3,6 +3,9 @@
 export interface AddPodcastRequest {
   feed: string
 }
+export interface CreateSeriesRuleRequest {
+  name: string
+}
 export interface EpisodeDetailDto {
   id: string
   title: string
@@ -13,6 +16,7 @@ export interface EpisodeDetailDto {
   publishedAt: string | null
   played: boolean
   progressMs: number
+  seriesName: string | null
   podcastId: string | null
   podcastName: string | null
   podcastImage: string | null

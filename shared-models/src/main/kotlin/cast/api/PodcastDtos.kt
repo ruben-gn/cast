@@ -24,6 +24,7 @@ data class EpisodeDetailDto(
     val publishedAt: String?,
     val played: Boolean,
     val progressMs: Long,
+    val seriesName: String? = null,
     val podcastId: String? = null,
     val podcastName: String? = null,
     val podcastImage: String? = null,
@@ -42,6 +43,9 @@ data class PodcastDetailDto(
 
 @Serializable
 data class AddPodcastRequest(val feed: String)
+
+@Serializable
+data class CreateSeriesRuleRequest(val name: String)
 
 @Serializable
 data class ReorderQueueRequest(val episodeIds: List<String>)

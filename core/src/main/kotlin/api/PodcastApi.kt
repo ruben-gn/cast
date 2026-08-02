@@ -5,6 +5,7 @@ import application.model.EpisodeWithPlayback
 import application.usecase.GetPodcastDetail
 import application.usecase.RemovePodcast
 import cast.api.AddPodcastRequest
+import cast.api.CreateSeriesRuleRequest
 import cast.api.EpisodeDetailDto
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
@@ -25,6 +26,9 @@ import podcast.core.usecase.ImportOpml
 import podcast.core.usecase.ListPodcasts
 import podcast.core.usecase.StartListening
 import podcast.core.usecase.StopListening
+import series.core.models.SeriesRule
+import series.core.usecase.CreateSeriesRule
+import series.core.usecase.DeleteSeriesRule
 import kotlin.time.Duration
 
 fun Route.podcastApi(dependencies: DependencyRegistry) {
@@ -37,6 +41,8 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
     val removePodcast: RemovePodcast by dependencies
     val startListening: StartListening by dependencies
     val stopListening: StopListening by dependencies
+    val createSeriesRule: CreateSeriesRule by dependencies
+    val deleteSeriesRule: DeleteSeriesRule by dependencies
 
     get {
         call.respond(listPodcasts().map(::podcastSummaryDto))
@@ -95,6 +101,21 @@ fun Route.podcastApi(dependencies: DependencyRegistry) {
         val found = stopListening(id)
         call.respond(if (found) HttpStatusCode.NoContent else HttpStatusCode.NotFound)
     }
+
+    post("{id}/series") {
+        val id = PodcastId(call.parameters["id"]!!)
+        val request = call.receive<CreateSeriesRuleRequest>()
+        val found = createSeriesRule(SeriesRule(id, request.name))
+        call.respond(if (found) HttpStatusCode.NoContent else HttpStatusCode.NotFound)
+    }
+
+    delete("{id}/series") {
+        val id = PodcastId(call.parameters["id"]!!)
+        val name = call.request.queryParameters["name"]
+            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+        val found = deleteSeriesRule(SeriesRule(id, name))
+        call.respond(if (found) HttpStatusCode.NoContent else HttpStatusCode.NotFound)
+    }
 }
 
 private fun podcastSummaryDto(podcast: Podcast) =
@@ -134,6 +155,7 @@ internal fun episodeDetailDto(
     publishedAt = ep.episode.publishedAt?.toString(),
     played = ep.played,
     progressMs = ep.progressMs,
+    seriesName = null,
     podcastId = podcastId,
     podcastName = podcastName,
     podcastImage = podcastImage,
@@ -149,6 +171,7 @@ internal fun episodeDetailDto(ep: EpisodeInContext) = EpisodeDetailDto(
     publishedAt = ep.episode.publishedAt?.toString(),
     played = ep.played,
     progressMs = ep.progressMs,
+    seriesName = ep.seriesName,
     podcastId = ep.episode.podcastId.value,
     podcastName = ep.podcastName,
     podcastImage = ep.podcastImage,

@@ -22,6 +22,7 @@ import kotlinx.serialization.json.*
 import playback.installPlaybackModule
 import podcast.installPodcastModule
 import queue.installQueueModule
+import series.installSeriesModule
 import settings.installSettingsModule
 import java.sql.DriverManager
 import java.time.Clock
@@ -56,6 +57,7 @@ class AppTest : DescribeSpec({
             installPlaybackModule()
             installQueueModule()
             installSettingsModule()
+            installSeriesModule()
             installApplicationModule()
             installRoutes()
         }
@@ -286,6 +288,79 @@ class AppTest : DescribeSpec({
 
                 val titles = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>().map { it.title }
                 titles shouldBe listOf("Recent Episode")
+            }
+        }
+    }
+
+    describe("series grouping") {
+        val seriesFeedUrl = "https://example.com/series-feed.xml"
+        val seriesRss = """
+            <rss><channel>
+                <title>Series Show</title>
+                <image><url>https://example.com/img.png</url></image>
+                <item><title>The Divided Dial: Part 2</title><guid>series-part-2</guid><pubDate>06 Apr 2026 12:00:00 +0000</pubDate><enclosure url="https://cdn/part2.mp3" length="0" type="audio/mpeg"/></item>
+                <item><title>The Divided Dial: Part 1</title><guid>series-part-1</guid><pubDate>05 Apr 2026 12:00:00 +0000</pubDate><enclosure url="https://cdn/part1.mp3" length="0" type="audio/mpeg"/></item>
+                <item><title>Unrelated Episode</title><guid>series-unrelated</guid><pubDate>05 Apr 2026 12:00:00 +0000</pubDate><enclosure url="https://cdn/unrelated.mp3" length="0" type="audio/mpeg"/></item>
+            </channel></rss>
+        """.trimIndent()
+
+        it("marks matching recent episodes with the series name after creating a rule") {
+            testApp(rssFeeds = mapOf(seriesFeedUrl to seriesRss)) { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(seriesFeedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.post("/api/podcasts/${podcast.id}/series") {
+                    contentType(ContentType.Application.Json)
+                    setBody(CreateSeriesRuleRequest("The Divided Dial"))
+                }
+
+                val recent = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>().associateBy { it.title }
+                recent.getValue("The Divided Dial: Part 1").seriesName shouldBe "The Divided Dial"
+                recent.getValue("The Divided Dial: Part 2").seriesName shouldBe "The Divided Dial"
+                recent.getValue("Unrelated Episode").seriesName shouldBe null
+            }
+        }
+
+        it("unmarks episodes after deleting a series rule") {
+            testApp(rssFeeds = mapOf(seriesFeedUrl to seriesRss)) { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(seriesFeedUrl))
+                }.body<PodcastDetailDto>()
+                json.post("/api/podcasts/${podcast.id}/series") {
+                    contentType(ContentType.Application.Json)
+                    setBody(CreateSeriesRuleRequest("The Divided Dial"))
+                }
+
+                json.delete("/api/podcasts/${podcast.id}/series?name=${"The Divided Dial".encodeURLQueryComponent()}")
+
+                val recent = json.get("/api/episodes/recent").body<List<EpisodeDetailDto>>()
+                recent.all { it.seriesName == null } shouldBe true
+            }
+        }
+
+        it("returns not found when creating a rule for an unknown podcast") {
+            testApp { json, _ ->
+                val response = json.post("/api/podcasts/unknown-podcast/series") {
+                    contentType(ContentType.Application.Json)
+                    setBody(CreateSeriesRuleRequest("The Divided Dial"))
+                }
+                response.status shouldBe HttpStatusCode.NotFound
+            }
+        }
+
+        it("returns not found when deleting a rule that does not exist") {
+            testApp(rssFeeds = mapOf(seriesFeedUrl to seriesRss)) { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(seriesFeedUrl))
+                }.body<PodcastDetailDto>()
+
+                val response = json.delete("/api/podcasts/${podcast.id}/series?name=${"Unknown Series".encodeURLQueryComponent()}")
+
+                response.status shouldBe HttpStatusCode.NotFound
             }
         }
     }
@@ -606,6 +681,7 @@ private fun Application.installInMemoryDatabase() {
             CREATE_PLAYBACK_STATE_TABLE,
             CREATE_QUEUE_TABLE,
             CREATE_SETTINGS_TABLE,
+            CREATE_SERIES_RULES_TABLE,
         ).forEach { stmt.executeUpdate(it) }
     }
     monitor.subscribe(ApplicationStopped) { connection.close() }
