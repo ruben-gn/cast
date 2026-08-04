@@ -256,7 +256,8 @@ class PlaybackService : MediaLibraryService() {
                     else -> emptyList()
                 }
             }.getOrElse { e -> Log.w(TAG, "onGetChildren failed for parentId=$parentId", e); emptyList() }
-            LibraryResult.ofItemList(children, params)
+            Log.d(TAG, "onGetChildren: parentId=$parentId page=$page pageSize=$pageSize total=${children.size}")
+            LibraryResult.ofItemList(children.browsePage(page, pageSize), params)
         }
 
         override fun onGetItem(
