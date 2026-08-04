@@ -314,7 +314,9 @@ class PlaybackService : MediaLibraryService() {
             val episode = lastUnfinishedEpisode()
                 ?: throw UnsupportedOperationException("No previous episode to resume")
             Log.d(TAG, "onPlaybackResumption: resuming id=${episode.id} progressMs=${episode.progressMs}")
-            MediaSession.MediaItemsWithStartPosition(listOf(playableItem(episode)), 0, episode.progressMs)
+            MediaSession.MediaItemsWithStartPosition(
+                listOf(playableItem(episode, completionExtras(episode))), 0, episode.progressMs,
+            )
         }
 
         // Prev/next media keys (headphones, Android Auto, steering wheel) default to
@@ -428,7 +430,8 @@ class PlaybackService : MediaLibraryService() {
 
     /**
      * Completion-status extras so Android Auto renders a progress bar on the continue-listening
-     * item. Auto reads these off the media description; partial progress also needs a percentage.
+     * item, and the System UI resumption notification on the resumed one. Both read these off the
+     * media description; partial progress also needs a percentage.
      */
     private fun completionExtras(episode: EpisodeDetailDto): Bundle = Bundle().apply {
         val durationMs = episode.durationMs
