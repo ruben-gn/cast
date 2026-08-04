@@ -59,6 +59,7 @@ class QueuePlaybackListenerTest {
     private lateinit var player: ExoPlayer
     private lateinit var listener: QueuePlaybackListener
     private val wsMessages = mutableListOf<String>()
+    private var browseInvalidations = 0
     private val queue = FakeQueueRepository(upNext = listOf("ep2"))
 
     @Before
@@ -74,6 +75,7 @@ class QueuePlaybackListenerTest {
             sendWs = { message, _ -> wsMessages += message; true },
             toMediaItem = { MediaItem.Builder().setMediaId(it.id).build() },
             onWidgetUpdate = {},
+            onEpisodeFinished = { browseInvalidations++ },
             startProgressSync = {},
             stopProgressSync = {},
         )
@@ -99,6 +101,9 @@ class QueuePlaybackListenerTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(listOf("ep1", "ep2"), endedEpisodeIds())
+        // Each finish drops the episode out of /recent and the queue, so a browser (Android Auto)
+        // holding those lists has to be told to re-query them.
+        assertEquals(2, browseInvalidations)
     }
 
     @Test

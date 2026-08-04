@@ -31,6 +31,7 @@ class QueuePlaybackListener(
     private val sendWs: (message: String, coalesceKey: String?) -> Boolean,
     private val toMediaItem: (EpisodeDetailDto) -> MediaItem,
     private val onWidgetUpdate: (isPlaying: Boolean) -> Unit,
+    private val onEpisodeFinished: () -> Unit,
     private val startProgressSync: (episodeId: String) -> Unit,
     private val stopProgressSync: () -> Unit,
 ) : Player.Listener {
@@ -93,6 +94,7 @@ class QueuePlaybackListener(
                 if (!sendWs("""{"type":"ended","episodeId":"$finishedId"}""", null))
                     store.markEndedPending(finishedId)
                 store.clearCachedProgress(finishedId)
+                onEpisodeFinished()
             }
             // The new current item has been consumed from up-next: remove it from the backend
             // queue (which re-emits queueIds → reconcileQueueTail, a no-op since it's now current).
@@ -156,6 +158,7 @@ class QueuePlaybackListener(
                 if (!sendWs("""{"type":"ended","episodeId":"$it"}""", null))
                     store.markEndedPending(it)
                 store.clearCachedProgress(it)
+                onEpisodeFinished()
             }
             stopProgressSync()
             // Clear the finished episode from the player (also clears the player bar and widget

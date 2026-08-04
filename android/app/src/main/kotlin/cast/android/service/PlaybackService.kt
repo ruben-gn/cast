@@ -109,6 +109,7 @@ class PlaybackService : MediaLibraryService() {
             sendWs = ::sendWs,
             toMediaItem = { playableItem(it) },
             onWidgetUpdate = ::pushWidgetState,
+            onEpisodeFinished = ::notifyBrowseTreeChanged,
             startProgressSync = ::startProgressSync,
             stopProgressSync = ::stopProgressSync,
         )
@@ -449,6 +450,19 @@ class PlaybackService : MediaLibraryService() {
                 MediaConstants.EXTRAS_KEY_COMPLETION_STATUS,
                 MediaConstants.EXTRAS_VALUE_COMPLETION_STATUS_NOT_PLAYED,
             )
+        }
+    }
+
+    /**
+     * A browser caches the children it subscribed to and only re-queries them when told, so an
+     * episode finishing during an Android Auto session leaves it listed under Recent (the backend
+     * drops played episodes from /recent) and under Queue (it was consumed). Item counts are
+     * unknown here — the browser re-queries anyway — so pass MAX_VALUE per the API docs.
+     */
+    private fun notifyBrowseTreeChanged() {
+        val session = mediaSession ?: return
+        listOf(RECENT_ROOT_ID, RECENT_ID, QUEUE_ID).forEach {
+            session.notifyChildrenChanged(it, Int.MAX_VALUE, null)
         }
     }
 
