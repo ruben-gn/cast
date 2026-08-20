@@ -5,6 +5,7 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
   <html lang="en">
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <script dangerouslySetInnerHTML={{__html: `(function(){try{var m=localStorage.getItem('cast-theme');if(m==='dark'||m==='light')document.documentElement.setAttribute('data-theme',m);}catch(e){}})();`}}/>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" />
@@ -91,6 +92,26 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
       </div>
       <script src="/static/js/player.js"></script>
       <script dangerouslySetInnerHTML={{__html: `
+        function currentTheme() {
+          try { return localStorage.getItem('cast-theme') || 'system'; } catch (e) { return 'system'; }
+        }
+        function setTheme(mode) {
+          try {
+            if (mode === 'system') localStorage.removeItem('cast-theme');
+            else localStorage.setItem('cast-theme', mode);
+          } catch (e) {}
+          if (mode === 'system') document.documentElement.removeAttribute('data-theme');
+          else document.documentElement.setAttribute('data-theme', mode);
+          syncThemeControl();
+        }
+        function syncThemeControl() {
+          var cur = currentTheme();
+          document.querySelectorAll('.theme-option[data-mode]').forEach(function(el) {
+            var on = el.dataset.mode === cur;
+            el.classList.toggle('is-active', on);
+            el.setAttribute('aria-checked', on ? 'true' : 'false');
+          });
+        }
         function updateNavActive() {
           var path = window.location.pathname;
           document.querySelectorAll('.nav-link[data-path]').forEach(function(el) {
@@ -100,8 +121,11 @@ export const Layout: FC<{ title: string, children: Child }> = ({ title, children
           });
           document.body.classList.toggle('now-playing-active', path === '/now-playing');
         }
-        document.addEventListener('DOMContentLoaded', updateNavActive);
+        document.addEventListener('DOMContentLoaded', function() { updateNavActive(); syncThemeControl(); });
         document.addEventListener('htmx:pushUrl', function() { setTimeout(updateNavActive, 0); });
+        // The Settings fragment is swapped in by HTMX, so the control has to be
+        // re-synced from localStorage every time it lands.
+        document.addEventListener('htmx:afterSettle', syncThemeControl);
       `}}/>
     </body>
   </html>

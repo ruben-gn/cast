@@ -1,19 +1,77 @@
 :root {
-    --accent: #1B998B;
-    --accent-hover: #16786D;
-    --accent-light: rgba(27, 153, 139, 0.12);
-    --bg: #EEF4F3;
+    /* Linen Paper -- see docs/specs/2026-06-06-android-linen-theme-design.md */
+    --accent: #D8512A;
+    --accent-hover: #B8431F;
+    --accent-light: #FBE0D6;
+    --accent-rgb: 216,81,42;
+    --bg: #FBF8F3;
     --surface: #FFFFFF;
-    --surface-alt: #F4F9F8;
-    --text: #1A2C2A;
-    --text-muted: #6B8480;
-    --border: #D8E8E6;
-    --shadow-sm: 0 2px 6px rgba(26,44,42,0.07);
-    --shadow-md: 0 6px 20px rgba(26,44,42,0.12);
+    --surface-alt: #ECE5DB;
+    --text: #2B241E;
+    --text-muted: #8E8175;
+    --border: #DBD0C0;
+    --on-accent: #FFFFFF;
+    --danger: #A3342B;
+    --danger-bg: #F7E7E3;
+    /* The player bar was a fixed dark slab; as tokens it can follow a theme. */
+    --player-bg: var(--surface);
+    --player-ink: var(--text);
+    --player-muted: var(--text-muted);
+    --player-track: var(--surface-alt);
+    --player-hair: var(--border);
+    --shadow-sm: 0 2px 6px rgba(43,36,30,0.07);
+    --shadow-md: 0 6px 20px rgba(43,36,30,0.12);
+    --grain-alpha: 0.55;
     --radius-sm: 8px;
     --radius-md: 14px;
     --radius-lg: 20px;
     --header-height: 60px;
+}
+
+/* Ember -- the dark counterpart to Linen Paper. Tokens only: every component
+   below styles through them, so nothing here needs a component rule.
+   --player-* and --radius-* are inherited from :root; they resolve against
+   whichever --surface/--text is in play, so the player bar follows for free.
+
+   Three states, not two: an explicit choice stamps data-theme on <html>, and
+   the default (follow system) stamps nothing. The :not([data-theme="light"])
+   guard lets a forced light theme beat a dark OS. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --accent: #E86A45;
+        --accent-hover: #F07C59;
+        --accent-light: #6E2C16;
+        --accent-rgb: 232,106,69;
+        --on-accent: #3A1B0E;
+        --bg: #161210;
+        --surface: #221C18;
+        --surface-alt: #3A302A;
+        --text: #F4EAE4;
+        --text-muted: #B3A398;
+        --border: #5A4F47;
+        --danger: #E8837A;
+        --danger-bg: #3A1F1C;
+        --shadow-sm: 0 2px 6px rgba(0,0,0,0.35);
+        --shadow-md: 0 6px 20px rgba(0,0,0,0.45);
+    }
+}
+
+:root[data-theme="dark"] {
+    --accent: #E86A45;
+    --accent-hover: #F07C59;
+    --accent-light: #6E2C16;
+    --accent-rgb: 232,106,69;
+    --on-accent: #3A1B0E;
+    --bg: #161210;
+    --surface: #221C18;
+    --surface-alt: #3A302A;
+    --text: #F4EAE4;
+    --text-muted: #B3A398;
+    --border: #5A4F47;
+    --danger: #E8837A;
+    --danger-bg: #3A1F1C;
+    --shadow-sm: 0 2px 6px rgba(0,0,0,0.35);
+    --shadow-md: 0 6px 20px rgba(0,0,0,0.45);
 }
 
 .htmx-indicator {
@@ -59,6 +117,20 @@ body#main-body {
     overflow-y: scroll;
 }
 
+/* Paper grain on the page ground only -- surfaces stay clean so text contrast
+   is never affected. Same seamless 160px tile the Android theme draws. */
+body#main-body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--grain-alpha);
+    background-image: url('/static/img/paper_grain.png');
+    background-repeat: repeat;
+    background-size: 160px 160px;
+}
+
 button:active {
     transform: scale(0.98);
 }
@@ -99,7 +171,7 @@ input:focus {
     border-radius: var(--radius-md);
     border: none;
     background: var(--accent);
-    color: white;
+    color: var(--on-accent);
     font-family: inherit;
     font-size: 14px;
     font-weight: 600;
@@ -212,7 +284,7 @@ input:focus {
 .sub-error {
     margin: 0;
     font-size: 13px;
-    color: #d95f5f;
+    color: var(--danger);
     display: none;
 }
 
@@ -250,7 +322,7 @@ input:focus {
     border-radius: var(--radius-sm);
     border: none;
     background: var(--accent);
-    color: white;
+    color: var(--on-accent);
     font-weight: 700;
     cursor: pointer;
     font-family: inherit;
@@ -478,12 +550,12 @@ input:focus {
     left: 0;
     right: 0;
     height: 3px;
-    background: rgba(27,153,139,0.18);
+    background: rgba(var(--accent-rgb),0.18);
 }
 
 .episode-progress-fill {
     height: 100%;
-    background: rgba(27,153,139,0.65);
+    background: rgba(var(--accent-rgb),0.65);
 }
 
 /* Podcast source label in episode */
@@ -658,7 +730,7 @@ details[open] .episode-description-summary::before {
     height: 38px;
     border-radius: 50%;
     background: var(--accent);
-    color: white;
+    color: var(--on-accent);
     border: none;
     cursor: pointer;
     font-size: 14px;
@@ -667,19 +739,19 @@ details[open] .episode-description-summary::before {
     justify-content: center;
     flex-shrink: 0;
     transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-    box-shadow: 0 2px 8px rgba(27,153,139,0.35);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb),0.35);
 }
 
 .episode-play-btn:hover {
     background: var(--accent-hover);
     transform: scale(1.08);
-    box-shadow: 0 4px 14px rgba(27,153,139,0.5);
+    box-shadow: 0 4px 14px rgba(var(--accent-rgb),0.5);
 }
 
 .episode-play-btn--small {
     width: 28px;
     height: 28px;
-    box-shadow: 0 1px 4px rgba(27,153,139,0.3);
+    box-shadow: 0 1px 4px rgba(var(--accent-rgb),0.3);
 }
 
 .episode-queue-btn {
@@ -739,7 +811,7 @@ details[open] .episode-description-summary::before {
     height: 18px;
     padding: 0 5px;
     background: var(--accent);
-    color: white;
+    color: var(--on-accent);
     border-radius: 9px;
     font-size: 10px;
     font-weight: 700;
@@ -870,9 +942,9 @@ details[open] .episode-description-summary::before {
 }
 
 .queue-remove-btn:hover {
-    background: #fef2f2;
-    color: #d95f5f;
-    border-color: #d95f5f;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: var(--danger);
 }
 
 /* Persistent audio player bar */
@@ -881,15 +953,15 @@ details[open] .episode-description-summary::before {
     bottom: 0;
     left: 0;
     right: 0;
-    background: #0D2420;
-    color: white;
+    background: var(--player-bg);
+    color: var(--player-ink);
     padding: 12px 24px;
     z-index: 500;
     display: none;
     align-items: center;
     gap: 20px;
-    box-shadow: 0 -2px 16px rgba(0,0,0,0.4);
-    border-top: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 -2px 16px rgba(43,36,30,0.10);
+    border-top: 1px solid var(--player-hair);
 }
 
 .player-bar-main {
@@ -923,12 +995,12 @@ details[open] .episode-description-summary::before {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: white;
+    color: var(--player-ink);
 }
 
 .player-podcast {
     font-size: 11px;
-    color: rgba(255,255,255,0.6);
+    color: var(--player-muted);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -944,7 +1016,7 @@ details[open] .episode-description-summary::before {
 .player-ctrl-btn {
     background: none;
     border: none;
-    color: white;
+    color: var(--player-ink);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -963,7 +1035,7 @@ details[open] .episode-description-summary::before {
     right: 0;
     bottom: 0;
     height: 3px;
-    background: rgba(255,255,255,0.12);
+    background: var(--player-track);
 }
 
 .player-progress-fill {
@@ -976,6 +1048,46 @@ details[open] .episode-description-summary::before {
 
 body.has-playback #player-bar { display: flex; }
 body.now-playing-active #player-bar { display: none; }
+
+/* Theme segmented control (Settings) */
+.settings-row--stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    cursor: default;
+}
+
+.theme-control {
+    display: flex;
+    gap: 4px;
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+}
+
+.theme-option {
+    flex: 1;
+    padding: 9px 14px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.theme-option:hover {
+    color: var(--text);
+}
+
+.theme-option.is-active {
+    background: var(--surface);
+    color: var(--accent);
+    box-shadow: var(--shadow-sm);
+}
 
 /* Settings page */
 .settings-title {
@@ -1173,9 +1285,9 @@ body.now-playing-active #player-bar { display: none; }
 
 .np-playpause {
     width: 72px; height: 72px; border-radius: 50%; border: none; cursor: pointer;
-    background: var(--accent); color: white;
+    background: var(--accent); color: var(--on-accent);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 14px rgba(27,153,139,0.4); transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(var(--accent-rgb),0.4); transition: transform 0.1s;
 }
 .np-playpause:active { transform: scale(0.94); }
 

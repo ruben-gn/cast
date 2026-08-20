@@ -4,6 +4,14 @@ export const SettingsPage: FC<{ hidePlayed: boolean, recentListeningOnly: boolea
     <div class="settings-page">
         <h1 class="settings-title">Settings</h1>
         <form class="settings-form">
+            <div class="settings-row settings-row--stack">
+                <span class="settings-label">Appearance</span>
+                <div class="theme-control" role="radiogroup" aria-label="Appearance">
+                    <button type="button" class="theme-option" data-mode="system" role="radio" aria-checked="false" onclick="setTheme('system')">System</button>
+                    <button type="button" class="theme-option" data-mode="light" role="radio" aria-checked="false" onclick="setTheme('light')">Light</button>
+                    <button type="button" class="theme-option" data-mode="dark" role="radio" aria-checked="false" onclick="setTheme('dark')">Dark</button>
+                </div>
+            </div>
             <label class="settings-row">
                 <span class="settings-label">Hide played episodes</span>
                 <input
