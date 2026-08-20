@@ -61,6 +61,7 @@ class RecentViewModel @Inject constructor(
     }
 
     fun onEpisodeCompleted(episodeId: String) {
+        episodeRepository.invalidateRecentCache()
         val current = (_uiState.value as? UiState.Success)?.data ?: return
         _uiState.value = UiState.Success(current.filterNot { it.id == episodeId })
     }

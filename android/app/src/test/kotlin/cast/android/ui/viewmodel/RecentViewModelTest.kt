@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -46,6 +47,23 @@ class RecentViewModelTest {
             podcastRepository = FakePodcastRepository(),
         )
         assertEquals(UiState.Loading, vm.uiState.value)
+    }
+
+    @Test
+    fun `a finished episode leaves the list and marks the cached list stale`() {
+        val episodes = listOf(episode("1"), episode("2"))
+        val episodeRepository = FakeEpisodeRepository(cachedRecent = episodes)
+        val vm = RecentViewModel(
+            episodeRepository = episodeRepository,
+            queueRepository = FakeQueueRepository(),
+            podcastRepository = FakePodcastRepository(),
+        )
+
+        vm.onEpisodeCompleted("1")
+
+        assertEquals(UiState.Success(listOf(episode("2"))), vm.uiState.value)
+        // Without this the next visit re-seeds from a cache that still holds the finished episode.
+        assertTrue(episodeRepository.recentCacheInvalidated)
     }
 
     @Test

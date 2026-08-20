@@ -16,7 +16,11 @@ import okhttp3.MultipartBody
 class FakeEpisodeRepository(
     private val cachedRecent: List<EpisodeDetailDto>? = null,
 ) : EpisodeRepository {
+    var recentCacheInvalidated = false
+        private set
+
     override fun cachedRecentEpisodes(): List<EpisodeDetailDto>? = cachedRecent
+    override fun invalidateRecentCache() { recentCacheInvalidated = true }
     override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> = cachedRecent ?: emptyList()
     override suspend fun getEpisode(episodeId: String): EpisodeDetailDto = TODO()
     override suspend fun setPlayed(episodeId: String, played: Boolean) {}

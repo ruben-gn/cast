@@ -19,6 +19,8 @@ class EpisodeRepositoryImpl @Inject constructor(
 
     override fun cachedRecentEpisodes(): List<EpisodeDetailDto>? = recentCache.latest
 
+    override fun invalidateRecentCache() = recentCache.clear()
+
     override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> =
         api.getRecentEpisodes().also(recentCache::put)
 

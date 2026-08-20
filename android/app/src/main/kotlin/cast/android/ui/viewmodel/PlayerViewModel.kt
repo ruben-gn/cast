@@ -86,6 +86,13 @@ class PlayerViewModel @Inject constructor(
             if (prevId != null && prevPos > 0 && prevDur > 0) {
                 _lastKnownProgress.value = _lastKnownProgress.value + (prevId to (prevPos to prevDur))
             }
+            // STATE_ENDED only fires when the *last* playlist item finishes, so an episode that
+            // auto-advances into a queued one completes here instead. Same split as
+            // QueuePlaybackListener's backend sync.
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && prevId != null) {
+                viewModelScope.launch { _episodeCompleted.emit(prevId) }
+                downloadRepository.remove(prevId)
+            }
             if (mediaItem?.mediaId != _currentMediaItem.value?.mediaId) {
                 _position.value = 0L
             }
