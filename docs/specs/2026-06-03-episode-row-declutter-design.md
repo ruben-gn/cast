@@ -1,7 +1,7 @@
 # Episode Row Declutter — Design
 
 **Date:** 2026-06-03
-**Status:** Approved, ready for implementation planning
+**Status:** implemented
 **Scope:** Android app only (`android/`)
 
 ## Problem

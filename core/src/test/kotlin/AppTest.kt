@@ -321,6 +321,26 @@ class AppTest : DescribeSpec({
             }
         }
 
+        it("marks matching episodes on the podcast detail with the series name") {
+            testApp(rssFeeds = mapOf(seriesFeedUrl to seriesRss)) { json, _ ->
+                val podcast = json.post("/api/podcasts") {
+                    contentType(ContentType.Application.Json)
+                    setBody(AddPodcastRequest(seriesFeedUrl))
+                }.body<PodcastDetailDto>()
+
+                json.post("/api/podcasts/${podcast.id}/series") {
+                    contentType(ContentType.Application.Json)
+                    setBody(CreateSeriesRuleRequest("The Divided Dial"))
+                }
+
+                val episodes = json.get("/api/podcasts/${podcast.id}").body<PodcastDetailDto>()
+                    .episodes.associateBy { it.title }
+                episodes.getValue("The Divided Dial: Part 1").seriesName shouldBe "The Divided Dial"
+                episodes.getValue("The Divided Dial: Part 2").seriesName shouldBe "The Divided Dial"
+                episodes.getValue("Unrelated Episode").seriesName shouldBe null
+            }
+        }
+
         it("unmarks episodes after deleting a series rule") {
             testApp(rssFeeds = mapOf(seriesFeedUrl to seriesRss)) { json, _ ->
                 val podcast = json.post("/api/podcasts") {

@@ -1,7 +1,7 @@
 # Android — Visual feedback on action button press
 
 **Date:** 2026-06-03
-**Status:** Approved design, pending implementation plan
+**Status:** implemented
 
 ## Problem
 

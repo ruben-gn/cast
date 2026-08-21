@@ -1,5 +1,8 @@
 # Catalog View Toggle & Sort — Design Spec
 
+**Date:** 2026-06-09
+**Status:** implemented
+
 ## Overview
 
 Add a list/grid view toggle and sort control to the Android catalog screen, with podcasts split into two sections by listening status.

@@ -1,7 +1,6 @@
 package api
 
 import application.model.EpisodeInContext
-import application.model.EpisodeWithPlayback
 import application.usecase.GetPodcastDetail
 import application.usecase.RemovePodcast
 import cast.api.AddPodcastRequest
@@ -129,7 +128,7 @@ private fun podcastSummaryDto(podcast: Podcast) =
         latestEpisodeAt = podcast.latestEpisodeAt.toString(),
     )
 
-private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlayback>) =
+private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeInContext>) =
     PodcastDetailDto(
         id = podcast.id.value,
         url = podcast.url.value,
@@ -137,29 +136,8 @@ private fun podcastDetailDto(podcast: Podcast, episodes: List<EpisodeWithPlaybac
         image = podcast.image,
         listening = podcast.listening,
         created = podcast.created.toString(),
-        episodes = episodes.map { episodeDetailDto(it, podcastId = podcast.id.value, podcastName = podcast.name, podcastImage = podcast.image) }
+        episodes = episodes.map(::episodeDetailDto)
     )
-
-internal fun episodeDetailDto(
-    ep: EpisodeWithPlayback,
-    podcastId: String,
-    podcastName: String,
-    podcastImage: String,
-) = EpisodeDetailDto(
-    id = ep.episode.id.value,
-    title = ep.episode.title,
-    description = ep.episode.description,
-    audioUrl = ep.episode.audioUrl,
-    duration = ep.episode.duration?.formatted(),
-    durationMs = ep.episode.duration?.inWholeMilliseconds,
-    publishedAt = ep.episode.publishedAt?.toString(),
-    played = ep.played,
-    progressMs = ep.progressMs,
-    seriesName = null,
-    podcastId = podcastId,
-    podcastName = podcastName,
-    podcastImage = podcastImage,
-)
 
 internal fun episodeDetailDto(ep: EpisodeInContext) = EpisodeDetailDto(
     id = ep.episode.id.value,

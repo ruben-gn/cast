@@ -1,6 +1,7 @@
 # Webapp ↔ Android parity (non-native features)
 
 **Date:** 2026-06-03
+**Status:** implemented (round 1; later gaps tracked in [`../webapp-parity-gaps.md`](../webapp-parity-gaps.md))
 **Scope:** Bring the SSR webapp (`webapp/`) up to feature parity with the Android app for
 non-native UI features. Explicitly **out of scope:** Android Auto, home-screen widget, offline
 progress caching, background feed refresh, lock-screen/media-session controls, playback

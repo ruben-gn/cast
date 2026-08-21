@@ -1,7 +1,7 @@
 # Android "Hide played episodes" toggle — design
 
 **Date:** 2026-06-06
-**Status:** Approved, ready for implementation plan
+**Status:** implemented
 
 ## Problem
 

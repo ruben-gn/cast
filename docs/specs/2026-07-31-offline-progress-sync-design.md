@@ -1,6 +1,6 @@
 # Offline progress sync — design & implementation plan
 
-Date: 2026-07-31. Status: planned, not built.
+Date: 2026-07-31. Status: implemented and deployed 2026-07-31.
 
 ## Goal
 

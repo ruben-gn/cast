@@ -1,7 +1,13 @@
 # Android Snappiness: Local-First Data + Instant Playback
 
 **Date:** 2026-06-02
-**Status:** Approved design, pending implementation plan
+**Status:** Partially implemented (as of 2026-08-21). Built: §2 instant resume seek (via
+DataStore rather than Room), §3 shared cache + downloads, §6 offline conflict resolution
+(delivered by [`2026-07-31-offline-progress-sync-design.md`](2026-07-31-offline-progress-sync-design.md)).
+Outstanding: §1 Room read-through cache (never started — no Room dependency in the app),
+§4 auto-download the queue + prefetch-on-open (downloads are manual only), §5 backend
+ownership (`GET /api/resume`, server-side dequeue on `ended`, `completionPercent` on the
+episode DTO).
 
 ## Problem
 

@@ -1,6 +1,7 @@
 # "Listening" podcast status — design
 
 **Date:** 2026-06-07
+**Status:** implemented
 
 ## Summary
 

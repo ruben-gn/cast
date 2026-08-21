@@ -1,7 +1,7 @@
 # Cast brand mark: launcher icon + splash screen
 
 Date: 2026-06-12
-Status: approved (iterated visually in the browser companion)
+Status: implemented, except the deferred "rising sun" splash (see [Kept for later](#kept-for-later-out-of-scope))
 
 ## The mark
 
