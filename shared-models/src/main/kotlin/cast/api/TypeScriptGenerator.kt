@@ -1,9 +1,11 @@
 package cast.api
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.*
 import java.io.File
 
+@OptIn(ExperimentalSerializationApi::class)
 fun main() {
     val classLoader = Thread.currentThread().contextClassLoader
     val packageUrl = classLoader.getResource("cast/api") ?: error("cast/api not on classpath")
@@ -17,20 +19,27 @@ fun main() {
             runCatching {
                 val klass = Class.forName(className, true, classLoader)
                 val companion = klass.getDeclaredField("Companion").get(null)
-                companion.javaClass.getMethod("serializer").invoke(companion) as KSerializer<*>
+                val serializer = companion.javaClass.getMethod("serializer").invoke(companion) as KSerializer<*>
+                file.nameWithoutExtension to serializer
             }.getOrNull()
         }
 
     println("// Generated from Kotlin shared-models -- do not edit manually")
     println()
-    for (s in serializers) {
-        println(generateInterface(s.descriptor))
+    for ((name, serializer) in serializers) {
+        // Sealed parents describe themselves as a {type, value} envelope, which says nothing useful
+        // in TypeScript; their subclasses are emitted on their own as flat interfaces.
+        if (serializer.descriptor.kind is PolymorphicKind) continue
+        println(generateInterface(name, serializer.descriptor))
     }
 }
 
-private fun generateInterface(descriptor: SerialDescriptor): String = buildString {
-    val name = descriptor.serialName.substringAfterLast('.')
+private fun generateInterface(name: String, descriptor: SerialDescriptor): String = buildString {
     appendLine("export interface $name {")
+    // A @SerialName that isn't just the class's own FQN means the class is a member of a sealed
+    // hierarchy, where that name is the value of the `type` discriminator rather than a field.
+    if (descriptor.serialName != "cast.api.$name")
+        appendLine("  type: '${descriptor.serialName}'")
     for (i in 0 until descriptor.elementsCount) {
         val fieldName = descriptor.getElementName(i)
         val tsType = toTypeScriptType(descriptor.getElementDescriptor(i))

@@ -1,5 +1,7 @@
 package cast.android.service
 
+import cast.api.PlaybackClientMessage
+import cast.api.UpdateProgressMessage
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -18,15 +20,15 @@ class ProgressOutboxFlusherTest {
                 endedEpisodeIds = emptyList(),
             ),
         )
-        val sent = mutableListOf<Pair<String, String?>>()
+        val sent = mutableListOf<Pair<PlaybackClientMessage, String?>>()
         val flusher = ProgressOutboxFlusher(store) { message, coalesceKey -> sent += message to coalesceKey; true }
 
         flusher.flush()
 
         assertEquals(
             listOf(
-                """{"type":"update","episodeId":"ep1","progressMs":5000,"updatedAt":1000}""" to "ep1",
-                """{"type":"update","episodeId":"ep2","progressMs":9000,"updatedAt":2000}""" to "ep2",
+                UpdateProgressMessage("ep1", 5000, 1000) to "ep1",
+                UpdateProgressMessage("ep2", 9000, 2000) to "ep2",
             ),
             sent,
         )

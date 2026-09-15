@@ -2,6 +2,8 @@ package cast.android.network
 
 import android.os.Handler
 import android.os.Looper
+import cast.api.PlaybackClientMessage
+import cast.api.PlaybackServerMessage
 import cast.api.PlaybackStateResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +94,9 @@ class PlaybackWebSocketClient @Inject constructor(
                 }
 
                 override fun onMessage(ws: WebSocket, text: String) {
-                    _states.tryEmit(json.decodeFromString(text))
+                    when (val message = json.decodeFromString<PlaybackServerMessage>(text)) {
+                        is PlaybackStateResponse -> _states.tryEmit(message)
+                    }
                 }
 
                 override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
@@ -127,12 +131,13 @@ class PlaybackWebSocketClient @Inject constructor(
      * single message instead of a burst of stale ones. Returns whether the message went out on a
      * live socket now (`true`) or was queued (`false`).
      */
-    fun send(message: String, coalesceKey: String? = null): Boolean {
+    fun send(message: PlaybackClientMessage, coalesceKey: String? = null): Boolean {
+        val text = json.encodeToString(PlaybackClientMessage.serializer(), message)
         val ws = webSocket
-        if (connected && ws != null && ws.send(message)) return true
+        if (connected && ws != null && ws.send(text)) return true
         synchronized(pending) {
             if (coalesceKey != null) pending.removeAll { it.coalesceKey == coalesceKey }
-            pending.add(PendingMessage(coalesceKey, message))
+            pending.add(PendingMessage(coalesceKey, text))
         }
         return false
     }

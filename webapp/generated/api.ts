@@ -21,8 +21,16 @@ export interface EpisodeDetailDto {
   podcastName: string | null
   podcastImage: string | null
 }
+export interface EpisodeEndedMessage {
+  type: 'ended'
+  episodeId: string
+}
+export interface GetPlaybackStateMessage {
+  type: 'get'
+  episodeId: string
+}
 export interface PlaybackStateResponse {
-  type: string
+  type: 'state'
   episodeId: string
   progressMs: number
   played: boolean
@@ -51,4 +59,15 @@ export interface ReorderQueueRequest {
 export interface SettingsDto {
   hidePlayed: boolean
   recentListeningOnly: boolean
+}
+export interface StartPlaybackMessage {
+  type: 'start'
+  episodeId: string
+  startPositionMs: number
+}
+export interface UpdateProgressMessage {
+  type: 'update'
+  episodeId: string
+  progressMs: number
+  updatedAt: number | null
 }

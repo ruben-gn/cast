@@ -1,13 +1,19 @@
 package api
 
 import application.usecase.RecordProgress
+import cast.api.EpisodeEndedMessage
+import cast.api.GetPlaybackStateMessage
+import cast.api.PlaybackClientMessage
+import cast.api.PlaybackServerMessage
 import cast.api.PlaybackStateResponse
+import cast.api.StartPlaybackMessage
+import cast.api.UpdateProgressMessage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.plugins.di.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
 import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.MarkPlayed
 import playback.core.usecase.StartPlayback
@@ -15,7 +21,8 @@ import shared.model.EpisodeId
 import java.time.Instant
 
 private val log = KotlinLogging.logger { }
-private val json = Json
+// Tolerant of unknown fields so a newer client rolling out ahead of the server isn't rejected.
+private val json = Json { ignoreUnknownKeys = true }
 
 fun Route.playbackApi(dependencies: DependencyRegistry) {
     val recordProgress: RecordProgress by dependencies
@@ -29,29 +36,25 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
                 try {
                     val text = frame.readText()
                     log.info { "Received playback message: $text" }
-                    val obj = json.parseToJsonElement(text).jsonObject
-                    val episodeId = EpisodeId(obj["episodeId"]!!.jsonPrimitive.content)
-                    when (obj["type"]?.jsonPrimitive?.content) {
-                        "start" -> {
-                            val startPositionMs = obj["startPositionMs"]!!.jsonPrimitive.long
-                            startPlayback(episodeId = episodeId, startPositionMs = startPositionMs)
-                        }
-                        "update" -> {
-                            val progressMs = obj["progressMs"]!!.jsonPrimitive.long
-                            val updatedAt = obj["updatedAt"]?.jsonPrimitive?.long?.let(Instant::ofEpochMilli)
-                            recordProgress(episodeId = episodeId, progressMs = progressMs, updatedAt = updatedAt)
-                        }
-                        "ended" -> markPlayed(episodeId)
-                        "get" -> {
-                            val state = getPlaybackState(episodeId)
-                            send(json.encodeToString(PlaybackStateResponse(
-                                type = "state",
+                    when (val message = json.decodeFromString<PlaybackClientMessage>(text)) {
+                        is StartPlaybackMessage -> startPlayback(
+                            episodeId = EpisodeId(message.episodeId),
+                            startPositionMs = message.startPositionMs,
+                        )
+                        is UpdateProgressMessage -> recordProgress(
+                            episodeId = EpisodeId(message.episodeId),
+                            progressMs = message.progressMs,
+                            updatedAt = message.updatedAt?.let(Instant::ofEpochMilli),
+                        )
+                        is EpisodeEndedMessage -> markPlayed(EpisodeId(message.episodeId))
+                        is GetPlaybackStateMessage -> {
+                            val state = getPlaybackState(EpisodeId(message.episodeId))
+                            send(json.encodeToString<PlaybackServerMessage>(PlaybackStateResponse(
                                 episodeId = state.episodeId.value,
                                 progressMs = state.progressMs,
                                 played = state.played,
                             )))
                         }
-                        else -> log.warn { "Unknown message type in: $text" }
                     }
                 } catch (e: Exception) {
                     log.error(e) { "Failed to handle playback message. Continuing..." }

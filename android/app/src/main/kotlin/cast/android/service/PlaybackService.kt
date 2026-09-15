@@ -37,6 +37,8 @@ import cast.android.network.PlaybackWebSocketClient
 import cast.android.ui.MainActivity
 import cast.android.widget.NowPlayingWidget
 import cast.api.EpisodeDetailDto
+import cast.api.PlaybackClientMessage
+import cast.api.UpdateProgressMessage
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
@@ -492,7 +494,7 @@ class PlaybackService : MediaLibraryService() {
                     downloadTimestampStore.markPlayed(episodeId)
                 }
                 sendWs(
-                    """{"type":"update","episodeId":"$episodeId","progressMs":$progressMs,"updatedAt":$now}""",
+                    UpdateProgressMessage(episodeId = episodeId, progressMs = progressMs, updatedAt = now),
                     coalesceKey = episodeId,
                 )
             }
@@ -504,7 +506,7 @@ class PlaybackService : MediaLibraryService() {
         progressJob = null
     }
 
-    private fun sendWs(message: String, coalesceKey: String? = null): Boolean {
+    private fun sendWs(message: PlaybackClientMessage, coalesceKey: String? = null): Boolean {
         Log.d(TAG, "sendWs: $message")
         return playbackWebSocketClient.send(message, coalesceKey)
     }

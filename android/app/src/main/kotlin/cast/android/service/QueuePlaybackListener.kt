@@ -6,7 +6,12 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import cast.android.domain.repository.QueueRepository
 import cast.api.EpisodeDetailDto
+import cast.api.EpisodeEndedMessage
+import cast.api.GetPlaybackStateMessage
+import cast.api.PlaybackClientMessage
 import cast.api.PlaybackStateResponse
+import cast.api.StartPlaybackMessage
+import cast.api.UpdateProgressMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -28,7 +33,7 @@ class QueuePlaybackListener(
     private val scope: CoroutineScope,
     private val queue: QueueRepository,
     private val store: PlaybackProgressStore,
-    private val sendWs: (message: String, coalesceKey: String?) -> Boolean,
+    private val sendWs: (message: PlaybackClientMessage, coalesceKey: String?) -> Boolean,
     private val toMediaItem: (EpisodeDetailDto) -> MediaItem,
     private val onWidgetUpdate: (isPlaying: Boolean) -> Unit,
     private val onEpisodeFinished: () -> Unit,
@@ -60,7 +65,7 @@ class QueuePlaybackListener(
         } else {
             currentMs
         }
-        sendWs("""{"type":"start","episodeId":"${state.episodeId}","startPositionMs":$startMs}""", null)
+        sendWs(StartPlaybackMessage(episodeId = state.episodeId, startPositionMs = startMs), null)
         episodeStarted = true
     }
 
@@ -91,7 +96,7 @@ class QueuePlaybackListener(
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
             // The previous item ran to its natural end: mark it played and drop it locally.
             if (finishedId != null) {
-                if (!sendWs("""{"type":"ended","episodeId":"$finishedId"}""", null))
+                if (!sendWs(EpisodeEndedMessage(finishedId), null))
                     store.markEndedPending(finishedId)
                 store.clearCachedProgress(finishedId)
                 onEpisodeFinished()
@@ -121,7 +126,7 @@ class QueuePlaybackListener(
         }
         // Remember it so Auto/Bluetooth can resume after the service is killed (onPlaybackResumption).
         store.rememberLastEpisode(episodeId)
-        sendWs("""{"type":"get","episodeId":"$episodeId"}""", null)
+        sendWs(GetPlaybackStateMessage(episodeId), null)
 
         // Append the backend queue behind the new now-playing item.
         reconcileQueueTail()
@@ -134,7 +139,7 @@ class QueuePlaybackListener(
             if (episodeStarted) {
                 // Resume after intentional pause: re-sync from server so webapp progress is picked up
                 episodeStarted = false
-                sendWs("""{"type":"get","episodeId":"$episodeId"}""", null)
+                sendWs(GetPlaybackStateMessage(episodeId), null)
             }
             startProgressSync(episodeId)
         } else {
@@ -142,7 +147,7 @@ class QueuePlaybackListener(
             val progressMs = player.currentPosition
             val now = System.currentTimeMillis()
             store.cacheProgress(episodeId, progressMs, now)
-            sendWs("""{"type":"update","episodeId":"$episodeId","progressMs":$progressMs,"updatedAt":$now}""", episodeId)
+            sendWs(UpdateProgressMessage(episodeId = episodeId, progressMs = progressMs, updatedAt = now), episodeId)
             stopProgressSync()
         }
     }
@@ -158,7 +163,7 @@ class QueuePlaybackListener(
             // Fires only when the last playlist item finishes (queue exhausted). Mid-queue
             // completion is handled in onMediaItemTransition(REASON_AUTO).
             currentEpisodeId?.let {
-                if (!sendWs("""{"type":"ended","episodeId":"$it"}""", null))
+                if (!sendWs(EpisodeEndedMessage(it), null))
                     store.markEndedPending(it)
                 store.clearCachedProgress(it)
                 onEpisodeFinished()

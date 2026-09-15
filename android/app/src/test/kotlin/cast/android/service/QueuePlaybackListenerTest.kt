@@ -17,7 +17,10 @@ import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
 import androidx.test.core.app.ApplicationProvider
 import cast.android.domain.repository.QueueRepository
 import cast.api.EpisodeDetailDto
+import cast.api.EpisodeEndedMessage
+import cast.api.PlaybackClientMessage
 import cast.api.PlaybackStateResponse
+import cast.api.StartPlaybackMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +61,7 @@ class QueuePlaybackListenerTest {
 
     private lateinit var player: ExoPlayer
     private lateinit var listener: QueuePlaybackListener
-    private val wsMessages = mutableListOf<String>()
+    private val wsMessages = mutableListOf<PlaybackClientMessage>()
     private var browseInvalidations = 0
     private val progressSyncEpisodeIds = mutableListOf<String>()
     private val queue = FakeQueueRepository(upNext = listOf("ep2"))
@@ -131,7 +134,7 @@ class QueuePlaybackListenerTest {
         assertEquals(5_000L, player.currentPosition)
         assertTrue(
             "expected `start` to report the live position, not the stale server one; ws=$wsMessages",
-            wsMessages.any { it.contains(""""type":"start"""") && it.contains(""""startPositionMs":5000""") },
+            wsMessages.filterIsInstance<StartPlaybackMessage>().any { it.startPositionMs == 5_000L },
         )
     }
 
@@ -154,12 +157,10 @@ class QueuePlaybackListenerTest {
     }
 
     private fun serverState(episodeId: String, progressMs: Long, played: Boolean) =
-        PlaybackStateResponse(type = "state", episodeId = episodeId, progressMs = progressMs, played = played)
+        PlaybackStateResponse(episodeId = episodeId, progressMs = progressMs, played = played)
 
     private fun endedEpisodeIds(): List<String> =
-        wsMessages
-            .filter { it.contains(""""type":"ended"""") }
-            .map { it.substringAfter(""""episodeId":"""").substringBefore('"') }
+        wsMessages.filterIsInstance<EpisodeEndedMessage>().map { it.episodeId }
 
     /** Builds a playable fake source per MediaItem, preserving its mediaId so transitions report it. */
     private object FakeSourceFactory : MediaSource.Factory {
