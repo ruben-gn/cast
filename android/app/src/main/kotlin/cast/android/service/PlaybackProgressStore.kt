@@ -20,6 +20,9 @@ interface PlaybackProgressStore {
     suspend fun cachedProgressMs(episodeId: String): Long?
     fun cacheProgress(episodeId: String, progressMs: Long, atMillis: Long)
     fun clearCachedProgress(episodeId: String)
+    fun markProgressPending(episodeId: String)
+    /** Retires the entry only if [atMillis] is still its newest recorded position. */
+    fun clearProgressPending(episodeId: String, atMillis: Long)
     fun markEndedPending(episodeId: String)
     fun clearEndedPending(episodeId: String)
     suspend fun pendingSync(): PendingSync
@@ -42,6 +45,7 @@ class DataStorePlaybackProgressStore(
 
     private fun progressKey(episodeId: String) = longPreferencesKey("progress_$episodeId")
     private fun progressAtKey(episodeId: String) = longPreferencesKey("progress_at_$episodeId")
+    private fun progressPendingKey(episodeId: String) = booleanPreferencesKey("progress_pending_$episodeId")
     private fun endedPendingKey(episodeId: String) = booleanPreferencesKey("ended_pending_$episodeId")
 
     override suspend fun cachedProgressMs(episodeId: String): Long? =
@@ -65,7 +69,30 @@ class DataStorePlaybackProgressStore(
                 dataStore.edit {
                     it.remove(progressKey(episodeId))
                     it.remove(progressAtKey(episodeId))
+                    // A finished episode's position is moot; the ended flag carries it from here.
+                    it.remove(progressPendingKey(episodeId))
                 }
+            }
+        }
+    }
+
+    override fun markProgressPending(episodeId: String) {
+        scope.launch {
+            runCatching {
+                // Checked first because this runs once per second while offline, and every edit
+                // rewrites the whole preferences file.
+                if (dataStore.data.first()[progressPendingKey(episodeId)] != true)
+                    dataStore.edit { it[progressPendingKey(episodeId)] = true }
+            }
+        }
+    }
+
+    override fun clearProgressPending(episodeId: String, atMillis: Long) {
+        scope.launch {
+            runCatching {
+                val prefs = dataStore.data.first()
+                if (prefs[progressPendingKey(episodeId)] == true && prefs[progressAtKey(episodeId)] == atMillis)
+                    dataStore.edit { it.remove(progressPendingKey(episodeId)) }
             }
         }
     }
@@ -81,10 +108,10 @@ class DataStorePlaybackProgressStore(
     override suspend fun pendingSync(): PendingSync {
         val prefs = dataStore.data.first()
         val progress = prefs.asMap().keys
-            .filter { it.name.startsWith("progress_at_") }
+            .filter { it.name.startsWith("progress_pending_") }
             .mapNotNull { key ->
-                val episodeId = key.name.removePrefix("progress_at_")
-                val atMillis = prefs[key] as? Long ?: return@mapNotNull null
+                val episodeId = key.name.removePrefix("progress_pending_")
+                val atMillis = prefs[progressAtKey(episodeId)] as? Long ?: return@mapNotNull null
                 val progressMs = prefs[progressKey(episodeId)] as? Long ?: return@mapNotNull null
                 PendingProgress(episodeId, progressMs, atMillis)
             }

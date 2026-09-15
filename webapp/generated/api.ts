@@ -21,6 +21,10 @@ export interface EpisodeDetailDto {
   podcastName: string | null
   podcastImage: string | null
 }
+export interface EpisodeEndedAckMessage {
+  type: 'ended-ack'
+  episodeId: string
+}
 export interface EpisodeEndedMessage {
   type: 'ended'
   episodeId: string
@@ -52,6 +56,11 @@ export interface PodcastSummaryDto {
   listening: boolean
   created: string
   latestEpisodeAt: string
+}
+export interface ProgressAckMessage {
+  type: 'progress-ack'
+  episodeId: string
+  updatedAt: number | null
 }
 export interface ReorderQueueRequest {
   episodeIds: string[]

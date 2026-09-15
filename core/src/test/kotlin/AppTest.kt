@@ -504,6 +504,24 @@ class AppTest : DescribeSpec({
             }
         }
 
+        it("acknowledges each write so a client can retire it from its outbox") {
+            testApp { _, ws ->
+                ws.webSocket("/api/playback") {
+                    send("""{"type":"update","episodeId":"ep-1","progressMs":45000,"updatedAt":1000}""")
+                    val progressAck = receiveMessage()
+                    progressAck["type"]!!.jsonPrimitive.content shouldBe "progress-ack"
+                    progressAck["episodeId"]!!.jsonPrimitive.content shouldBe "ep-1"
+                    // Echoed so a stale ack can't retire progress recorded after it.
+                    progressAck["updatedAt"]!!.jsonPrimitive.long shouldBe 1000L
+
+                    send("""{"type":"ended","episodeId":"ep-1"}""")
+                    val endedAck = receiveMessage()
+                    endedAck["type"]!!.jsonPrimitive.content shouldBe "ended-ack"
+                    endedAck["episodeId"]!!.jsonPrimitive.content shouldBe "ep-1"
+                }
+            }
+        }
+
         it("marks the episode as played when it ends") {
             testApp { _, ws ->
                 ws.webSocket("/api/playback") {
@@ -687,7 +705,15 @@ class AppTest : DescribeSpec({
     }
 })
 
-private suspend fun DefaultClientWebSocketSession.receiveState(): JsonObject =
+/** Skips the acks a write emits, so a test can ask for state right after sending one. */
+private suspend fun DefaultClientWebSocketSession.receiveState(): JsonObject {
+    while (true) {
+        val message = receiveMessage()
+        if (message["type"]!!.jsonPrimitive.content == "state") return message
+    }
+}
+
+private suspend fun DefaultClientWebSocketSession.receiveMessage(): JsonObject =
     Json.parseToJsonElement((incoming.receive() as Frame.Text).readText()).jsonObject
 
 private fun Application.installInMemoryDatabase() {

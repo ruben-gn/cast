@@ -156,9 +156,12 @@ class PlaybackService : MediaLibraryService() {
         // Replay offline progress/mark-played on every (re)connect, including the very first open —
         // this collector must be running before connect() below for that to hold, since the
         // SharedFlow has no replay.
-        val flusher = ProgressOutboxFlusher(progressStore, ::sendWs)
+        val outbox = ProgressOutbox(progressStore, ::sendWs)
         serviceScope.launch {
-            playbackWebSocketClient.opened.collect { flusher.flush() }
+            playbackWebSocketClient.opened.collect { outbox.flush() }
+        }
+        serviceScope.launch {
+            playbackWebSocketClient.acks.collect { outbox.onAck(it) }
         }
 
         playbackWebSocketClient.connect()
@@ -493,10 +496,11 @@ class PlaybackService : MediaLibraryService() {
                 if (downloadRepository.statuses.value[episodeId] == DownloadStatus.DOWNLOADED) {
                     downloadTimestampStore.markPlayed(episodeId)
                 }
-                sendWs(
+                val sent = sendWs(
                     UpdateProgressMessage(episodeId = episodeId, progressMs = progressMs, updatedAt = now),
                     coalesceKey = episodeId,
                 )
+                if (!sent) progressStore.markProgressPending(episodeId)
             }
         }
     }

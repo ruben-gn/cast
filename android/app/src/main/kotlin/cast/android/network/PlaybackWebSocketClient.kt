@@ -2,6 +2,7 @@ package cast.android.network
 
 import android.os.Handler
 import android.os.Looper
+import cast.api.PlaybackAck
 import cast.api.PlaybackClientMessage
 import cast.api.PlaybackServerMessage
 import cast.api.PlaybackStateResponse
@@ -39,6 +40,9 @@ class PlaybackWebSocketClient @Inject constructor(
 
     private val _states = MutableSharedFlow<PlaybackStateResponse>(replay = 1)
     val states: SharedFlow<PlaybackStateResponse> = _states.asSharedFlow()
+
+    private val _acks = MutableSharedFlow<PlaybackAck>(extraBufferCapacity = 64)
+    val acks: SharedFlow<PlaybackAck> = _acks.asSharedFlow()
 
     private val _opened = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val opened: SharedFlow<Unit> = _opened.asSharedFlow()
@@ -96,6 +100,7 @@ class PlaybackWebSocketClient @Inject constructor(
                 override fun onMessage(ws: WebSocket, text: String) {
                     when (val message = json.decodeFromString<PlaybackServerMessage>(text)) {
                         is PlaybackStateResponse -> _states.tryEmit(message)
+                        is PlaybackAck -> _acks.tryEmit(message)
                     }
                 }
 

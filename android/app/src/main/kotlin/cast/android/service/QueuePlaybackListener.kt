@@ -147,7 +147,8 @@ class QueuePlaybackListener(
             val progressMs = player.currentPosition
             val now = System.currentTimeMillis()
             store.cacheProgress(episodeId, progressMs, now)
-            sendWs(UpdateProgressMessage(episodeId = episodeId, progressMs = progressMs, updatedAt = now), episodeId)
+            if (!sendWs(UpdateProgressMessage(episodeId = episodeId, progressMs = progressMs, updatedAt = now), episodeId))
+                store.markProgressPending(episodeId)
             stopProgressSync()
         }
     }

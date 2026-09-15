@@ -181,6 +181,8 @@ class QueuePlaybackListenerTest {
         override suspend fun cachedProgressMs(episodeId: String): Long? = null
         override fun cacheProgress(episodeId: String, progressMs: Long, atMillis: Long) {}
         override fun clearCachedProgress(episodeId: String) {}
+        override fun markProgressPending(episodeId: String) {}
+        override fun clearProgressPending(episodeId: String, atMillis: Long) {}
         override fun markEndedPending(episodeId: String) {}
         override fun clearEndedPending(episodeId: String) {}
         override suspend fun pendingSync(): PendingSync = PendingSync(emptyList(), emptyList())

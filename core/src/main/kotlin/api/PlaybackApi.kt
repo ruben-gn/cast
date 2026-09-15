@@ -1,11 +1,13 @@
 package api
 
 import application.usecase.RecordProgress
+import cast.api.EpisodeEndedAckMessage
 import cast.api.EpisodeEndedMessage
 import cast.api.GetPlaybackStateMessage
 import cast.api.PlaybackClientMessage
 import cast.api.PlaybackServerMessage
 import cast.api.PlaybackStateResponse
+import cast.api.ProgressAckMessage
 import cast.api.StartPlaybackMessage
 import cast.api.UpdateProgressMessage
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -41,12 +43,22 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
                             episodeId = EpisodeId(message.episodeId),
                             startPositionMs = message.startPositionMs,
                         )
-                        is UpdateProgressMessage -> recordProgress(
-                            episodeId = EpisodeId(message.episodeId),
-                            progressMs = message.progressMs,
-                            updatedAt = message.updatedAt?.let(Instant::ofEpochMilli),
-                        )
-                        is EpisodeEndedMessage -> markPlayed(EpisodeId(message.episodeId))
+                        is UpdateProgressMessage -> {
+                            recordProgress(
+                                episodeId = EpisodeId(message.episodeId),
+                                progressMs = message.progressMs,
+                                updatedAt = message.updatedAt?.let(Instant::ofEpochMilli),
+                            )
+                            send(json.encodeToString<PlaybackServerMessage>(
+                                ProgressAckMessage(message.episodeId, message.updatedAt)
+                            ))
+                        }
+                        is EpisodeEndedMessage -> {
+                            markPlayed(EpisodeId(message.episodeId))
+                            send(json.encodeToString<PlaybackServerMessage>(
+                                EpisodeEndedAckMessage(message.episodeId)
+                            ))
+                        }
                         is GetPlaybackStateMessage -> {
                             val state = getPlaybackState(EpisodeId(message.episodeId))
                             send(json.encodeToString<PlaybackServerMessage>(PlaybackStateResponse(

@@ -1,13 +1,16 @@
 package cast.android.service
 
+import cast.api.EpisodeEndedAckMessage
+import cast.api.EpisodeEndedMessage
 import cast.api.PlaybackClientMessage
+import cast.api.ProgressAckMessage
 import cast.api.UpdateProgressMessage
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ProgressOutboxFlusherTest {
+class ProgressOutboxTest {
 
     @Test
     fun `sends a timestamped update per pending progress entry, coalesced by episode id`() = runTest {
@@ -21,9 +24,9 @@ class ProgressOutboxFlusherTest {
             ),
         )
         val sent = mutableListOf<Pair<PlaybackClientMessage, String?>>()
-        val flusher = ProgressOutboxFlusher(store) { message, coalesceKey -> sent += message to coalesceKey; true }
+        val outbox = ProgressOutbox(store) { message, coalesceKey -> sent += message to coalesceKey; true }
 
-        flusher.flush()
+        outbox.flush()
 
         assertEquals(
             listOf(
@@ -35,45 +38,75 @@ class ProgressOutboxFlusherTest {
     }
 
     @Test
-    fun `sends ended for each pending-ended id and clears the flag when send succeeds`() = runTest {
+    fun `sends ended for each pending-ended id`() = runTest {
         val store = FakeProgressStore(
             pending = PendingSync(progress = emptyList(), endedEpisodeIds = listOf("ep1", "ep2")),
         )
-        val flusher = ProgressOutboxFlusher(store) { _, _ -> true }
+        val sent = mutableListOf<PlaybackClientMessage>()
+        val outbox = ProgressOutbox(store) { message, _ -> sent += message; true }
 
-        flusher.flush()
+        outbox.flush()
 
-        assertEquals(setOf("ep1", "ep2"), store.clearedEnded)
+        assertEquals(listOf(EpisodeEndedMessage("ep1"), EpisodeEndedMessage("ep2")), sent)
     }
 
     @Test
-    fun `keeps the ended flag when send fails`() = runTest {
+    fun `keeps everything pending until the server acknowledges it`() = runTest {
         val store = FakeProgressStore(
-            pending = PendingSync(progress = emptyList(), endedEpisodeIds = listOf("ep1")),
+            pending = PendingSync(
+                progress = listOf(PendingProgress("ep1", 5_000L, 1_000L)),
+                endedEpisodeIds = listOf("ep1"),
+            ),
         )
-        val flusher = ProgressOutboxFlusher(store) { _, _ -> false }
+        val outbox = ProgressOutbox(store) { _, _ -> true }
 
-        flusher.flush()
+        outbox.flush()
 
+        assertTrue(store.clearedProgress.isEmpty())
         assertTrue(store.clearedEnded.isEmpty())
+    }
+
+    @Test
+    fun `retires an entry when its ack arrives`() = runTest {
+        val store = FakeProgressStore(pending = PendingSync(emptyList(), emptyList()))
+        val outbox = ProgressOutbox(store) { _, _ -> true }
+
+        outbox.onAck(ProgressAckMessage("ep1", updatedAt = 1_000L))
+        outbox.onAck(EpisodeEndedAckMessage("ep2"))
+
+        assertEquals(listOf("ep1" to 1_000L), store.clearedProgress)
+        assertEquals(setOf("ep2"), store.clearedEnded)
+    }
+
+    @Test
+    fun `ignores a progress ack without a timestamp, which cannot identify an entry`() = runTest {
+        val store = FakeProgressStore(pending = PendingSync(emptyList(), emptyList()))
+        val outbox = ProgressOutbox(store) { _, _ -> true }
+
+        outbox.onAck(ProgressAckMessage("ep1", updatedAt = null))
+
+        assertTrue(store.clearedProgress.isEmpty())
     }
 
     @Test
     fun `sends nothing when the store has nothing pending`() = runTest {
         val store = FakeProgressStore(pending = PendingSync(progress = emptyList(), endedEpisodeIds = emptyList()))
         var sendCount = 0
-        val flusher = ProgressOutboxFlusher(store) { _, _ -> sendCount++; true }
+        val outbox = ProgressOutbox(store) { _, _ -> sendCount++; true }
 
-        flusher.flush()
+        outbox.flush()
 
         assertEquals(0, sendCount)
     }
 
     private class FakeProgressStore(private val pending: PendingSync) : PlaybackProgressStore {
         val clearedEnded = mutableSetOf<String>()
+        val clearedProgress = mutableListOf<Pair<String, Long>>()
         override suspend fun cachedProgressMs(episodeId: String): Long? = null
         override fun cacheProgress(episodeId: String, progressMs: Long, atMillis: Long) {}
         override fun clearCachedProgress(episodeId: String) {}
+        override fun markProgressPending(episodeId: String) {}
+        override fun clearProgressPending(episodeId: String, atMillis: Long) { clearedProgress += episodeId to atMillis }
         override fun markEndedPending(episodeId: String) {}
         override fun clearEndedPending(episodeId: String) { clearedEnded += episodeId }
         override suspend fun pendingSync(): PendingSync = pending

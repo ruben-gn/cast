@@ -53,3 +53,26 @@ data class PlaybackStateResponse(
     val progressMs: Long,
     val played: Boolean,
 ) : PlaybackServerMessage
+
+/**
+ * Confirms a write reached the database. Clients hold unacknowledged progress in a durable outbox
+ * and replay it on reconnect; without an ack they cannot tell a persisted write from one the socket
+ * merely accepted before the connection died.
+ */
+@Serializable
+sealed interface PlaybackAck : PlaybackServerMessage
+
+@Serializable
+@SerialName("progress-ack")
+data class ProgressAckMessage(
+    override val episodeId: String,
+    // Echoes the acknowledged update's timestamp, so an ack can't retire progress recorded after it.
+    // Null for clients that don't timestamp their updates (the webapp).
+    val updatedAt: Long? = null,
+) : PlaybackAck
+
+@Serializable
+@SerialName("ended-ack")
+data class EpisodeEndedAckMessage(
+    override val episodeId: String,
+) : PlaybackAck
