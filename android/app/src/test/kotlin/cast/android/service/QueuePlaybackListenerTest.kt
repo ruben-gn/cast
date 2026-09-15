@@ -60,6 +60,7 @@ class QueuePlaybackListenerTest {
     private lateinit var listener: QueuePlaybackListener
     private val wsMessages = mutableListOf<String>()
     private var browseInvalidations = 0
+    private val progressSyncEpisodeIds = mutableListOf<String>()
     private val queue = FakeQueueRepository(upNext = listOf("ep2"))
 
     @Before
@@ -76,7 +77,7 @@ class QueuePlaybackListenerTest {
             toMediaItem = { MediaItem.Builder().setMediaId(it.id).build() },
             onWidgetUpdate = {},
             onEpisodeFinished = { browseInvalidations++ },
-            startProgressSync = {},
+            startProgressSync = { progressSyncEpisodeIds += it },
             stopProgressSync = {},
         )
         player.addListener(listener)
@@ -104,6 +105,18 @@ class QueuePlaybackListenerTest {
         // Each finish drops the episode out of /recent and the queue, so a browser (Android Auto)
         // holding those lists has to be told to re-query them.
         assertEquals(2, browseInvalidations)
+    }
+
+    @Test
+    fun `progress reporting follows the new episode across an auto-advance`() {
+        player.setMediaItems(listOf(MediaItem.Builder().setMediaId("ep1").build()))
+        player.prepare()
+        player.play()
+
+        TestPlayerRunHelper.runUntilPlaybackState(player, Player.STATE_ENDED)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(listOf("ep1", "ep2"), progressSyncEpisodeIds)
     }
 
     @Test

@@ -108,6 +108,9 @@ class QueuePlaybackListener(
         }
 
         val episodeId = currentEpisodeId ?: return
+        // An auto-advance leaves playWhenReady untouched, so onPlayWhenReadyChanged never re-arms
+        // the 1 Hz sync for the new item and it keeps reporting under the finished episode's id.
+        if (player.playWhenReady) startProgressSync(episodeId) else stopProgressSync()
         // Head-start seek from local cache so playback doesn't jump while we fetch the server position.
         // Does NOT set episodeStarted: the WS `get` reconcile (onServerState) still re-seeks to the
         // authoritative server value when it arrives. Server stays the source of truth.
