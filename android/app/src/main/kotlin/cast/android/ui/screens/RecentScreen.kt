@@ -53,6 +53,7 @@ fun RecentScreen(navController: NavHostController) {
     val downloadsVm: DownloadsViewModel = hiltViewModel()
     val playerVm = LocalPlayerViewModel.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by vm.isRefreshing.collectAsStateWithLifecycle()
     val queueIds by vm.queueIds.collectAsStateWithLifecycle()
     val expandedSeries by vm.expandedSeries.collectAsStateWithLifecycle()
     val downloadStatuses by downloadsVm.statuses.collectAsStateWithLifecycle()
@@ -95,7 +96,7 @@ fun RecentScreen(navController: NavHostController) {
     }
 
     PullToRefreshBox(
-        isRefreshing = uiState is UiState.Loading,
+        isRefreshing = isRefreshing,
         onRefresh = { vm.load() },
         modifier = Modifier.fillMaxSize(),
     ) {

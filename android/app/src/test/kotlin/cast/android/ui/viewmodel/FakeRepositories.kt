@@ -8,6 +8,7 @@ import cast.android.domain.repository.QueueRepository
 import cast.api.EpisodeDetailDto
 import cast.api.PodcastDetailDto
 import cast.api.PodcastSummaryDto
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import okhttp3.MultipartBody
@@ -15,13 +16,18 @@ import okhttp3.MultipartBody
 /** Minimal [EpisodeRepository] fake for ViewModel seeding tests. */
 class FakeEpisodeRepository(
     private val cachedRecent: List<EpisodeDetailDto>? = null,
+    /** When set, [getRecentEpisodes] blocks on it so a test can observe a fetch mid-flight. */
+    private val fetchGate: CompletableDeferred<Unit>?,
 ) : EpisodeRepository {
     var recentCacheInvalidated = false
         private set
 
     override fun cachedRecentEpisodes(): List<EpisodeDetailDto>? = cachedRecent
     override fun invalidateRecentCache() { recentCacheInvalidated = true }
-    override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> = cachedRecent ?: emptyList()
+    override suspend fun getRecentEpisodes(): List<EpisodeDetailDto> {
+        fetchGate?.await()
+        return cachedRecent ?: emptyList()
+    }
     override suspend fun getEpisode(episodeId: String): EpisodeDetailDto = TODO()
     override suspend fun setPlayed(episodeId: String, played: Boolean) {}
 }

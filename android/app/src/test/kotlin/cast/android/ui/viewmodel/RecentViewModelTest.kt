@@ -2,14 +2,17 @@ package cast.android.ui.viewmodel
 
 import cast.android.network.episode
 import cast.android.ui.UiState
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -32,7 +35,7 @@ class RecentViewModelTest {
     fun `seeds from cache as Success without Loading flash`() {
         val episodes = listOf(episode("1"))
         val vm = RecentViewModel(
-            episodeRepository = FakeEpisodeRepository(cachedRecent = episodes),
+            episodeRepository = FakeEpisodeRepository(cachedRecent = episodes, fetchGate = null),
             queueRepository = FakeQueueRepository(),
             podcastRepository = FakePodcastRepository(),
         )
@@ -42,7 +45,7 @@ class RecentViewModelTest {
     @Test
     fun `cold start with no cache starts in Loading`() {
         val vm = RecentViewModel(
-            episodeRepository = FakeEpisodeRepository(cachedRecent = null),
+            episodeRepository = FakeEpisodeRepository(cachedRecent = null, fetchGate = null),
             queueRepository = FakeQueueRepository(),
             podcastRepository = FakePodcastRepository(),
         )
@@ -52,7 +55,7 @@ class RecentViewModelTest {
     @Test
     fun `a finished episode leaves the list and marks the cached list stale`() {
         val episodes = listOf(episode("1"), episode("2"))
-        val episodeRepository = FakeEpisodeRepository(cachedRecent = episodes)
+        val episodeRepository = FakeEpisodeRepository(cachedRecent = episodes, fetchGate = null)
         val vm = RecentViewModel(
             episodeRepository = episodeRepository,
             queueRepository = FakeQueueRepository(),
@@ -67,11 +70,32 @@ class RecentViewModelTest {
     }
 
     @Test
+    fun `a refresh over loaded data reports itself as refreshing`() = runTest {
+        val episodes = listOf(episode("1"))
+        val gate = CompletableDeferred<Unit>()
+        val vm = RecentViewModel(
+            episodeRepository = FakeEpisodeRepository(cachedRecent = episodes, fetchGate = gate),
+            queueRepository = FakeQueueRepository(),
+            podcastRepository = FakePodcastRepository(),
+        )
+
+        // The list stays on screen (never Loading), so isRefreshing is the only signal the
+        // pull-to-refresh indicator can follow.
+        runCurrent()
+        assertEquals(UiState.Success(episodes), vm.uiState.value)
+        assertTrue(vm.isRefreshing.value)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+        assertFalse(vm.isRefreshing.value)
+    }
+
+    @Test
     fun `groupSeries calls the repository and reloads`() = runTest {
         val episodes = listOf(episode("1"))
         val podcastRepository = FakePodcastRepository()
         val vm = RecentViewModel(
-            episodeRepository = FakeEpisodeRepository(cachedRecent = episodes),
+            episodeRepository = FakeEpisodeRepository(cachedRecent = episodes, fetchGate = null),
             queueRepository = FakeQueueRepository(),
             podcastRepository = podcastRepository,
         )

@@ -1,5 +1,6 @@
 package api
 
+import application.usecase.RecordProgress
 import cast.api.PlaybackStateResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.plugins.di.*
@@ -10,7 +11,6 @@ import kotlinx.serialization.json.*
 import playback.core.usecase.GetPlaybackState
 import playback.core.usecase.MarkPlayed
 import playback.core.usecase.StartPlayback
-import playback.core.usecase.UpdateProgress
 import shared.model.EpisodeId
 import java.time.Instant
 
@@ -18,7 +18,7 @@ private val log = KotlinLogging.logger { }
 private val json = Json
 
 fun Route.playbackApi(dependencies: DependencyRegistry) {
-    val updateProgress: UpdateProgress by dependencies
+    val recordProgress: RecordProgress by dependencies
     val getPlaybackState: GetPlaybackState by dependencies
     val markPlayed: MarkPlayed by dependencies
     val startPlayback: StartPlayback by dependencies
@@ -39,7 +39,7 @@ fun Route.playbackApi(dependencies: DependencyRegistry) {
                         "update" -> {
                             val progressMs = obj["progressMs"]!!.jsonPrimitive.long
                             val updatedAt = obj["updatedAt"]?.jsonPrimitive?.long?.let(Instant::ofEpochMilli)
-                            updateProgress(episodeId = episodeId, progressMs = progressMs, updatedAt = updatedAt)
+                            recordProgress(episodeId = episodeId, progressMs = progressMs, updatedAt = updatedAt)
                         }
                         "ended" -> markPlayed(episodeId)
                         "get" -> {
