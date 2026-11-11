@@ -17,6 +17,11 @@ updates:
   - package-ecosystem: docker
     directories: ["/", "/webapp"]
     schedule: { interval: weekly, day: friday }
+    ignore:
+      # One name for both stages: a major bumps the JDK past jvmToolchain(21) and breaks the build.
+      # Move JDK and toolchain together, by hand, when it's time.
+      - dependency-name: eclipse-temurin
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
