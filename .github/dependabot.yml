@@ -1,0 +1,25 @@
+# Minor/patch bumps are grouped per ecosystem and auto-merged once CI passes
+# (workflows/dependabot-automerge.yml). Majors stay open as PRs.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directories: ["/", "/android"]
+    schedule: { interval: weekly, day: friday }
+    groups:
+      gradle: { update-types: [minor, patch] }
+
+  - package-ecosystem: bun
+    directory: /webapp
+    schedule: { interval: weekly, day: friday }
+    groups:
+      bun: { update-types: [minor, patch] }
+
+  - package-ecosystem: docker
+    directories: ["/", "/webapp"]
+    schedule: { interval: weekly, day: friday }
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: friday }
+    groups:
+      actions: { update-types: [minor, patch] }

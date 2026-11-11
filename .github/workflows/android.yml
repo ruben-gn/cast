@@ -8,12 +8,34 @@ on:
       - 'shared-models/**'
       - '.github/workflows/android.yml'
   workflow_dispatch:
+  # Auto-merged Dependabot PRs are merged by GITHUB_TOKEN, which doesn't fire push workflows.
+  # The daily run picks those up; the changes job skips it when nothing Android-related is new.
+  schedule:
+    - cron: '17 6 * * *'
 
 permissions:
   contents: write
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.diff.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: diff
+        if: github.event_name == 'schedule'
+        run: |
+          PREV=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -n "$PREV" ] && git diff --quiet "$PREV" HEAD -- android shared-models; then
+            echo skip=true >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: changes
+    if: needs.changes.outputs.skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
