@@ -34,7 +34,7 @@ bun run server.tsx          # start on :3000, proxies to Kotlin on :8100
 bun --watch run server.tsx  # dev mode with auto-reload
 ```
 
-The android module uses `jvmToolchain(21)` to match `shared-models` — don't drop it to 17, the tests load Java 21 class files and will fail with `UnsupportedClassVersionError`.
+The android module uses `jvmToolchain(25)` to match `shared-models` — don't drop it lower, the tests load Java 25 class files and will fail with `UnsupportedClassVersionError`.
 
 ## Architecture
 

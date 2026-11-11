@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
 # Build the fat jar from source — no host-side gradle step needed.
-# JDK must match jvmToolchain(21) (shared with android); the runtime can be newer.
-FROM eclipse-temurin:21-jdk AS build
+# JDK must match jvmToolchain (also in core, shared-models, android).
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /src
 COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle ./gradle
