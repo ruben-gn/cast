@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build the fat jar from source — no host-side gradle step needed.
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /src
 COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle ./gradle
@@ -13,7 +13,7 @@ COPY src ./src
 RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew --no-daemon --console=plain buildFatJar
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 RUN groupadd -r app && useradd -r -g app app
 WORKDIR /app
 COPY --from=build /src/build/libs/Cast-all.jar app.jar
