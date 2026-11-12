@@ -19,7 +19,7 @@ val ciVersionName = System.getenv("CAST_VERSION_NAME") ?: "1.0"
 
 android {
     namespace = "cast.android"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "cast.android"
