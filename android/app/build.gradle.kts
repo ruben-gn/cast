@@ -66,6 +66,8 @@ android {
             // Robolectric needs the merged Android resources/manifest on the unit-test classpath.
             isIncludeAndroidResources = true
         }
+        // Robolectric reads FileDescriptor internals via jdk.internal.access, which JDK 25 no longer exports.
+        unitTests.all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
     }
 }
 
