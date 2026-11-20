@@ -1,5 +1,7 @@
 # Minor/patch bumps are grouped per ecosystem and auto-merged once CI passes
 # (workflows/dependabot-automerge.yml). Majors stay open as PRs.
+# Cooldown: hijacked releases are usually yanked within days; don't auto-deploy them.
+# Docker base images skip it so security patches land fast.
 version: 2
 updates:
   - package-ecosystem: gradle
@@ -7,12 +9,14 @@ updates:
     schedule: { interval: weekly, day: friday }
     groups:
       gradle: { update-types: [minor, patch] }
+    cooldown: { default-days: 7 }
 
   - package-ecosystem: bun
     directory: /webapp
     schedule: { interval: weekly, day: friday }
     groups:
       bun: { update-types: [minor, patch] }
+    cooldown: { default-days: 7 }
 
   - package-ecosystem: docker
     directories: ["/", "/webapp"]
@@ -27,3 +31,4 @@ updates:
     schedule: { interval: weekly, day: friday }
     groups:
       actions: { update-types: [minor, patch] }
+    cooldown: { default-days: 7 }
