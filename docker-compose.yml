@@ -14,7 +14,8 @@ services:
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8100/health"]
+      # bash /dev/tcp: the temurin 25 image has no wget or curl
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8100 && printf \"GET /health HTTP/1.0\\r\\n\\r\\n\" >&3 && head -1 <&3 | grep -q \" 200 \""]
       interval: 10s
       timeout: 5s
       retries: 5
